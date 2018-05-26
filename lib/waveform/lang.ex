@@ -15,7 +15,7 @@ defmodule Waveform.Lang do
   end
 
   def send_command(command) do
-    GenServer.call(@me, {:sclang, command})
+    GenServer.call(@me, {:command, command})
   end
 
   def start_server do
@@ -29,7 +29,7 @@ defmodule Waveform.Lang do
   end
 
   # gen_server callbacks
-  def start_link(opts \\ []) do
+  def start_link(_opts) do
     GenServer.start_link(@me, %State{}, name: @me)
   end
 

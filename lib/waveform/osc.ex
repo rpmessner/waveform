@@ -30,7 +30,7 @@ defmodule Waveform.OSC do
     GenServer.cast(@me, {:command, command})
   end
 
-  def start_link(opts \\ []) do
+  def start_link(_opts) do
     GenServer.start_link(@me, %State{}, name: @me)
   end
 
