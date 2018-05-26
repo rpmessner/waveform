@@ -9,9 +9,8 @@ defmodule Waveform.Lang do
 
   defmodule State do
     defstruct(
-      proc: nil,
-      pid: nil,
-      socket: nil
+      sclang_proc: nil,
+      output_pid: nil,
     )
   end
 
@@ -31,30 +30,41 @@ defmodule Waveform.Lang do
 
   # gen_server callbacks
   def start_link(opts \\ []) do
-    GenServer.start_link(@me, {}, name: @me)
+    GenServer.start_link(@me, %State{}, name: @me)
   end
 
   def init(_state) do
-    proc = %Proc{out: outstream} = Porcelain.spawn(
+    sclang_proc = %Proc{out: outstream} = Porcelain.spawn(
       @path, [], [in: :receive, out: :stream]
     )
 
-    pid = spawn fn -> Enum.into(outstream, IO.stream(:stdio, :line)) end
+    output_pid = spawn fn ->
+      Enum.map(outstream, fn line ->
+        # IO.puts(line)
+        case line do
+          "SuperCollider 3 server ready" <> _rest ->
+            Waveform.OSC.load_synthdefs
+            Waveform.OSC.request_notifications
+          _ ->
+        end
+        line
+      end)
+    end
 
     state = %State{
-      proc: proc,
-      pid: pid
+      sclang_proc: sclang_proc,
+      output_pid: output_pid
     }
 
     {:ok, state}
   end
 
   def terminate(_reason, state) do
-    Process.exit(state.pid, :kill)
+    Process.exit(state.output_pid, :kill)
   end
 
   def handle_call({:command, command}, _from, state) do
-    Proc.send_input(state.proc, "#{command}\n")
+    Proc.send_input(state.sclang_proc, "#{command}\n")
 
     {:reply, nil, state}
   end

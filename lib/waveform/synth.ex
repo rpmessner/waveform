@@ -1,23 +1,12 @@
 defmodule Waveform.Synth do
-  use GenServer
+  def play(note) do
+    node_id = Waveform.OSC.Node.ID.next_id
+    group_id = 0
+    synth_name = 'sonic-pi-prophet'
+    add_action = 0
+    group_id = 0
 
-  @me __MODULE__
-
-  defmodule State do
-    defstruct(
-      a: nil
-    )
+    # http://doc.sccode.org/Reference/Server-Command-Reference.html#/s_new
+    Waveform.OSC.send_command(['/s_new', synth_name, node_id, add_action, group_id, :note, note])
   end
-
-  def start_link(opts \\ []) do
-    GenServer.start_link(@me, %State{}, name: @me)
-  end
-
-  def init(state) do
-    Waveform.OSC.load_synthdefs
-    Waveform.OSC.request_notifications
-
-    {:ok, state}
-  end
-
 end
