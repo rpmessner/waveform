@@ -1,5 +1,7 @@
 defmodule Waveform.Synth do
   alias Waveform.Music, as: Music
+  alias Waveform.Music.Chord, as: Chord
+
   alias Waveform.OSC, as: OSC
   alias Waveform.OSC.Group, as: Group
   alias Waveform.OSC.Node, as: Node
@@ -11,6 +13,13 @@ defmodule Waveform.Synth do
   ]
   @s_new 's_new'
   @default_synth 'sonic-pi-prophet'
+
+  def play(%Chord{}=c) do
+    Chord.notes(c)
+    |> Enum.map(fn note ->
+      synth(note)
+    end)
+  end
 
   def play(note), do: synth(note)
   def play(note, args), do: synth(note, args)

@@ -110,14 +110,40 @@ defmodule MidiConversion do
    ]
 
   defmacro define_midi_conversions() do
-    Enum.map @conversions, fn {midi, notes} ->
-      Enum.map String.split(notes, "/"), fn note ->
-        quote do
+    @conversions
+    |> Enum.with_index()
+    |> Enum.map(fn {{midi, notes}, midi_idx} ->
+      toks = String.split(notes, "/")
+      no_sharp = Enum.count(toks) == 1
+
+      toks
+      |> Enum.reverse()
+      |> Enum.with_index()
+      |> Enum.map(fn {note, note_idx} ->
+        is_first = note_idx == 0
+        quality = if is_first, do: :flat, else: :sharp
+
+        quote location: :keep do
+          unquote do
+            if is_first do
+              quote do
+                unquote do
+                  if no_sharp do
+                    quote do
+                      def to_atom(unquote(midi), :sharp), do: to_atom(unquote(midi))
+                    end
+                  end
+                end
+                def to_atom(unquote(midi)), do: to_atom(unquote(midi), :flat)
+              end
+            end
+          end
+          def to_atom(unquote(midi), unquote(quality)), do: unquote(String.to_atom(note))
           def to_midi(unquote(note |> String.to_atom)), do: unquote(midi)
           def to_midi(unquote(note |> String.downcase |> String.to_atom)), do: unquote(midi)
         end
-      end
-    end
+      end)
+    end)
   end
 end
 
