@@ -1,5 +1,8 @@
 defmodule Waveform.Synth do
-  def play(note) do
+  alias Waveform.Music, as: Music
+
+  def play(note) when is_atom(note), do: play(Music.to_midi(note))
+  def play(note) when is_number(note) do
     node_id = Waveform.OSC.Node.ID.next_id
     group_id = 0
     synth_name = 'sonic-pi-prophet'
