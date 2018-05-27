@@ -61,8 +61,8 @@ defmodule Waveform.OSC do
 
   defp udp_receive(socket) do
     case :gen_udp.recv(socket, 0, 1000) do
-      {:ok,{ip, port, the_message} = a} ->
-        # IO.inspect({"osc message:", :osc.decode(the_message)})
+      {:ok, {_ip, _port, the_message}} ->
+        IO.inspect({"osc message:", :osc.decode(the_message)})
         udp_receive(socket)
       {:error, :timeout} -> udp_receive(socket)
     end
