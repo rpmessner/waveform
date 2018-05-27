@@ -10,7 +10,7 @@ defmodule Waveform.OSC.Node do
       )
     end
 
-    def next_id do
+    def next do
       GenServer.call(@me, {:next})
     end
 
@@ -26,5 +26,9 @@ defmodule Waveform.OSC.Node do
       state = %{state | current_id: state.current_id + 1}
       {:reply, state.current_id, state}
     end
+  end
+
+  def next_id do
+    ID.next
   end
 end

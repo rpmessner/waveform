@@ -1,7 +1,8 @@
 defmodule Waveform.Synth do
   alias Waveform.Music, as: Music
   alias Waveform.OSC, as: OSC
-  alias Waveform.OSC.Node.ID, as: ID
+  alias Waveform.OSC.Group, as: Group
+  alias Waveform.OSC.Node, as: Node
 
   import Waveform.Util
 
@@ -25,11 +26,10 @@ defmodule Waveform.Synth do
     |> synth
   end
   def synth(args) when is_list(args) do
-    node_id = ID.next_id
-    group_id = 0
+    node_id = Node.next_id
+    group_id = Group.synth_group
     synth_name = @default_synth
     add_action = 0
-    group_id = 0
 
     # http://doc.sccode.org/Reference/Server-Command-Reference.html#/s_new
     OSC.send_command([@s_new, synth_name, node_id, add_action, group_id | args])
