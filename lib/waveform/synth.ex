@@ -1,5 +1,5 @@
 defmodule Waveform.Synth do
-  alias Waveform.Music, as: Music
+  alias Waveform.Music.Note, as: Note
   alias Waveform.Music.Chord, as: Chord
 
   alias Waveform.OSC, as: OSC
@@ -15,18 +15,17 @@ defmodule Waveform.Synth do
   @default_synth 'sonic-pi-prophet'
 
   def play(%Chord{}=c) do
-    Chord.notes(c)
-    |> Enum.map(fn note ->
-      synth(note)
-    end)
+    c
+    |> Chord.notes()
+    |> Enum.map &(synth &1)
   end
 
   def play(note), do: synth(note)
   def play(note, args), do: synth(note, args)
 
-  def synth(note) when is_atom(note), do: (note |> Music.to_midi |> play)
+  def synth(note) when is_atom(note), do: (note |> Note.to_midi |> play)
   def synth(note) when is_number(note), do: play([:note, note])
-  def synth(note, args) when is_atom(note), do: play(Music.to_midi(note), args)
+  def synth(note, args) when is_atom(note), do: play(Note.to_midi(note), args)
   def synth(note, args) when is_list(args), do: play(note, Enum.into(args, %{}))
   def synth(note, args) when is_number(note) and is_map(args) do
     args
@@ -42,6 +41,14 @@ defmodule Waveform.Synth do
 
     # http://doc.sccode.org/Reference/Server-Command-Reference.html#/s_new
     OSC.send_command([@s_new, synth_name, node_id, add_action, group_id | args])
+  end
+
+  def chord(tonic, quality) do
+    %Chord{tonic: tonic, quality: quality}
+  end
+
+  def chord(tonic, quality, inversion: inversion) do
+    %Chord{tonic: tonic, quality: quality, inversion: inversion}
   end
 
   defp normalizer, do: fn {key, value}, coll ->

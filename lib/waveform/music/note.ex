@@ -147,7 +147,7 @@ defmodule MidiConversion do
   end
 end
 
-defmodule Waveform.Music do
+defmodule Waveform.Music.Note do
   require MidiConversion
 
   MidiConversion.define_midi_conversions

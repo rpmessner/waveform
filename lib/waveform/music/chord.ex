@@ -1,15 +1,21 @@
 defmodule Waveform.Music.Chord do
-  alias Waveform.Music, as: Music
+  alias Waveform.Music.Note, as: Note
   alias __MODULE__
 
   defstruct(
     tonic: :c4,
     quality: :major7,
-    inversion: 1
+    inversion: 0
   )
 
   @chord_qualities %{
-    major7: [:"1P", :"3M", :"5P", :"7M"]
+    major: [:"1P", :"3M", :"5P"],
+    minor: [:"1P", :"3m", :"5P"],
+    major7: [:"1P", :"3M", :"5P", :"7M"],
+    dominant7: [:"1P", :"3M", :"5P", :"7m"],
+    minor7: [:"1P", :"3m", :"5P", :"7m"],
+    half_diminished7: [:"1P", :"3m", :"5b", :"7m"],
+    diminished7: [:"1P", :"3m", :"5b", :"7bb"],
   }
 
   @interval_steps %{
@@ -28,21 +34,22 @@ defmodule Waveform.Music.Chord do
     :"7bb" => 9,
     :"7m" => 10,
     :"7M" => 11,
-    :"0" => 12
+    :"O" => 12
   }
 
-  def chord(tonic, quality) do
-    %Chord{tonic: tonic, quality: quality}
-  end
-
-  def chord(tonic, quality, inversion) do
-    %Chord{tonic: tonic, quality: quality, inversion: inversion}
-  end
+  @octave_steps @interval_steps[:O]
 
   def notes(%Chord{}=c) do
     @chord_qualities[c.quality]
-    |> Enum.map(fn interval ->
-      Music.to_midi(c.tonic) + @interval_steps[interval]
+    |> Enum.with_index()
+    |> Enum.map(fn {interval, idx} ->
+      note = Note.to_midi(c.tonic) + @interval_steps[interval]
+
+      if idx < c.inversion do
+        note + @octave_steps
+      else
+        note
+      end
     end)
   end
 end
