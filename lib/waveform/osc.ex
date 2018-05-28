@@ -10,6 +10,15 @@ defmodule Waveform.OSC do
                 |> Path.join("../../synthdefs/compiled")
                 |> to_charlist
 
+  @s_new '/s_new'
+  @g_new '/g_new'
+  @notify '/notify'
+  @d_loadDir '/d_loadDir'
+  @n_go '/n_go'
+  @n_end '/n_end'
+
+  @yes 1
+
   defmodule State do
     defstruct(
       socket: nil,
@@ -25,13 +34,21 @@ defmodule Waveform.OSC do
     request_notifications()
   end
 
+  def new_synth(name, id, action, group_id, args) do
+    send_command([@s_new, name, id, action, group_id | args])
+  end
+
+  def new_group(id, action, parent) do
+    send_command([@g_new, id, action, parent])
+  end
+
   def request_notifications do
-    send_command(['/notify', 1])
+    send_command([@notify, @yes])
   end
 
   def load_synthdefs do
     {:ok, cwd} = File.cwd()
-    send_command(['/d_loadDir', @synth_folder])
+    send_command([@d_loadDir, @synth_folder])
   end
 
   def send_command(command) do
@@ -75,13 +92,13 @@ defmodule Waveform.OSC do
         IO.inspect({"osc message:", message})
 
         case message do
-          {:cmd, ['/n_go', 1 | _]} ->
+          {:cmd, [@n_go, 1 | _]} ->
             Group.setup()
 
-          {:cmd, ['/n_go', node_id | _]} ->
+          {:cmd, [@n_go, node_id | _]} ->
             Node.activate_node(node_id)
 
-          {:cmd, ['/n_end', node_id | _]} ->
+          {:cmd, [@n_end, node_id | _]} ->
             Node.deactivate_node(node_id)
 
           _ ->
@@ -96,6 +113,7 @@ defmodule Waveform.OSC do
   end
 
   defp osc(state, command) do
+    IO.inspect({"osc send:", command})
     :ok = :gen_udp.send(state.socket, state.host, state.host_port, :osc.encode(command))
   end
 end
