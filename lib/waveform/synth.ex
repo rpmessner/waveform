@@ -14,10 +14,11 @@ defmodule Waveform.Synth do
   @s_new 's_new'
   @default_synth 'sonic-pi-prophet'
 
-  def play(%Chord{}=c) do
+  def play(%Chord{}=c), do: play(c, [])
+  def play(%Chord{}=c, options) do
     c
     |> Chord.notes()
-    |> Enum.map &(synth &1)
+    |> Enum.map(&(synth &1, options))
   end
 
   def play(note), do: synth(note)
