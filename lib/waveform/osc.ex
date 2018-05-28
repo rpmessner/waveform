@@ -3,9 +3,9 @@ defmodule Waveform.OSC do
 
   @me __MODULE__
   @synth_folder __ENV__.file
-  |> Path.dirname
-  |> Path.join("../../synthdefs/compiled")
-  |> to_charlist
+                |> Path.dirname()
+                |> Path.join("../../synthdefs/compiled")
+                |> to_charlist
 
   defmodule State do
     defstruct(
@@ -22,7 +22,7 @@ defmodule Waveform.OSC do
   end
 
   def load_synthdefs do
-    {:ok, cwd} = File.cwd
+    {:ok, cwd} = File.cwd()
     send_command(['/d_loadDir', @synth_folder])
   end
 
@@ -37,9 +37,9 @@ defmodule Waveform.OSC do
   def init(state) do
     {:ok, socket} = :gen_udp.open(state.udp_port, [:binary, {:active, false}])
 
-    Waveform.Lang.start_server
+    Waveform.Lang.start_server()
 
-    pid = spawn fn -> udp_receive(socket) end
+    pid = spawn(fn -> udp_receive(socket) end)
 
     state = %State{
       socket: socket,
@@ -64,7 +64,9 @@ defmodule Waveform.OSC do
       {:ok, {_ip, _port, the_message}} ->
         # IO.inspect({"osc message:", :osc.decode(the_message)})
         udp_receive(socket)
-      {:error, :timeout} -> udp_receive(socket)
+
+      {:error, :timeout} ->
+        udp_receive(socket)
     end
   end
 

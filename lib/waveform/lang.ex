@@ -10,7 +10,7 @@ defmodule Waveform.Lang do
   defmodule State do
     defstruct(
       sclang_proc: nil,
-      output_pid: nil,
+      output_pid: nil
     )
   end
 
@@ -19,13 +19,17 @@ defmodule Waveform.Lang do
   end
 
   def start_server do
-    GenServer.call(@me, {:command, """
-      Server.local.options.sampleRate = 44100
-      Server.internal.options.sampleRate = 44100
-      Server.local.options.maxLogins = 2
-      Server.internal.options.maxLogins = 2
-      Server.default.boot
-    """})
+    GenServer.call(
+      @me,
+      {:command,
+       """
+         Server.local.options.sampleRate = 44100
+         Server.internal.options.sampleRate = 44100
+         Server.local.options.maxLogins = 2
+         Server.internal.options.maxLogins = 2
+         Server.default.boot
+       """}
+    )
   end
 
   # gen_server callbacks
@@ -34,22 +38,31 @@ defmodule Waveform.Lang do
   end
 
   def init(_state) do
-    sclang_proc = %Proc{out: outstream} = Porcelain.spawn(
-      @path, [], [in: :receive, out: :stream]
-    )
+    sclang_proc =
+      %Proc{out: outstream} =
+      Porcelain.spawn(
+        @path,
+        [],
+        in: :receive,
+        out: :stream
+      )
 
-    output_pid = spawn fn ->
-      Enum.map(outstream, fn line ->
-        # IO.puts(line)
-        case line do
-          "SuperCollider 3 server ready" <> _rest ->
-            Waveform.OSC.load_synthdefs
-            Waveform.OSC.request_notifications
-          _ ->
-        end
-        line
+    output_pid =
+      spawn(fn ->
+        Enum.map(outstream, fn line ->
+          # IO.puts(line)
+          case line do
+            "SuperCollider 3 server ready" <> _rest ->
+              Waveform.OSC.load_synthdefs()
+              Waveform.OSC.request_notifications()
+
+            _ ->
+              nil
+          end
+
+          line
+        end)
       end)
-    end
 
     state = %State{
       sclang_proc: sclang_proc,

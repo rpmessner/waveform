@@ -14,8 +14,9 @@ defmodule Waveform.Music.Chord do
     major7: [:"1P", :"3M", :"5P", :"7M"],
     dominant7: [:"1P", :"3M", :"5P", :"7m"],
     minor7: [:"1P", :"3m", :"5P", :"7m"],
+    dominant7b5: [:"1P", :"3M", :"5b", :"7m"],
     half_diminished7: [:"1P", :"3m", :"5b", :"7m"],
-    diminished7: [:"1P", :"3m", :"5b", :"7bb"],
+    diminished7: [:"1P", :"3m", :"5b", :"7bb"]
   }
 
   @interval_steps %{
@@ -34,12 +35,12 @@ defmodule Waveform.Music.Chord do
     :"7bb" => 9,
     :"7m" => 10,
     :"7M" => 11,
-    :"O" => 12
+    :O => 12
   }
 
   @octave_steps @interval_steps[:O]
 
-  def notes(%Chord{}=c) do
+  def notes(%Chord{} = c) do
     @chord_qualities[c.quality]
     |> Enum.with_index()
     |> Enum.map(fn {interval, idx} ->
