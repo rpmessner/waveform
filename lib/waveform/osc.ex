@@ -1,6 +1,8 @@
 defmodule Waveform.OSC do
   use GenServer
 
+  alias Waveform.OSC.Node, as: Node
+
   @me __MODULE__
   @synth_folder __ENV__.file
                 |> Path.dirname()
@@ -62,9 +64,19 @@ defmodule Waveform.OSC do
   defp udp_receive(socket) do
     case :gen_udp.recv(socket, 0, 1000) do
       {:ok, {_ip, _port, the_message}} ->
-        # IO.inspect({"osc message:", :osc.decode(the_message)})
-        udp_receive(socket)
+        message = :osc.decode(the_message)
 
+        # IO.inspect({"osc message:", message })
+
+        case message do
+          {:cmd, ['/n_go', node_id | _]} ->
+            Node.activate_node(node_id)
+          {:cmd, ['/n_end', node_id | _]} ->
+            Node.deactivate_node(node_id)
+          _ ->
+        end
+
+        udp_receive(socket)
       {:error, :timeout} ->
         udp_receive(socket)
     end

@@ -18,13 +18,15 @@ defmodule Waveform.Synth do
   ]
   @s_new 's_new'
 
+  def current_synth() do
+    Manager.current_synth_atom()
+  end
 
   def use_synth(synth) do
     Manager.set_current_synth(synth)
   end
 
   def play(%Chord{} = c), do: play(c, [])
-
   def play(%Chord{} = c, options) do
     c
     |> Chord.notes()
@@ -47,7 +49,7 @@ defmodule Waveform.Synth do
   end
 
   def synth(args) when is_list(args) do
-    node_id = Node.next_id()
+    %Node{id: node_id} = Node.next_node()
     group_id = Group.synth_group()
     synth_name = Manager.current_synth()
     add_action = 0
@@ -56,12 +58,9 @@ defmodule Waveform.Synth do
     OSC.send_command([@s_new, synth_name, node_id, add_action, group_id | args])
   end
 
-  def chord(tonic, quality) do
-    %Chord{tonic: tonic, quality: quality}
-  end
-
-  def chord(tonic, quality, inversion: inversion) do
-    %Chord{tonic: tonic, quality: quality, inversion: inversion}
+  def chord(tonic, quality, options \\ []) do
+    options_map = Enum.into(options, %{})
+    struct(Chord, Map.merge(%{tonic: tonic, quality: quality}, options_map))
   end
 
   defp normalizer,
@@ -94,6 +93,14 @@ defmodule Waveform.Synth do
       GenServer.call(@me, {:set_current, next})
     end
 
+    def current_synth_atom() do
+      current_name = GenServer.call(@me, {:current})
+      {name, _} = Enum.find(@synth_names, fn {key, value} ->
+        value == current_name
+      end)
+      name
+    end
+
     def current_synth() do
       GenServer.call(@me, {:current})
     end
@@ -109,7 +116,8 @@ defmodule Waveform.Synth do
     def terminate(_reason, _state), do: nil
 
     def handle_call({:set_current, new}, _from, state) do
-      {:reply, new, %State{state | current: @synth_names[new] || state.current}}
+      name = @synth_names[new]
+      {:reply, (if name, do: new), %State{state | current: name || state.current}}
     end
 
     def handle_call({:current}, _from, state) do
