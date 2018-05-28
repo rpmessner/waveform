@@ -19,18 +19,16 @@ defmodule Waveform.Synth.FX do
   )
 
   defmodule State do
-    defstruct(
-      effects: []
-    )
+    defstruct(effects: [])
   end
 
   def state do
     GenServer.call(@me, {:state})
   end
 
-  def new_fx(type) do
+  def new_fx(type, options) do
     if fx_name = @enabled_fx[type] do
-      GenServer.call(@me, {:new_fx, type, fx_name})
+      GenServer.call(@me, {:new_fx, type, fx_name, options})
     else
       {:error, "unknown fx name"}
     end
@@ -48,11 +46,11 @@ defmodule Waveform.Synth.FX do
     {:reply, state, state}
   end
 
-  def handle_call({:new_fx, type, name}, _from, state) do
+  def handle_call({:new_fx, type, name, options}, _from, state) do
     container_group = Group.fx_container_group(type)
     synth_group = Group.fx_synth_group(type, container_group)
 
-    synth_node = OSC.new_synth(name, ID.next, :tail, container_group.id, [:amp, 16, :in_bus, 0])
+    synth_node = OSC.new_synth(name, ID.next(), :tail, container_group.id, options)
 
     fx = %FX{synth_node: synth_node, container_group: container_group, synth_group: synth_group}
 

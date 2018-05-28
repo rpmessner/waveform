@@ -19,6 +19,19 @@ defmodule Waveform.OSC do
 
   @yes 1
 
+  @add_actions %{
+    # add the new group to the the head of the group specified by the add target ID.
+    head: 0,
+    # add the new group to the the tail of the group specified by the add target ID.
+    tail: 1,
+    # add the new group just before the node specified by the add target ID.
+    before: 2,
+    # add the new group just after the node specified by the add target ID.
+    after: 3,
+    # the new node replaces the node specified by the add target ID. The target node is freed.
+    replace: 4
+  }
+
   defmodule State do
     defstruct(
       socket: nil,
@@ -35,11 +48,11 @@ defmodule Waveform.OSC do
   end
 
   def new_synth(name, id, action, group_id, args) do
-    send_command([@s_new, name, id, action, group_id | args])
+    send_command([@s_new, name, id, @add_actions[action], group_id | args])
   end
 
   def new_group(id, action, parent) do
-    send_command([@g_new, id, action, parent])
+    send_command([@g_new, id, @add_actions[action], parent])
   end
 
   def request_notifications do

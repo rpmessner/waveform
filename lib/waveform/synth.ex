@@ -11,15 +11,55 @@ defmodule Waveform.Synth do
 
   import Waveform.Util
 
-  @params_whitelist [
-    :amp,
-    :pan,
-    :release,
-    :attack,
-    :sustain,
-    :out_bus,
-    :in_bus
-  ]
+  @fx_params_whitelist %{
+    :common => ~w(
+      pre_amp
+      pre_amp_slide
+      pre_amp_slide_shape
+      pre_amp_slide_curve
+      amp
+      amp_slide
+      amp_slide_shape
+      amp_slide_curve
+      mix
+      mix_slide
+      mix_slide_shape
+      mix_slide_curve
+      pre_mix
+      pre_mix_slide
+      pre_mix_slide_shape
+      pre_mix_slide_curve
+      in_bus
+      out_bus
+    )a,
+    :reverb => ~w(
+      mix
+      room
+      room_slide
+      room_slide_shape
+      room_slide_curve
+      damp
+      damp_slide
+      damp_slide_shape
+      damp_slide_curve
+    )a
+  }
+
+  @synth_params_whitelist ~w(
+    amp
+    amp_slide
+    pan
+    pan_slide
+    release
+    attack
+    attack_level
+    sustain
+    sustain_level
+    decay
+    decay_level
+    slide
+    env_curve
+  )a
 
   def current_synth() do
     Manager.current_synth_atom()
@@ -59,7 +99,7 @@ defmodule Waveform.Synth do
   def synth(args, %Group{id: group_id}) when is_list(args) do
     %Node{id: node_id} = Node.next_node()
     synth_name = Manager.current_synth()
-    add_action = 0
+    add_action = :head
 
     # http://doc.sccode.org/Reference/Server-Command-Reference.html#/s_new
     OSC.new_synth(synth_name, node_id, add_action, group_id, args)
@@ -70,8 +110,11 @@ defmodule Waveform.Synth do
     struct(Chord, Map.merge(%{tonic: tonic, quality: quality}, options_map))
   end
 
-  def use_fx(name) do
+  def use_fx(name), do: use_fx(name, [])
 
+  def use_fx(name, args) do
+    args_list = args |> Enum.reduce([], fn {key, value}, coll -> [key, value | coll] end)
+    FX.new_fx(name, args_list)
   end
 
   defp group_arg(args) do
@@ -89,5 +132,4 @@ defmodule Waveform.Synth do
         coll
       end
     end
-
 end

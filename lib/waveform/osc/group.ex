@@ -11,10 +11,8 @@ defmodule Waveform.OSC.Group do
   defmodule State do
     defstruct(
       groups: [],
-      current_group: %{
-        root: %Group{id: 1, name: :root}
-      },
       root_group: %Group{id: 1, name: :root},
+      root_synth_group: nil,
       synth_group: nil
     )
   end
@@ -47,20 +45,6 @@ defmodule Waveform.OSC.Group do
     GenServer.call(@me, {:new_group, name, :fx_synth_group, :head, container_group})
   end
 
-
-  @add_actions %{
-    # add the new group to the the head of the group specified by the add target ID.
-    head: 0,
-    # add the new group to the the tail of the group specified by the add target ID.
-    tail: 1,
-    # add the new group just before the node specified by the add target ID.
-    before: 2,
-    # add the new group just after the node specified by the add target ID.
-    after: 3,
-    # the new node replaces the node specified by the add target ID. The target node is freed.
-    replace: 4
-  }
-
   def start_link(_state) do
     GenServer.start_link(@me, %State{}, name: @me)
   end
@@ -72,7 +56,7 @@ defmodule Waveform.OSC.Group do
   def handle_call({:synth_group}, _from, state) do
     group = %Group{type: :synth, name: :synth_group, id: ID.next()}
     create_group(group.id, :head, state.root_group.id)
-    {:reply, group, %{state | synth_group: group}}
+    {:reply, group, %{state | root_synth_group: group, synth_group: group}}
   end
 
   def handle_call({:new_group, name, action, parent}, _from, state) do
@@ -81,13 +65,13 @@ defmodule Waveform.OSC.Group do
 
   def handle_call({:new_group, name, :fx_synth_group, action, parent}, _from, state) do
     new_group = %Group{type: :fx_synth_group, name: name, id: ID.next()}
-    create_group(new_group.id, @add_actions[action], parent.id)
+    create_group(new_group.id, action, parent.id)
     {:reply, new_group, %{state | synth_group: new_group}}
   end
 
   def handle_call({:new_group, name, type, action, parent}, _from, state) do
     new_group = %Group{name: name, type: type, id: ID.next()}
-    create_group(new_group.id, @add_actions[action], parent.id)
+    create_group(new_group.id, action, parent.id)
     {:reply, new_group, %{state | groups: [new_group | state.groups]}}
   end
 
