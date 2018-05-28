@@ -29,9 +29,11 @@ defmodule Waveform.Synth do
   def play(%Chord{} = c), do: play(c, [])
 
   def play(%Chord{} = c, options) do
+    group = Group.chord_group()
+
     c
     |> Chord.notes()
-    |> Enum.map(&synth(&1, options))
+    |> Enum.map(&synth(&1, options |> Enum.into(%{}) |> Map.merge(%{group: group})))
   end
 
   def play(note), do: synth(note)
@@ -69,6 +71,7 @@ defmodule Waveform.Synth do
 
   defp group_arg(args) do
     case args[:group] do
+      %Group{} = g -> {g, Map.delete(args, :group)}
       nil -> {Group.root_group(), args}
     end
   end

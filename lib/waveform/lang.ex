@@ -53,8 +53,7 @@ defmodule Waveform.Lang do
           # IO.puts(line)
           case line do
             "SuperCollider 3 server ready" <> _rest ->
-              Waveform.OSC.load_synthdefs()
-              Waveform.OSC.request_notifications()
+              Waveform.OSC.setup()
 
             _ ->
               nil

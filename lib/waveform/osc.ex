@@ -2,6 +2,7 @@ defmodule Waveform.OSC do
   use GenServer
 
   alias Waveform.OSC.Node, as: Node
+  alias Waveform.OSC.Group, as: Group
 
   @me __MODULE__
   @synth_folder __ENV__.file
@@ -17,6 +18,11 @@ defmodule Waveform.OSC do
       host_port: 57110,
       udp_port: 57111
     )
+  end
+
+  def setup do
+    load_synthdefs()
+    request_notifications()
   end
 
   def request_notifications do
@@ -69,6 +75,9 @@ defmodule Waveform.OSC do
         IO.inspect({"osc message:", message})
 
         case message do
+          {:cmd, ['/n_go', 1 | _]} ->
+            Group.setup()
+
           {:cmd, ['/n_go', node_id | _]} ->
             Node.activate_node(node_id)
 
