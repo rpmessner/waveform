@@ -66,7 +66,7 @@ defmodule Waveform.OSC do
       {:ok, {_ip, _port, the_message}} ->
         message = :osc.decode(the_message)
 
-        # IO.inspect({"osc message:", message })
+        IO.inspect({"osc message:", message})
 
         case message do
           {:cmd, ['/n_go', node_id | _]} ->

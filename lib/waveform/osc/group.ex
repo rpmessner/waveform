@@ -10,14 +10,22 @@ defmodule Waveform.OSC.Group do
     defstruct(groups: [])
   end
 
-  defstruct(id: nil)
+  defstruct(id: nil, name: nil)
 
   def state do
     GenServer.call(@me, {:state})
   end
 
   def root_group do
-    %Group{id: 0}
+    %Group{id: 0, name: "ROOT"}
+  end
+
+  def new_group do
+    GenServer.call(@me, {:new_group, root_group()})
+  end
+
+  def new_group(%Group{} = parent) do
+    GenServer.call(@me, {:new_group, parent})
   end
 
   def start_link(_state) do
@@ -30,7 +38,7 @@ defmodule Waveform.OSC.Group do
 
   def handle_call({:new_group, parent}, _from, state) do
     new_group = %Group{id: ID.next()}
-    OSC.send_command(['/g_new', new_group.id, 0, 0])
+    OSC.send_command(['/g_new', new_group.id, 0, parent.id])
     {:reply, new_group, %{state | groups: [new_group | state.groups]}}
   end
 
