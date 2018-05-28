@@ -1,15 +1,18 @@
 defmodule Waveform.OSC.Node do
+  use GenServer
+
   @me __MODULE__
   alias __MODULE__
   alias Waveform.OSC.Node.ID, as: ID
 
-  use GenServer
-
   defmodule State do
     defstruct(
-      inactive_nodes: [], #havn't recieved confirmation
-      active_nodes: [], #alive in supercollider
-      dead_nodes: [] #dead in supercollider
+      # havn't recieved confirmation
+      inactive_nodes: [],
+      # alive in supercollider
+      active_nodes: [],
+      # dead in supercollider
+      dead_nodes: []
     )
   end
 
@@ -17,6 +20,10 @@ defmodule Waveform.OSC.Node do
     id: nil,
     active: nil
   )
+
+  def state do
+    GenServer.call(@me, {:state})
+  end
 
   def next_node do
     GenServer.call(@me, {:next_node})
@@ -39,10 +46,10 @@ defmodule Waveform.OSC.Node do
   end
 
   def handle_cast({:deactivate_node, node_id}, state) do
-    active_node = Enum.find state.active_nodes, &(&1.id == node_id)
+    active_node = Enum.find(state.active_nodes, &(&1.id == node_id))
 
     if active_node do
-      active_nodes = Enum.filter state.active_nodes, &(&1.id != node_id)
+      active_nodes = Enum.filter(state.active_nodes, &(&1.id != node_id))
       dead_nodes = [%{active_node | active: false} | state.dead_nodes]
       new_state = %{state | active_nodes: active_nodes, dead_nodes: dead_nodes}
       # IO.inspect({"removing_node:", state, active_node, new_state})
@@ -53,10 +60,10 @@ defmodule Waveform.OSC.Node do
   end
 
   def handle_cast({:activate_node, node_id}, state) do
-    inactive_node = Enum.find state.inactive_nodes, &(&1.id == node_id)
+    inactive_node = Enum.find(state.inactive_nodes, &(&1.id == node_id))
 
     if inactive_node do
-      inactive_nodes = Enum.filter state.inactive_nodes, &(&1.id != node_id)
+      inactive_nodes = Enum.filter(state.inactive_nodes, &(&1.id != node_id))
       active_nodes = [%{inactive_node | active: true} | state.active_nodes]
       new_state = %{state | active_nodes: active_nodes, inactive_nodes: inactive_nodes}
       # IO.inspect({"removing node:", state, inactive_node, new_state})
@@ -70,5 +77,9 @@ defmodule Waveform.OSC.Node do
     next = %Node{id: ID.next()}
     inactive_nodes = [next | state.inactive_nodes]
     {:reply, next, %{state | inactive_nodes: inactive_nodes}}
+  end
+
+  def handle_call({:state}, _from, state) do
+    {:reply, state, state}
   end
 end

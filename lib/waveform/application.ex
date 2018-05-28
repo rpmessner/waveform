@@ -7,6 +7,7 @@ defmodule Waveform.Application do
       {Waveform.OSC, nil},
       {Waveform.OSC.Node.ID, 1},
       {Waveform.OSC.Node, nil},
+      {Waveform.OSC.Group, nil},
       {Waveform.Synth.Manager, nil}
     ]
 

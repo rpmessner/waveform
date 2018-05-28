@@ -4,9 +4,7 @@ defmodule Waveform.OSC.Node.ID do
   @me __MODULE__
 
   defmodule State do
-    defstruct(
-      current_id: 0,
-    )
+    defstruct(current_id: 0)
   end
 
   def next do

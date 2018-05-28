@@ -27,6 +27,7 @@ defmodule Waveform.Synth do
   end
 
   def play(%Chord{} = c), do: play(c, [])
+
   def play(%Chord{} = c, options) do
     c
     |> Chord.notes()
@@ -42,15 +43,18 @@ defmodule Waveform.Synth do
   def synth(note, args) when is_list(args), do: play(note, Enum.into(args, %{}))
 
   def synth(note, args) when is_number(note) and is_map(args) do
+    {group, args} = group_arg(args)
+
+    IO.inspect({note, args})
+
     args
     |> calculate_sustain
     |> Enum.reduce([:note, note], normalizer)
-    |> synth
+    |> synth(group)
   end
 
-  def synth(args) when is_list(args) do
+  def synth(args, %Group{id: group_id}) when is_list(args) do
     %Node{id: node_id} = Node.next_node()
-    group_id = Group.synth_group()
     synth_name = Manager.current_synth()
     add_action = 0
 
@@ -61,6 +65,12 @@ defmodule Waveform.Synth do
   def chord(tonic, quality, options \\ []) do
     options_map = Enum.into(options, %{})
     struct(Chord, Map.merge(%{tonic: tonic, quality: quality}, options_map))
+  end
+
+  defp group_arg(args) do
+    case args[:group] do
+      nil -> {Group.root_group(), args}
+    end
   end
 
   defp normalizer,
@@ -97,9 +107,12 @@ defmodule Waveform.Synth do
 
     def current_synth_atom() do
       current_name = GenServer.call(@me, {:current})
-      {name, _} = Enum.find(@synth_names, fn {key, value} ->
-        value == current_name
-      end)
+
+      {name, _} =
+        Enum.find(@synth_names, fn {key, value} ->
+          value == current_name
+        end)
+
       name
     end
 
@@ -119,7 +132,7 @@ defmodule Waveform.Synth do
 
     def handle_call({:set_current, new}, _from, state) do
       name = @synth_names[new]
-      {:reply, (if name, do: new), %State{state | current: name || state.current}}
+      {:reply, if(name, do: new), %State{state | current: name || state.current}}
     end
 
     def handle_call({:current}, _from, state) do

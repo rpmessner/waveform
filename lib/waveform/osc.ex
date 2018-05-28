@@ -71,12 +71,16 @@ defmodule Waveform.OSC do
         case message do
           {:cmd, ['/n_go', node_id | _]} ->
             Node.activate_node(node_id)
+
           {:cmd, ['/n_end', node_id | _]} ->
             Node.deactivate_node(node_id)
+
           _ ->
+            nil
         end
 
         udp_receive(socket)
+
       {:error, :timeout} ->
         udp_receive(socket)
     end
