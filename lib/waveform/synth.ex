@@ -81,6 +81,8 @@ defmodule Waveform.Synth do
       prophet: 'sonic-pi-prophet',
       saw: 'sonic-pi-saw',
       dsaw: 'sonic-pi-dsaw',
+      fm: 'sonic-pi-fm',
+      pulse: 'sonic-pi-pulse',
       tb303: 'sonic-pi-tb303'
     }
     @default_synth @synth_names[:prophet]
