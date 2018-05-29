@@ -4,12 +4,15 @@ defmodule Waveform.Loop do
   defmacro loop(name, do: body) do
     quote do
       loop_func = fn ->
-        Enum.map(Stream.repeatedly(fn ->
-          unquote(body)
-        end), fn _ -> end)
+        Enum.map(
+          Stream.repeatedly(fn () ->
+            unquote(body)
+          end),
+          fn _ -> nil end
+        )
       end
 
-      pid = spawn loop_func
+      pid = spawn(loop_func)
 
       Manager.store(
         unquote(name),
@@ -25,6 +28,4 @@ defmodule Waveform.Loop do
   def kill_all() do
     Manager.kill_all()
   end
-
 end
-

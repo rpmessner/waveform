@@ -36,19 +36,20 @@ defmodule Waveform.Loop.Manager do
   end
 
   def handle_cast({:kill, name}, state) do
-    loop = Enum.find state.loops, &(&1.name == name)
+    loop = Enum.find(state.loops, &(&1.name == name))
 
     Process.exit(loop.pid, :kill)
 
-    loops = Enum.filter state.loops, &(&1.name != name)
+    loops = Enum.filter(state.loops, &(&1.name != name))
 
     {:noreply, %{state | loops: loops}}
   end
 
   def handle_cast({:kill_all}, state) do
     Enum.each(state.loops, fn loop ->
-      Process.kill(loop.pid)
+      Process.exit(loop.pid, :kill)
     end)
+
     {:noreply, %{state | loops: []}}
   end
 end
