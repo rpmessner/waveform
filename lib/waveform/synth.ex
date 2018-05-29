@@ -11,40 +11,6 @@ defmodule Waveform.Synth do
 
   import Waveform.Util
 
-  @fx_params_whitelist %{
-    :common => ~w(
-      pre_amp
-      pre_amp_slide
-      pre_amp_slide_shape
-      pre_amp_slide_curve
-      amp
-      amp_slide
-      amp_slide_shape
-      amp_slide_curve
-      mix
-      mix_slide
-      mix_slide_shape
-      mix_slide_curve
-      pre_mix
-      pre_mix_slide
-      pre_mix_slide_shape
-      pre_mix_slide_curve
-      in_bus
-      out_bus
-    )a,
-    :reverb => ~w(
-      mix
-      room
-      room_slide
-      room_slide_shape
-      room_slide_curve
-      damp
-      damp_slide
-      damp_slide_shape
-      damp_slide_curve
-    )a
-  }
-
   @synth_params_whitelist ~w(
     amp
     amp_slide
@@ -92,7 +58,7 @@ defmodule Waveform.Synth do
 
     args
     |> calculate_sustain
-    |> Enum.reduce([:note, note], normalizer)
+    |> Enum.reduce([:note, note], normalizer(@synth_params_whitelist))
     |> synth(group)
   end
 
@@ -117,16 +83,20 @@ defmodule Waveform.Synth do
     FX.new_fx(name, args_list)
   end
 
+  def kill_fx do
+    FX.kill_all()
+  end
+
   defp group_arg(args) do
     case args[:group] do
       %Group{} = g -> {g, Map.delete(args, :group)}
-      nil -> {Group.root_group(), args}
+      nil -> {Group.synth_group(), args}
     end
   end
 
-  defp normalizer,
+  defp normalizer(whitelist),
     do: fn {key, value}, coll ->
-      if Enum.member?(@params_whitelist, key) && is_number(value) do
+      if Enum.member?(whitelist, key) && is_number(value) do
         [key, value | coll]
       else
         coll

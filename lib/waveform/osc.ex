@@ -12,6 +12,7 @@ defmodule Waveform.OSC do
 
   @s_new '/s_new'
   @g_new '/g_new'
+  @g_deepFree '/g_deepFree'
   @notify '/notify'
   @d_loadDir '/d_loadDir'
   @n_go '/n_go'
@@ -49,6 +50,11 @@ defmodule Waveform.OSC do
 
   def new_synth(name, id, action, group_id, args) do
     send_command([@s_new, name, id, @add_actions[action], group_id | args])
+  end
+
+  def delete_group(id) when is_number(id), do: delete_group([id])
+  def delete_group(ids) do
+    send_command([@g_deepFree | ids])
   end
 
   def new_group(id, action, parent) do
@@ -102,7 +108,7 @@ defmodule Waveform.OSC do
       {:ok, {_ip, _port, the_message}} ->
         message = :osc.decode(the_message)
 
-        IO.inspect({"osc message:", message})
+        # IO.inspect({"osc message:", message})
 
         case message do
           {:cmd, [@n_go, 1 | _]} ->
@@ -126,7 +132,7 @@ defmodule Waveform.OSC do
   end
 
   defp osc(state, command) do
-    IO.inspect({"osc send:", command})
+    # IO.inspect({"osc send:", command})
     :ok = :gen_udp.send(state.socket, state.host, state.host_port, :osc.encode(command))
   end
 end

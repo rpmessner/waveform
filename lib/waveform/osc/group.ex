@@ -21,8 +21,13 @@ defmodule Waveform.OSC.Group do
     GenServer.call(@me, {:state})
   end
 
-  def root_group do
-    state.root_group
+  def reset_synth_group() do
+    GenServer.cast(@me, {:reset_synth})
+  end
+
+  def delete_group(id) when is_number(id), do: delete_group([id])
+  def delete_group(ids) do
+    GenServer.cast(@me, {:delete_group, ids})
   end
 
   def synth_group do
@@ -53,6 +58,10 @@ defmodule Waveform.OSC.Group do
     {:ok, state}
   end
 
+  def handle_cast({:reset_synth}, state) do
+    {:noreply, %{state | synth_group: state.root_synth_group }}
+  end
+
   def handle_call({:synth_group}, _from, state) do
     group = %Group{type: :synth, name: :synth_group, id: ID.next()}
     create_group(group.id, :head, state.root_group.id)
@@ -73,6 +82,15 @@ defmodule Waveform.OSC.Group do
     new_group = %Group{name: name, type: type, id: ID.next()}
     create_group(new_group.id, action, parent.id)
     {:reply, new_group, %{state | groups: [new_group | state.groups]}}
+  end
+
+  def handle_cast({:delete_group, ids}, state) do
+    IO.inspect(ids)
+    OSC.delete_group(ids)
+
+    groups = Enum.filter state.groups, &(Enum.member? ids, &1.id)
+
+    {:noreply, %{state | groups: groups}}
   end
 
   defp create_group(id, action, parent) do
