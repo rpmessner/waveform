@@ -4,15 +4,27 @@ defmodule Waveform.Loop.Manager do
   @me __MODULE__
 
   defmodule Loop do
-    defstruct(name: nil, pid: nil)
+    defstruct(name: nil, pid: nil, func: nil)
   end
 
   defmodule State do
     defstruct(loops: [])
   end
 
-  def store(name, pid) do
-    GenServer.cast(@me, {:store, name, pid})
+  def state() do
+    GenServer.call(@me, {:state})
+  end
+
+  def store(name, func, pid) do
+    GenServer.cast(@me, {:store, name, func, pid})
+  end
+
+  def resume(name) do
+    GenServer.cast(@me, {:resume, name})
+  end
+
+  def pause(name) do
+    GenServer.cast(@me, {:pause, name})
   end
 
   def kill(name) do
@@ -31,8 +43,12 @@ defmodule Waveform.Loop.Manager do
     {:ok, state}
   end
 
-  def handle_cast({:store, name, pid}, state) do
-    {:noreply, %{state | loops: [%Loop{name: name, pid: pid} | state.loops]}}
+  def handle_call({:state}, _from, state) do
+    {:reply, state, state}
+  end
+
+  def handle_cast({:store, name, func, pid}, state) do
+    {:noreply, %{state | loops: [%Loop{func: func, name: name, pid: pid} | state.loops]}}
   end
 
   def handle_cast({:kill, name}, state) do
@@ -43,6 +59,26 @@ defmodule Waveform.Loop.Manager do
     loops = Enum.filter(state.loops, &(&1.name != name))
 
     {:noreply, %{state | loops: loops}}
+  end
+
+  def handle_cast({:pause, name}, state) do
+    loop = Enum.find(state.loops, &(&1.name == name))
+
+    Process.exit(loop.pid, :kill)
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:resume, name}, state) do
+    loop = Enum.find(state.loops, &(&1.name == name))
+
+    pid = spawn loop.func
+
+    loop = %{loop | pid: pid}
+
+    loops = Enum.filter(state.loops, &(&1.name != name))
+
+    {:noreply, %{state | loops: [loop | loops]}}
   end
 
   def handle_cast({:kill_all}, state) do
