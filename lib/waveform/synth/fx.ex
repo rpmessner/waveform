@@ -105,10 +105,11 @@ defmodule Waveform.Synth.FX do
   end
 
   def handle_cast({:kill_all}, state) do
-    Enum.each state.effects, fn effect ->
+    Enum.each(state.effects, fn effect ->
       Group.delete_group(effect.container_group.id)
       Group.delete_group(effect.synth_group.id)
-    end
+    end)
+
     Group.reset_synth_group()
     {:noreply, %{state | effects: []}}
   end

@@ -53,6 +53,7 @@ defmodule Waveform.OSC do
   end
 
   def delete_group(id) when is_number(id), do: delete_group([id])
+
   def delete_group(ids) do
     send_command([@g_deepFree | ids])
   end
