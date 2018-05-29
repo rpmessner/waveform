@@ -5,7 +5,7 @@ defmodule Waveform.Loop do
     quote do
       loop_func = fn ->
         Enum.take_while(
-          Stream.repeatedly(fn () ->
+          Stream.repeatedly(fn ->
             unquote(body)
           end),
           fn _ -> true end

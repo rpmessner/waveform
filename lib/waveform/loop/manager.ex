@@ -52,17 +52,15 @@ defmodule Waveform.Loop.Manager do
   end
 
   def handle_cast({:kill, name}, state) do
-    loop = Enum.find(state.loops, &(&1.name == name))
+    {loop, loops} = get_loop(state.loops, name)
 
     Process.exit(loop.pid, :kill)
-
-    loops = Enum.filter(state.loops, &(&1.name != name))
 
     {:noreply, %{state | loops: loops}}
   end
 
   def handle_cast({:pause, name}, state) do
-    loop = Enum.find(state.loops, &(&1.name == name))
+    {loop, _} = get_loop(state.loops, name)
 
     Process.exit(loop.pid, :kill)
 
@@ -70,15 +68,17 @@ defmodule Waveform.Loop.Manager do
   end
 
   def handle_cast({:resume, name}, state) do
-    loop = Enum.find(state.loops, &(&1.name == name))
+    {loop, loops} = get_loop(state.loops, name)
 
-    pid = spawn loop.func
+    pid = spawn(loop.func)
 
     loop = %{loop | pid: pid}
 
-    loops = Enum.filter(state.loops, &(&1.name != name))
-
     {:noreply, %{state | loops: [loop | loops]}}
+  end
+
+  defp get_loop(loops, name) do
+    {Enum.find(loops, &(&1.name == name)), Enum.filter(loops, &(&1.name != name))}
   end
 
   def handle_cast({:kill_all}, state) do
