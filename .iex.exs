@@ -10,8 +10,10 @@ alias Waveform.OSC.Node, as: Node
 alias Waveform.OSC.Node.ID, as: ID
 
 alias Waveform.Synth.FX, as: FX
-alias Waveform.Synth.Manager, as: Manager
-alias Waveform.Synth.Loop, as: Loop
+alias Waveform.Synth.Manager, as: SynthManager
+
+alias Waveform.Loop, as: Loop
+alias Waveform.Loop.Manager, as: LoopManager
 
 require Loop
 import Loop
