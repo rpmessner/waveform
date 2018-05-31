@@ -33,9 +33,9 @@ defmodule Waveform.Synth.Manager do
     pretty_bell: 'sonic-pi-pretty_bell',
     prophet: 'sonic-pi-prophet',
     pulse: 'sonic-pi-pulse',
-    recorder: 'sonic-pi-recorder',
+    # recorder: 'sonic-pi-recorder',
     saw: 'sonic-pi-saw',
-    scope: 'sonic-pi-scope',
+    # scope: 'sonic-pi-scope',
     square: 'sonic-pi-square',
     subpulse: 'sonic-pi-subpulse',
     supersaw: 'sonic-pi-supersaw',
@@ -82,6 +82,7 @@ defmodule Waveform.Synth.Manager do
 
   def handle_call({:set_current, new}, _from, state) do
     name = @synth_names[new]
+
     {:reply, if(name, do: new), %State{state | current: name || state.current}}
   end
 

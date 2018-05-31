@@ -3,6 +3,7 @@ require Waveform.Loop
 import Waveform.Loop
 import Waveform.Synth
 
+alias Waveform.Beat, as: Beat
 alias Waveform.Music.Note, as: Note
 alias Waveform.Music.Chord, as: Chord
 alias Waveform.Music.Progression, as: Progression

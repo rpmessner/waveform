@@ -3,6 +3,7 @@ defmodule Waveform.Application do
 
   def start(_type, _args) do
     children = [
+      {Waveform.Beat, nil},
       {Waveform.Lang, nil},
       {Waveform.OSC, nil},
       {Waveform.OSC.Node.ID, 1},
