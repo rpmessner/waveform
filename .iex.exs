@@ -1,3 +1,6 @@
+require Waveform.Loop
+
+import Waveform.Loop
 import Waveform.Synth
 
 alias Waveform.Music.Note, as: Note
@@ -15,5 +18,3 @@ alias Waveform.Synth.Manager, as: SynthManager
 alias Waveform.Loop, as: Loop
 alias Waveform.Loop.Manager, as: LoopManager
 
-require Loop
-import Loop
