@@ -16,13 +16,22 @@ defmodule Waveform.Beat do
     )
   end
 
-  defmodule Callback do
+
+  defmodule Tick do
     defstruct(
       beats: 3,
-      superimposition: 4,
+      over: 4,
       # swing: 0.5,
       func: nil
     )
+
+    def tick() do
+      Beat.tick()
+    end
+
+    def handle_callback(%Tick{func: func}, idx, counter, state) do
+      func.({idx, counter, state.current_beat})
+    end
   end
 
   def clear do
@@ -65,8 +74,8 @@ defmodule Waveform.Beat do
     GenServer.cast(@me, {:on_beat, beats, beats, func})
   end
 
-  def on_beat(beats, superimposition, func) do
-    GenServer.cast(@me, {:on_beat, beats, superimposition, func})
+  def on_beat(beats, over, func) do
+    GenServer.cast(@me, {:on_beat, beats, over, func})
   end
 
   def on_beat(func) do
@@ -77,24 +86,18 @@ defmodule Waveform.Beat do
     {:ok, state}
   end
 
-  def handle_cast({:on_beat, beats, si, func}, state) do
+  def handle_cast({:on_beat, beats, over, func}, state) do
     {:noreply,
      %{
        state
        | callbacks: [
-           %Callback{superimposition: si, beats: beats, func: func} | state.callbacks
+           %Tick{over: over, beats: beats, func: func} | state.callbacks
          ]
      }}
   end
 
   def handle_cast({:on_beat, func}, state) do
-    {:noreply, %{state | callbacks: [%Callback{func: func} | state.callbacks]}}
-  end
-
-  defmodule Tick do
-    def tick() do
-      Beat.tick()
-    end
+    {:noreply, %{state | callbacks: [%Tick{func: func} | state.callbacks]}}
   end
 
   def handle_cast({:pause}, state) do
@@ -129,35 +132,32 @@ defmodule Waveform.Beat do
     counter = :os.perf_counter(10)
     # IO.inspect({"tick", state.current_beat, counter})
 
-    Enum.each(state.callbacks, fn %Callback{
+    Enum.each(state.callbacks, fn %Tick{
                                     beats: beats,
-                                    superimposition: si,
+                                    over: over,
                                     func: callback
                                   } = s ->
       # IO.inspect {state.current_beat, beats, rem(state.current_beat, beats)}
 
       if beats == 1 || rem(state.current_beat, beats) == 1 do
-        if si == beats do
+        if over == beats do
           # IO.inspect({"spawn single", state.current_beat, counter})
           spawn(fn ->
             callback.({counter, state.current_beat})
           end)
         else
           # IO.inspect({"spawn impos", state.current_beat, counter})
-          spawn(fn ->
-            beat_value = beat_value(state)
 
-            Enum.each(1..si, fn idx ->
-              callback.({idx, counter, state.current_beat})
+          beat_value = beat_value(state)
 
-              si_beat_value = beat_value * (beats / si)
+          Enum.each(0..(over - 1), fn idx ->
+            si_beat_value = beat_value * (beats / over) * idx
 
-              # IO.inspect {si_beat_value, beat_value}
+            # IO.inspect {si_beat_value, beat_value}
 
-              si_beat_value
-              |> Kernel.trunc()
-              |> Process.sleep()
-            end)
+            si_beat_value
+            |> Kernel.trunc()
+            |> :timer.apply_after(Tick, :handle_callback, [s, idx, counter, state])
           end)
         end
       end
