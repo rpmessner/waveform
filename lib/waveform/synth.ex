@@ -11,22 +11,6 @@ defmodule Waveform.Synth do
 
   import Waveform.Util
 
-  @synth_params_whitelist ~w(
-    amp
-    amp_slide
-    pan
-    pan_slide
-    release
-    attack
-    attack_level
-    sustain
-    sustain_level
-    decay
-    decay_level
-    slide
-    env_curve
-  )a
-
   def current_synth() do
     Manager.current_synth_atom()
   end
@@ -58,8 +42,12 @@ defmodule Waveform.Synth do
 
     args
     |> calculate_sustain
-    |> Enum.reduce([:note, note], normalizer(@synth_params_whitelist))
+    |> Enum.reduce([:note, note], normalizer)
     |> synth(group)
+  end
+
+  def synth(args, nil) when is_list(args) do
+    synth(args, Group.synth_group())
   end
 
   def synth(args, %Group{id: group_id}) when is_list(args) do
@@ -94,9 +82,9 @@ defmodule Waveform.Synth do
     end
   end
 
-  defp normalizer(whitelist),
+  defp normalizer,
     do: fn {key, value}, coll ->
-      if Enum.member?(whitelist, key) && is_number(value) do
+      if is_number(value) do
         [key, value | coll]
       else
         coll

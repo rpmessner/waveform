@@ -4,7 +4,7 @@ defmodule Waveform.Loop.Manager do
   @me __MODULE__
 
   defmodule Loop do
-    defstruct(name: nil, pid: nil, func: nil)
+    defstruct(group: nil, name: nil, pid: nil, func: nil)
   end
 
   defmodule State do
