@@ -46,14 +46,22 @@ defmodule Waveform.Synth.Manager do
   @default_synth @synth_names[:prophet]
 
   defmodule State do
-    defstruct(current: nil)
+    defstruct(current: [])
+  end
+
+  def use_last_synth() do
+    GenServer.call(@me, {:rollback})
+  end
+
+  def reset() do
+    GenServer.call(@me, {:reset})
   end
 
   def set_current_synth(next) do
     GenServer.call(@me, {:set_current, next})
   end
 
-  def current_synth_atom() do
+  def current_synth_name() do
     current_name = GenServer.call(@me, {:current})
 
     {name, _} =
@@ -64,27 +72,47 @@ defmodule Waveform.Synth.Manager do
     name
   end
 
-  def current_synth() do
+  def current_synth_value() do
     GenServer.call(@me, {:current})
   end
 
   def start_link(_state) do
-    GenServer.start_link(@me, %State{current: @default_synth}, name: @me)
+    GenServer.start_link(@me, default_state, name: @me)
   end
 
   def init(state) do
     {:ok, state}
   end
 
-  def terminate(_reason, _state), do: nil
-
   def handle_call({:set_current, new}, _from, state) do
     name = @synth_names[new]
 
-    {:reply, if(name, do: new), %State{state | current: name || state.current}}
+    if name do
+      {:reply, name, %{state | current: [name | state.current]}}
+    else
+      {:reply, nil, state}
+    end
   end
 
   def handle_call({:current}, _from, state) do
-    {:reply, state.current, state}
+    [current|_] = state.current
+
+    {:reply, current, state}
+  end
+
+  def handle_call({:reset}, _from, state) do
+    {:reply, :ok, default_state}
+  end
+
+  defp default_state do
+    %State{current: [@default_synth]}
+  end
+
+  def handle_call({:rollback}, _from, %State{current: [h]} = state) do
+    {:reply, h, state}
+  end
+
+  def handle_call({:rollback}, _from, %State{current: [h|t]} = state) do
+    {:reply, h, %{state | current: t}}
   end
 end

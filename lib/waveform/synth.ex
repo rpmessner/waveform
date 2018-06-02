@@ -14,7 +14,7 @@ defmodule Waveform.Synth do
   import Waveform.Util
 
   def current_synth() do
-    Manager.current_synth_atom()
+    Manager.current_synth_name()
   end
 
   def use_synth(synth) do
@@ -58,7 +58,7 @@ defmodule Waveform.Synth do
 
   def synth(args, %Group{id: group_id}) when is_list(args) do
     %Node{id: node_id} = Node.next_node()
-    synth_name = Manager.current_synth()
+    synth_name = Manager.current_synth_value()
     add_action = :head
 
     # http://doc.sccode.org/Reference/Server-Command-Reference.html#/s_new
