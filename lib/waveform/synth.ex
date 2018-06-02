@@ -31,9 +31,9 @@ defmodule Waveform.Synth do
     |> Enum.map(&synth(&1, options |> Enum.into(%{}) |> Map.merge(%{group: group})))
   end
 
-  def stop, do: Beat.stop
-  def start, do: Beat.start
-  def pause, do: Beat.pause
+  def stop, do: Beat.stop()
+  def start, do: Beat.start()
+  def pause, do: Beat.pause()
 
   def play(note), do: synth(note)
   def play(note, args), do: synth(note, args)

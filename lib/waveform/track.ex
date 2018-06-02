@@ -9,10 +9,14 @@ defmodule Waveform.Track do
   @default_beats 4
 
   defmacro deftrack(name, options \\ [], do: body) do
-    make_track(name, %{
-      beats: (options[:beats] || @default_beats),
-      over: (options[:over] || @default_over)
-    }, body)
+    make_track(
+      name,
+      %{
+        beats: options[:beats] || @default_beats,
+        over: options[:over] || @default_over
+      },
+      body
+    )
   end
 
   defp make_track(name, %{over: over, beats: beats}, body) do
@@ -26,6 +30,7 @@ defmodule Waveform.Track do
               end
             end
           end
+
         _ ->
           quote do
             track_func = fn s ->

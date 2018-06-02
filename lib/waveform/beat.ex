@@ -25,7 +25,8 @@ defmodule Waveform.Beat do
       over: 4,
       name: nil,
       # swing: 0.5,
-      func: nil)
+      func: nil
+    )
 
     def tick() do
       Beat.tick()
@@ -83,17 +84,21 @@ defmodule Waveform.Beat do
   end
 
   def on_beat(name, beats, func) when is_atom(name), do: on_beat(name, beats, beats, func)
+
   def on_beat(name, over, beats, func) when is_atom(name) do
     GenServer.cast(@me, {:on_beat, name, beats, over, func, nil})
   end
 
   def on_beat(beats, func) when is_integer(beats), do: on_beat(beats, beats, func)
+
   def on_beat(over, beats, func) when is_integer(beats) do
     GenServer.cast(@me, {:on_beat, nil, beats, over, func, nil})
   end
 
-  def on_beat(name, beats, func, %Group{}=group) when is_atom(name), do: on_beat(name, beats, beats, func, group)
-  def on_beat(name, over, beats, func, %Group{}=group) when is_integer(beats) do
+  def on_beat(name, beats, func, %Group{} = group) when is_atom(name),
+    do: on_beat(name, beats, beats, func, group)
+
+  def on_beat(name, over, beats, func, %Group{} = group) when is_integer(beats) do
     GenServer.cast(@me, {:on_beat, name, beats, over, func, group})
   end
 
@@ -101,7 +106,7 @@ defmodule Waveform.Beat do
     {:ok, state}
   end
 
-  def handle_cast({:on_beat, name, beats, over, func, %Group{}=group}, state) do
+  def handle_cast({:on_beat, name, beats, over, func, %Group{} = group}, state) do
     {:noreply,
      %{
        state
@@ -150,7 +155,7 @@ defmodule Waveform.Beat do
 
         Enum.each(0..(over - 1), fn idx ->
           spawn(fn ->
-            beat_value * (beats / over) * idx
+            (beat_value * (beats / over) * idx)
             |> Float.round()
             |> Kernel.trunc()
             |> :timer.apply_after(Tick, :handle_callback, [s, idx])
