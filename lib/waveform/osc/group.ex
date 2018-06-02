@@ -12,7 +12,7 @@ defmodule Waveform.OSC.Group do
     defstruct(
       groups: [],
       root_group: %Group{id: 1, name: :root},
-      root_synth_group: nil,
+      default_synth_group: nil,
       synth_group: nil
     )
   end
@@ -23,6 +23,10 @@ defmodule Waveform.OSC.Group do
 
   def reset_synth_group() do
     GenServer.cast(@me, {:reset_synth})
+  end
+
+  def activate_group(id) when is_number(id) do
+    GenServer.call(@me, {:activate_group, id})
   end
 
   def delete_group(id) when is_number(id), do: delete_group([id])
@@ -39,8 +43,8 @@ defmodule Waveform.OSC.Group do
     GenServer.call(@me, {:synth_group})
   end
 
-  def chord_group do
-    GenServer.call(@me, {:new_group, :chord, :head, synth_group()})
+  def chord_group(name) do
+    GenServer.call(@me, {:new_group, name, :chord_group, :head, synth_group()})
   end
 
   def fx_container_group(name) do
@@ -49,6 +53,10 @@ defmodule Waveform.OSC.Group do
 
   def fx_synth_group(name, container_group) do
     GenServer.call(@me, {:new_group, name, :fx_synth_group, :head, container_group})
+  end
+
+  def track_container_group(name) do
+    GenServer.call(@me, {:new_group, name, :track_container_group, :head})
   end
 
   def start_link(_state) do
@@ -60,7 +68,7 @@ defmodule Waveform.OSC.Group do
   end
 
   def handle_cast({:reset_synth}, state) do
-    {:noreply, %{state | synth_group: state.root_synth_group}}
+    {:noreply, %{state | synth_group: state.default_synth_group}}
   end
 
   def handle_call({:synth_group}, _from, state) do
@@ -68,7 +76,22 @@ defmodule Waveform.OSC.Group do
 
     create_group(group.id, :head, state.root_group.id)
 
-    {:reply, group, %{state | root_synth_group: group, synth_group: group}}
+    {:reply, group, %{state | default_synth_group: group, synth_group: group}}
+  end
+
+  def handle_call({:activate_group, id}, _from, state) do
+    case find_group(id, state) do
+      %Group{} = g -> {:reply, g, %{state | synth_group: g}}
+      _ -> {:reply, nil, state}
+    end
+  end
+
+  def handle_call({:new_group, name, :track_container_group, action}, _from, state) do
+    new_group = %Group{type: :track_container_group, name: name, id: ID.next()}
+
+    create_group(new_group.id, action, state.default_synth_group.id)
+
+    {:reply, new_group, %{state | groups: [new_group | state.groups]}}
   end
 
   def handle_call({:new_group, name, action, parent}, _from, state) do
@@ -105,5 +128,11 @@ defmodule Waveform.OSC.Group do
 
   def handle_call({:state}, _from, state) do
     {:reply, state, state}
+  end
+
+  defp find_group(id, state) do
+    Enum.find(state.groups, fn group ->
+      group.id == id
+    end)
   end
 end

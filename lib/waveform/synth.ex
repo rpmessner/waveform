@@ -1,4 +1,6 @@
 defmodule Waveform.Synth do
+  alias Waveform.Beat, as: Beat
+
   alias Waveform.Music.Note, as: Note
   alias Waveform.Music.Chord, as: Chord
 
@@ -22,12 +24,16 @@ defmodule Waveform.Synth do
   def play(%Chord{} = c), do: play(c, [])
 
   def play(%Chord{} = c, options) do
-    group = Group.chord_group()
+    group = Group.chord_group("#{c.tonic} #{c.quality} #{c.inversion}")
 
     c
     |> Chord.notes()
     |> Enum.map(&synth(&1, options |> Enum.into(%{}) |> Map.merge(%{group: group})))
   end
+
+  def stop, do: Beat.stop
+  def start, do: Beat.start
+  def pause, do: Beat.pause
 
   def play(note), do: synth(note)
   def play(note, args), do: synth(note, args)
