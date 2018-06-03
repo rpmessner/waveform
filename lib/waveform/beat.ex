@@ -37,12 +37,10 @@ defmodule Waveform.Beat do
 
       # IO.inspect {self(), "#{over} over #{beats}", idx, counter}
 
-      if group && group.id do
-        Group.activate_group(group.id)
-      end
-
       if Beat.state().started do
+        Group.activate_synth_group(group)
         func.(%{beat: idx, counter: counter})
+        Group.restore_synth_group()
       end
     end
   end

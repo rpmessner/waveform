@@ -7,49 +7,46 @@ defmodule Waveform.OSC.Group do
   alias Waveform.OSC.Node.ID, as: ID
   alias Waveform.OSC, as: OSC
 
-  defstruct(id: nil, name: nil, type: nil)
+  defstruct(id: nil, name: nil, type: nil, children: [], nodes: [], parent: nil)
 
   defmodule State do
     defstruct(
-      groups: [],
       root_group: %Group{id: 1, name: :root},
-      default_synth_group: nil,
-      synth_group: nil
+      root_synth_group: nil,
+      active_synth_group: []
     )
+  end
+
+  def reset do
+    GenServer.call(@me, {:reset})
   end
 
   def state do
     GenServer.call(@me, {:state})
   end
 
-  def reset_synth_group() do
-    GenServer.cast(@me, {:reset_synth})
+  def restore_synth_group() do
+    GenServer.call(@me, {:restore_synth_group})
   end
 
-  def activate_group(id) when is_number(id) do
-    GenServer.call(@me, {:activate_group, id})
-  end
-
-  def delete_group(id) when is_number(id), do: delete_group([id])
-
-  def delete_group(ids) do
-    GenServer.cast(@me, {:delete_group, ids})
+  def activate_synth_group(%Group{id: id}=g) do
+    GenServer.call(@me, {:activate_group, g})
   end
 
   def synth_group do
-    state.synth_group
+    state().active_synth_group |> List.first
   end
 
   def setup do
-    GenServer.call(@me, {:synth_group})
+    GenServer.call(@me, {:root_synth_group})
   end
 
   def chord_group(name) do
-    GenServer.call(@me, {:new_group, name, :chord_group, :head, synth_group()})
+    GenServer.call(@me, {:new_group, name, :chord_group, :tail, synth_group()})
   end
 
-  def fx_container_group(name) do
-    GenServer.call(@me, {:new_group, name, :fx_container_group, :tail, synth_group()})
+  def fx_container_group(name, parent_group) do
+    GenServer.call(@me, {:new_group, name, :fx_container_group, :tail, parent_group})
   end
 
   def fx_synth_group(name, container_group) do
@@ -60,80 +57,59 @@ defmodule Waveform.OSC.Group do
     GenServer.call(@me, {:new_group, name, :track_container_group, :head})
   end
 
+  defp default_state do
+    %State{}
+  end
+
   def start_link(_state) do
-    GenServer.start_link(@me, %State{}, name: @me)
+    GenServer.start_link(@me, default_state, name: @me)
   end
 
   def init(state) do
     {:ok, state}
   end
 
-  def handle_cast({:reset_synth}, state) do
-    {:noreply, %{state | synth_group: state.default_synth_group}}
+  def handle_call({:restore_synth_group}, _from, %State{active_synth_group: [_]} = state) do
+    {:reply, {:ok, nil}, state}
   end
 
-  def handle_call({:synth_group}, _from, state) do
-    group = %Group{type: :synth, name: :synth_group, id: ID.next()}
+  def handle_call({:restore_synth_group}, _from, %State{active_synth_group: [h|t]} = state) do
+    {:reply, {:ok, List.first(t)}, %{state | active_synth_group: t}}
+  end
+
+  def handle_call({:root_synth_group}, _from, state) do
+    group = %Group{type: :synth, name: :root_synth_group, id: ID.next()}
 
     create_group(group.id, :head, state.root_group.id)
 
-    {:reply, group, %{state | default_synth_group: group, synth_group: group}}
+    {:reply, :ok, %{state | active_synth_group: [group], root_synth_group: group}}
   end
 
-  def handle_call({:activate_group, id}, _from, state) do
-    case find_group(id, state) do
-      %Group{} = g -> {:reply, g, %{state | synth_group: g}}
-      _ -> {:reply, nil, state}
-    end
+  def handle_call({:activate_group, %Group{} = g}, _from, state) do
+    {:reply, :ok, %{state | active_synth_group: [g | state.active_synth_group]}}
   end
 
-  def handle_call({:new_group, name, :track_container_group, action}, _from, state) do
-    new_group = %Group{type: :track_container_group, name: name, id: ID.next()}
-
-    create_group(new_group.id, action, state.default_synth_group.id)
-
-    {:reply, new_group, %{state | groups: [new_group | state.groups]}}
+  def handle_call({:new_group, name, type, action}, from, state) do
+    handle_call({:new_group, name, type, action, state.root_synth_group}, from, state)
   end
 
-  def handle_call({:new_group, name, action, parent}, _from, state) do
-    handle_call({:new_group, name, :synth, action, parent}, _from, state)
-  end
+  def handle_call({:new_group, name, type, action, %Group{id: parent_id} = parent}, _from, state) do
+    new_group = %Group{name: name, type: type, id: ID.next(), parent: parent}
 
-  def handle_call({:new_group, name, :fx_synth_group, action, parent}, _from, state) do
-    new_group = %Group{type: :fx_synth_group, name: name, id: ID.next()}
+    create_group(new_group.id, action, parent_id)
 
-    create_group(new_group.id, action, parent.id)
-
-    {:reply, new_group, %{state | synth_group: new_group}}
-  end
-
-  def handle_call({:new_group, name, type, action, parent}, _from, state) do
-    new_group = %Group{name: name, type: type, id: ID.next()}
-
-    create_group(new_group.id, action, parent.id)
-
-    {:reply, new_group, %{state | groups: [new_group | state.groups]}}
-  end
-
-  def handle_cast({:delete_group, ids}, state) do
-    OSC.delete_group(ids)
-
-    groups = Enum.filter(state.groups, &Enum.member?(ids, &1.id))
-
-    {:noreply, %{state | groups: groups}}
+    {:reply, new_group, state}
   end
 
   defp create_group(id, action, parent) do
     OSC.new_group(id, action, parent)
   end
 
-  def handle_call({:state}, _from, state) do
-    {:reply, state, state}
+  def handle_call({:reset}, _from, _state) do
+    {:reply, :ok, default_state}
   end
 
-  defp find_group(id, state) do
-    Enum.find(state.groups, fn group ->
-      group.id == id
-    end)
+  def handle_call({:state}, _from, state) do
+    {:reply, state, state}
   end
 end

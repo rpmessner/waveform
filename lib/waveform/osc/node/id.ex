@@ -7,6 +7,10 @@ defmodule Waveform.OSC.Node.ID do
     defstruct(current_id: 0)
   end
 
+  def state do
+    GenServer.call(@me, {:state})
+  end
+
   def next do
     GenServer.call(@me, {:next})
   end
@@ -22,5 +26,9 @@ defmodule Waveform.OSC.Node.ID do
   def handle_call({:next}, _from, state) do
     state = %{state | current_id: state.current_id + 1}
     {:reply, state.current_id, state}
+  end
+
+  def handle_call({:state}, _from, state) do
+    {:reply, state, state}
   end
 end

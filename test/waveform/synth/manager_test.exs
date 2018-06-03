@@ -4,7 +4,10 @@ defmodule Waveform.Synth.ManagerTest do
   alias Waveform.Synth.Manager, as: Subject
 
   setup do
-    Subject.reset()
+    on_exit(fn ->
+      Subject.reset()
+    end)
+
     :ok
   end
 

@@ -23,7 +23,8 @@ defmodule Waveform.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:porcelain, "~> 2.0"}
+      {:porcelain, "~> 2.0"},
+      {:mock, "~> 0.3.0", only: :test}
     ]
   end
 end

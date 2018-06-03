@@ -95,7 +95,7 @@ defmodule Waveform.Synth.Manager do
   end
 
   def handle_call({:current}, _from, state) do
-    [current|_] = state.current
+    [current | _] = state.current
 
     {:reply, current, state}
   end
@@ -112,7 +112,7 @@ defmodule Waveform.Synth.Manager do
     {:reply, h, state}
   end
 
-  def handle_call({:rollback}, _from, %State{current: [h|t]} = state) do
+  def handle_call({:rollback}, _from, %State{current: [h | t]} = state) do
     {:reply, h, %{state | current: t}}
   end
 end

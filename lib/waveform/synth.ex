@@ -59,7 +59,7 @@ defmodule Waveform.Synth do
   def synth(args, %Group{id: group_id}) when is_list(args) do
     %Node{id: node_id} = Node.next_node()
     synth_name = Manager.current_synth_value()
-    add_action = :head
+    add_action = :tail
 
     # http://doc.sccode.org/Reference/Server-Command-Reference.html#/s_new
     OSC.new_synth(synth_name, node_id, add_action, group_id, args)
@@ -70,21 +70,12 @@ defmodule Waveform.Synth do
     struct(Chord, Map.merge(%{tonic: tonic, quality: quality}, options_map))
   end
 
-  def use_fx(name), do: use_fx(name, [])
-
-  def use_fx(name, args) do
-    args_list = args |> Enum.reduce([], fn {key, value}, coll -> [key, value | coll] end)
-    FX.new_fx(name, args_list)
-  end
-
-  def kill_fx do
-    FX.kill_all()
-  end
-
   defp group_arg(args) do
     case args[:group] do
       %Group{} = g -> {g, Map.delete(args, :group)}
-      nil -> {Group.synth_group(), args}
+      nil ->
+        IO.puts("using synth group")
+        {Group.synth_group(), args}
     end
   end
 

@@ -1,13 +1,7 @@
 defmodule Waveform.Synth.FX do
-  use GenServer
-
   alias Waveform.OSC, as: OSC
   alias Waveform.OSC.Node, as: Node
   alias Waveform.OSC.Group, as: Group
-  alias Waveform.OSC.Node.ID, as: ID
-
-  alias __MODULE__
-  @me __MODULE__
 
   @enabled_fx %{
     band_eq: 'sonic-pi-fx_band_eq',
@@ -53,64 +47,22 @@ defmodule Waveform.Synth.FX do
     wobble: 'sonic-pi-fx_wobble'
   }
 
-  defstruct(
-    container_group: nil,
-    synth_group: nil,
-    synth_node: nil
-  )
+  def add_fx(%Group{} = parent, type, options) do
+    name = @enabled_fx[type]
 
-  defmodule State do
-    defstruct(effects: [])
-  end
+    if name do
+      container_group = Group.fx_container_group(type, parent)
+      synth_group = Group.fx_synth_group(type, container_group)
 
-  def state do
-    GenServer.call(@me, {:state})
-  end
+      synth_node = Node.next_node()
 
-  def new_fx(type, options) do
-    if fx_name = @enabled_fx[type] do
-      GenServer.call(@me, {:new_fx, type, fx_name, options})
+      options = Enum.reduce(options, [], fn ({k, v}, acc) -> [k, v | acc] end)
+
+      OSC.new_synth(name, synth_node.id, :tail, container_group.id, options)
+
+      %{container_group | parent: parent, nodes: [synth_node], children: [synth_group]}
     else
-      {:error, "unknown fx name"}
+      parent
     end
-  end
-
-  def kill_all() do
-    GenServer.cast(@me, {:kill_all})
-  end
-
-  def start_link(_state) do
-    GenServer.start_link(@me, %State{}, name: @me)
-  end
-
-  def init(state) do
-    {:ok, state}
-  end
-
-  def handle_call({:state}, _from, state) do
-    {:reply, state, state}
-  end
-
-  def handle_call({:new_fx, type, name, options}, _from, state) do
-    container_group = Group.fx_container_group(type)
-    synth_group = Group.fx_synth_group(type, container_group)
-
-    synth_node = Node.next_node()
-
-    OSC.new_synth(name, synth_node.id, :tail, container_group.id, options)
-
-    fx = %FX{synth_node: synth_node, container_group: container_group, synth_group: synth_group}
-
-    {:reply, fx, %{state | effects: [fx | state.effects]}}
-  end
-
-  def handle_cast({:kill_all}, state) do
-    Enum.each(state.effects, fn effect ->
-      Group.delete_group(effect.container_group.id)
-      Group.delete_group(effect.synth_group.id)
-    end)
-
-    Group.reset_synth_group()
-    {:noreply, %{state | effects: []}}
   end
 end
