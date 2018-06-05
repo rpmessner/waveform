@@ -4,10 +4,20 @@ defmodule Waveform.OSC.Group do
   @me __MODULE__
   alias __MODULE__
 
+  alias Waveform.AudioBus, as: AudioBus
   alias Waveform.OSC.Node.ID, as: ID
   alias Waveform.OSC, as: OSC
 
-  defstruct(id: nil, name: nil, type: nil, children: [], nodes: [], parent: nil)
+  defstruct(
+    id: nil,
+    name: nil,
+    type: nil,
+    children: [],
+    nodes: [],
+    out_bus: nil,
+    in_bus: nil,
+    parent: nil
+  )
 
   defmodule State do
     defstruct(
@@ -29,12 +39,12 @@ defmodule Waveform.OSC.Group do
     GenServer.call(@me, {:restore_synth_group})
   end
 
-  def activate_synth_group(%Group{id: id}=g) do
+  def activate_synth_group(%Group{id: id} = g) do
     GenServer.call(@me, {:activate_group, g})
   end
 
   def synth_group do
-    state().active_synth_group |> List.first
+    state().active_synth_group |> List.first()
   end
 
   def setup do
@@ -42,11 +52,18 @@ defmodule Waveform.OSC.Group do
   end
 
   def chord_group(name) do
-    GenServer.call(@me, {:new_group, name, :chord_group, :tail, synth_group()})
+    GenServer.call(@me, {:new_group, name, :chord_group, :head, synth_group()})
+  end
+
+  def chord_group(name, parent_group) do
+    GenServer.call(@me, {:new_group, name, :chord_group, :head, parent_group})
   end
 
   def fx_container_group(name, parent_group) do
-    GenServer.call(@me, {:new_group, name, :fx_container_group, :tail, parent_group})
+    GenServer.call(
+      @me,
+      {:new_group, name, :fx_container_group, :tail, AudioBus.next(), parent_group}
+    )
   end
 
   def fx_synth_group(name, container_group) do
@@ -73,7 +90,7 @@ defmodule Waveform.OSC.Group do
     {:reply, {:ok, nil}, state}
   end
 
-  def handle_call({:restore_synth_group}, _from, %State{active_synth_group: [h|t]} = state) do
+  def handle_call({:restore_synth_group}, _from, %State{active_synth_group: [h | t]} = state) do
     {:reply, {:ok, List.first(t)}, %{state | active_synth_group: t}}
   end
 
@@ -93,8 +110,24 @@ defmodule Waveform.OSC.Group do
     handle_call({:new_group, name, type, action, state.root_synth_group}, from, state)
   end
 
-  def handle_call({:new_group, name, type, action, %Group{id: parent_id} = parent}, _from, state) do
-    new_group = %Group{name: name, type: type, id: ID.next(), parent: parent}
+  def handle_call(
+        {:new_group, name, type, action, %Group{id: parent_id, out_bus: out_bus} = parent},
+        _from,
+        state
+      ) do
+    new_group = %Group{out_bus: out_bus, name: name, type: type, id: ID.next(), parent: parent}
+
+    create_group(new_group.id, action, parent_id)
+
+    {:reply, new_group, state}
+  end
+
+  def handle_call(
+        {:new_group, name, type, action, out_bus, %Group{id: parent_id} = parent},
+        _from,
+        state
+      ) do
+    new_group = %Group{out_bus: out_bus, name: name, type: type, id: ID.next(), parent: parent}
 
     create_group(new_group.id, action, parent_id)
 

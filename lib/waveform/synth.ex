@@ -24,7 +24,14 @@ defmodule Waveform.Synth do
   def play(%Chord{} = c), do: play(c, [])
 
   def play(%Chord{} = c, options) do
-    group = Group.chord_group("#{c.tonic} #{c.quality} #{c.inversion}")
+    name = "#{c.tonic} #{c.quality} #{c.inversion}"
+
+    group =
+      if options[:group] do
+        Group.chord_group(name, options[:group])
+      else
+        Group.chord_group(name)
+      end
 
     c
     |> Chord.notes()
@@ -56,10 +63,23 @@ defmodule Waveform.Synth do
     synth(args, Group.synth_group())
   end
 
+  def synth(args, %Group{
+        out_bus: out_bus,
+        id: group_id
+      })
+      when is_list(args) and out_bus != nil do
+    IO.inspect({"adding out bus"})
+    trigger_synth([:out_bus, out_bus | args], group_id)
+  end
+
   def synth(args, %Group{id: group_id}) when is_list(args) do
+    trigger_synth(args, group_id)
+  end
+
+  defp trigger_synth(args, group_id) do
     %Node{id: node_id} = Node.next_node()
     synth_name = Manager.current_synth_value()
-    add_action = :tail
+    add_action = :head
 
     # http://doc.sccode.org/Reference/Server-Command-Reference.html#/s_new
     OSC.new_synth(synth_name, node_id, add_action, group_id, args)
@@ -71,8 +91,12 @@ defmodule Waveform.Synth do
   end
 
   defp group_arg(args) do
+    IO.puts("checking synth group ")
+
     case args[:group] do
-      %Group{} = g -> {g, Map.delete(args, :group)}
+      %Group{} = g ->
+        {g, Map.delete(args, :group)}
+
       nil ->
         IO.puts("using synth group")
         {Group.synth_group(), args}

@@ -3,13 +3,14 @@ defmodule Waveform.Application do
 
   def start(_type, _args) do
     children = [
+      {Waveform.AudioBus, nil},
       {Waveform.Beat, nil},
       {Waveform.Lang, nil},
       {Waveform.OSC, nil},
-      {Waveform.OSC.Node.ID, 1},
-      {Waveform.OSC.Node, nil},
+      {Waveform.OSC.Node.ID, 3},
       {Waveform.OSC.Group, nil},
       {Waveform.Synth.Manager, nil},
+      {Waveform.ServerInfo, nil}
     ]
 
     opts = [strategy: :one_for_one, name: Waveform.Supervisor]

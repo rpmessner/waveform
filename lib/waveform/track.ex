@@ -46,20 +46,19 @@ defmodule Waveform.Track do
       container_group = Group.track_container_group(unquote(name))
 
       container_group =
-        Enum.reduce unquote(fx), container_group, fn ({name, options}, acc) ->
+        Enum.reduce(unquote(fx), container_group, fn {name, options}, acc ->
           container_group |> FX.add_fx(name, options)
-        end
+        end)
 
-      IO.inspect({'after fx', container_group})
       unquote(function_definition)
 
-      case container_group do
-        %Group{children: []} = g ->
-          Beat.on_beat(unquote(name), unquote(beats), unquote(over), track_func, g)
-        %Group{children: [%Group{type: :fx_synth_group} = g|_]} ->
-          IO.inspect("HI")
-          Beat.on_beat(unquote(name), unquote(beats), unquote(over), track_func, g)
-      end
+      Beat.on_beat(
+        unquote(name),
+        unquote(beats),
+        unquote(over),
+        track_func,
+        container_group
+      )
     end
   end
 end
