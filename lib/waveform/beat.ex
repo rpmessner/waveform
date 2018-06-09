@@ -35,12 +35,12 @@ defmodule Waveform.Beat do
     def handle_callback(%Tick{group: group, over: over, beats: beats, func: func}, idx) do
       counter = :os.perf_counter(1000)
 
-      # IO.inspect {self(), "#{over} over #{beats}", idx, counter}
+      IO.inspect {group, self(), "#{over} over #{beats}", idx, counter}
 
       if Beat.state().started do
-        Group.activate_synth_group(group)
+        Group.activate_synth_group(self(), group)
         func.(%{beat: idx, counter: counter})
-        Group.restore_synth_group()
+        Group.restore_synth_group(self())
       end
     end
   end

@@ -99,7 +99,7 @@ defmodule Waveform.Synth do
 
       nil ->
         IO.puts("using synth group")
-        {Group.synth_group(), args}
+        {Group.synth_group(self()), args}
     end
   end
 

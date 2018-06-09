@@ -57,7 +57,7 @@ defmodule Waveform.Synth.FX do
       synth_node = Node.next_node()
 
       options = Enum.reduce(options, [:in_bus, in_bus], fn {k, v}, acc -> [k, v | acc] end)
-      IO.inspect({options})
+      # IO.inspect({options})
 
       OSC.new_synth(name, synth_node.id, :tail, container_group.id, options)
 

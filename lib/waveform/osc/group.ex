@@ -23,7 +23,7 @@ defmodule Waveform.OSC.Group do
     defstruct(
       root_group: %Group{id: 1, name: :root},
       root_synth_group: nil,
-      active_synth_group: []
+      active_synth_group: %{}
     )
   end
 
@@ -35,16 +35,20 @@ defmodule Waveform.OSC.Group do
     GenServer.call(@me, {:state})
   end
 
-  def restore_synth_group() do
-    GenServer.call(@me, {:restore_synth_group})
+  def restore_synth_group(pid) when is_pid(pid) do
+    GenServer.call(@me, {:restore_synth_group, pid})
   end
 
-  def activate_synth_group(%Group{id: id} = g) do
-    GenServer.call(@me, {:activate_group, g})
+  def activate_synth_group(pid, %Group{} = g) when is_pid(pid) do
+    GenServer.call(@me, {:activate_group, pid, g})
   end
 
-  def synth_group do
-    state().active_synth_group |> List.first()
+  def synth_group(pid) do
+    %State{active_synth_group: asg, root_synth_group: rsg} = state()
+
+    synth_group = (asg[pid] || []) |> List.first()
+
+    synth_group || rsg
   end
 
   def setup do
@@ -52,7 +56,7 @@ defmodule Waveform.OSC.Group do
   end
 
   def chord_group(name) do
-    GenServer.call(@me, {:new_group, name, :chord_group, :head, synth_group()})
+    GenServer.call(@me, {:new_group, name, :chord_group, :head, synth_group(self()) || state().root_synth_group})
   end
 
   def chord_group(name, parent_group) do
@@ -74,24 +78,22 @@ defmodule Waveform.OSC.Group do
     GenServer.call(@me, {:new_group, name, :track_container_group, :head})
   end
 
-  defp default_state do
-    %State{}
+  def start_link(_state) do
+    GenServer.start_link(@me, default_state(), name: @me)
   end
 
-  def start_link(_state) do
-    GenServer.start_link(@me, default_state, name: @me)
+  defp default_state do
+    %State{}
   end
 
   def init(state) do
     {:ok, state}
   end
 
-  def handle_call({:restore_synth_group}, _from, %State{active_synth_group: [_]} = state) do
-    {:reply, {:ok, nil}, state}
-  end
-
-  def handle_call({:restore_synth_group}, _from, %State{active_synth_group: [h | t]} = state) do
-    {:reply, {:ok, List.first(t)}, %{state | active_synth_group: t}}
+  def handle_call({:restore_synth_group, pid}, _from, %State{active_synth_group: asg} = state) do
+    [_ | t] = asg[pid] || []
+    asg = Map.put asg, pid, t
+    {:reply, {:ok, List.first(t)}, %{state | active_synth_group: asg}}
   end
 
   def handle_call({:root_synth_group}, _from, state) do
@@ -99,11 +101,13 @@ defmodule Waveform.OSC.Group do
 
     create_group(group.id, :head, state.root_group.id)
 
-    {:reply, :ok, %{state | active_synth_group: [group], root_synth_group: group}}
+    {:reply, :ok, %{state | root_synth_group: group}}
   end
 
-  def handle_call({:activate_group, %Group{} = g}, _from, state) do
-    {:reply, :ok, %{state | active_synth_group: [g | state.active_synth_group]}}
+  def handle_call({:activate_group, pid, %Group{} = g}, _from, %State{active_synth_group: asg} = state) do
+    pid_groups = asg[pid] || []
+    asg = Map.put asg, pid, [g | pid_groups]
+    {:reply, :ok, %{state | active_synth_group: asg}}
   end
 
   def handle_call({:new_group, name, type, action}, from, state) do
@@ -139,7 +143,7 @@ defmodule Waveform.OSC.Group do
   end
 
   def handle_call({:reset}, _from, _state) do
-    {:reply, :ok, default_state}
+    {:reply, :ok, default_state()}
   end
 
   def handle_call({:state}, _from, state) do

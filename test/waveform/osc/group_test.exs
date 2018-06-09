@@ -25,7 +25,7 @@ defmodule Waveform.OSC.GroupTest do
 
       assert called(OSC.new_group(ID.state().current_id, :head, 1))
 
-      assert Subject.synth_group() == Subject.state().root_synth_group
+      assert Subject.synth_group(self()) == Subject.state().root_synth_group
     end
   end
 
@@ -84,42 +84,24 @@ defmodule Waveform.OSC.GroupTest do
     end
   end
 
+  @tag :wip
   test "activates synth group" do
     with_mock OSC, new_group: fn _, _, _ -> nil end do
       Subject.setup()
 
-      assert %Group{} = foo = Subject.track_container_group(:foo)
-      assert %Group{} = bar = Subject.track_container_group(:bar)
-
-      assert :ok = Subject.activate_synth_group(foo)
-
-      assert ^foo = Subject.synth_group()
-
-      assert :ok = Subject.activate_synth_group(bar)
-
-      assert ^bar = Subject.synth_group()
-    end
-  end
-
-  test "restore synth group" do
-    with_mock OSC, new_group: fn _, _, _ -> nil end do
-      Subject.setup()
-      root_synth_group = Subject.state().root_synth_group
+      pid = spawn fn -> end
+      pid2 = spawn fn -> end
 
       assert %Group{} = foo = Subject.track_container_group(:foo)
       assert %Group{} = bar = Subject.track_container_group(:bar)
 
-      assert :ok = Subject.activate_synth_group(foo)
+      assert :ok = Subject.activate_synth_group(pid, foo)
 
-      assert ^foo = Subject.synth_group()
+      assert ^foo = Subject.synth_group(pid)
 
-      assert :ok = Subject.activate_synth_group(bar)
+      assert :ok = Subject.activate_synth_group(pid2, bar)
 
-      assert ^bar = Subject.synth_group()
-
-      assert {:ok, ^foo} = Subject.restore_synth_group()
-      assert {:ok, ^root_synth_group} = Subject.restore_synth_group()
-      assert {:ok, nil} = Subject.restore_synth_group()
+      assert ^bar = Subject.synth_group(pid2)
     end
   end
 
@@ -137,9 +119,9 @@ defmodule Waveform.OSC.GroupTest do
              } = cg1 = Subject.chord_group(:bar)
 
       assert called(OSC.new_group(foo.id + 1, :head, root_synth_group.id))
-      assert :ok = Subject.activate_synth_group(foo)
+      assert :ok = Subject.activate_synth_group(self(), foo)
 
-      assert ^foo = Subject.synth_group()
+      assert ^foo = Subject.synth_group(self())
 
       assert %Group{
                parent: ^foo
