@@ -51,13 +51,19 @@ defmodule Waveform.Synth.FX do
     name = @enabled_fx[type]
 
     if name do
-      container_group = Group.fx_container_group(type, parent)
+      %Group{in_bus: out_bus} = container_group = Group.fx_container_group(type, parent)
       %Group{out_bus: in_bus} = synth_group = Group.fx_synth_group(type, container_group)
 
       synth_node = Node.next_node()
 
-      options = Enum.reduce(options, [:in_bus, in_bus], fn {k, v}, acc -> [k, v | acc] end)
-      # IO.inspect({options})
+      default_options =
+        if out_bus != nil do
+          [:out_bus, out_bus, :in_bus, in_bus]
+        else
+          [:in_bus, in_bus]
+        end
+
+      options = Enum.reduce(options, default_options, fn {k, v}, acc -> [k, v | acc] end)
 
       OSC.new_synth(name, synth_node.id, :tail, container_group.id, options)
 
