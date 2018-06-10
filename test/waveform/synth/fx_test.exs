@@ -64,12 +64,9 @@ defmodule Waveform.Synth.FxTest do
 
       parent = %Group{id: ID.next()}
 
-      container_group_id = parent.id + 1
-      synth_group_id = parent.id + 2
-      synth_id = parent.id + 3
-
       %Group{out_bus: in_bus} = fx_group = Subject.add_fx(parent, :reverb, amp: 1)
 
+      synth_id = parent.id + 3
       container_group_id_2 = synth_id + 1
       synth_group_id_2 = synth_id + 2
       synth_id_2 = synth_id + 3

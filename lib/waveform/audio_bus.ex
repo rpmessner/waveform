@@ -9,7 +9,7 @@ defmodule Waveform.AudioBus do
   end
 
   def start_link(_state) do
-    GenServer.start_link(@me, default_state, name: @me)
+    GenServer.start_link(@me, default_state(), name: @me)
   end
 
   defp default_state do
@@ -41,7 +41,7 @@ defmodule Waveform.AudioBus do
   end
 
   def handle_call({:reset}, _from, _state) do
-    {:reply, :ok, default_state}
+    {:reply, :ok, default_state()}
   end
 
   def handle_call({:next}, _from, %State{idx: idx, idx_offset: offset} = state) do

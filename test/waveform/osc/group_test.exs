@@ -41,7 +41,7 @@ defmodule Waveform.OSC.GroupTest do
                type: :fx_container_group,
                name: :reverb,
                parent: ^parent
-             } = g = Subject.fx_container_group(:reverb, parent)
+             } = Subject.fx_container_group(:reverb, parent)
 
       assert called(OSC.new_group(ID.state().current_id, :tail, parent.id))
     end
@@ -62,7 +62,7 @@ defmodule Waveform.OSC.GroupTest do
                in_bus: ^parent_out,
                out_bus: ^next_bus,
                parent: ^parent
-             } = g = Subject.fx_container_group(:wobble, parent)
+             } = Subject.fx_container_group(:wobble, parent)
 
       assert called(OSC.new_group(ID.state().current_id, :tail, parent.id))
     end
@@ -79,7 +79,7 @@ defmodule Waveform.OSC.GroupTest do
                type: :fx_synth_group,
                name: :reverb,
                parent: ^parent
-             } = g = Subject.fx_synth_group(:reverb, parent)
+             } = Subject.fx_synth_group(:reverb, parent)
 
       assert called(OSC.new_group(ID.state().current_id, :head, parent.id))
     end
@@ -100,7 +100,7 @@ defmodule Waveform.OSC.GroupTest do
                type: :track_container_group,
                name: :foo,
                parent: ^root_synth_group
-             } = g = Subject.track_container_group(:foo)
+             } = Subject.track_container_group(:foo)
 
       assert called(OSC.new_group(ID.state().current_id, :head, root_synth_group.id))
     end
@@ -111,8 +111,8 @@ defmodule Waveform.OSC.GroupTest do
     with_mock OSC, new_group: fn _, _, _ -> nil end do
       Subject.setup()
 
-      pid = spawn fn -> end
-      pid2 = spawn fn -> end
+      pid = spawn fn -> nil end
+      pid2 = spawn fn -> nil end
 
       assert %Group{} = foo = Subject.track_container_group(:foo)
       assert %Group{} = bar = Subject.track_container_group(:bar)

@@ -2,7 +2,6 @@ defmodule Waveform.Lang do
   use GenServer
 
   alias Porcelain.Process, as: Proc
-  alias Porcelain.Result
 
   @me __MODULE__
   @path System.get_env("SCLANG_PATH") || "/Applications/SuperCollider.app/Contents/MacOS/sclang"

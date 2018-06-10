@@ -60,7 +60,7 @@ defmodule Waveform.Synth do
   end
 
   def synth(args, nil) when is_list(args) do
-    synth(args, Group.synth_group())
+    synth(args, Group.synth_group(self()))
   end
 
   def synth(args, %Group{

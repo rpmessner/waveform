@@ -1,7 +1,6 @@
 defmodule Waveform.Beat do
   use GenServer
 
-  alias Waveform.Util, as: Util
   alias Waveform.OSC.Group, as: Group
 
   alias __MODULE__
@@ -81,16 +80,15 @@ defmodule Waveform.Beat do
     GenServer.start_link(@me, %State{}, name: @me)
   end
 
+  def on_beat(beats, func) when is_integer(beats), do: on_beat(beats, beats, func)
+
   def on_beat(name, beats, func) when is_atom(name), do: on_beat(name, beats, beats, func)
+  def on_beat(over, beats, func) when is_integer(beats) do
+    GenServer.cast(@me, {:on_beat, nil, beats, over, func, nil})
+  end
 
   def on_beat(name, over, beats, func) when is_atom(name) do
     GenServer.cast(@me, {:on_beat, name, beats, over, func, nil})
-  end
-
-  def on_beat(beats, func) when is_integer(beats), do: on_beat(beats, beats, func)
-
-  def on_beat(over, beats, func) when is_integer(beats) do
-    GenServer.cast(@me, {:on_beat, nil, beats, over, func, nil})
   end
 
   def on_beat(name, beats, func, %Group{} = group) when is_atom(name),
@@ -129,11 +127,14 @@ defmodule Waveform.Beat do
   def handle_cast({:start}, %State{tref: tref} = state) do
     ms = beat_value(state)
 
-    unless state.tref do
-      {:ok, tref} = :timer.apply_interval(ms, Tick, :tick, [])
+    {:ok, tref} =
+      unless state.tref do
+        :timer.apply_interval(ms, Tick, :tick, [])
+      else
+        {:ok, tref}
+      end
 
-      counter = :os.perf_counter(10)
-    end
+    counter = :os.perf_counter(10)
 
     {:noreply, %{state | started: true, start_time: counter, tref: tref}}
   end
@@ -146,7 +147,6 @@ defmodule Waveform.Beat do
     Enum.each(state.callbacks, fn %Tick{
                                     beats: beats,
                                     over: over,
-                                    func: callback
                                   } = s ->
       if beats == 1 || rem(state.current_beat, beats) == 1 do
         beat_value = beat_value(state)

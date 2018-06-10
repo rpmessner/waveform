@@ -112,7 +112,7 @@ defmodule MidiConversion do
   defmacro define_midi_conversions() do
     @conversions
     |> Enum.with_index()
-    |> Enum.map(fn {{midi, notes}, midi_idx} ->
+    |> Enum.map(fn {{midi, notes}, _midi_idx} ->
       toks = String.split(notes, "/")
       no_sharp = Enum.count(toks) == 1
 
