@@ -8,7 +8,6 @@ defmodule Waveform.Synth do
   alias Waveform.OSC.Group, as: Group
   alias Waveform.OSC.Node, as: Node
 
-  alias Waveform.Synth.FX, as: FX
   alias Waveform.Synth.Manager, as: Manager
 
   import Waveform.Util
@@ -21,8 +20,12 @@ defmodule Waveform.Synth do
     Manager.set_current_synth(synth)
   end
 
-  def play(%Chord{} = c), do: play(c, [])
+  def stop, do: Beat.stop()
+  def start, do: Beat.start()
+  def pause, do: Beat.pause()
 
+  def play(%Chord{} = c), do: play(c, [])
+  def play(note), do: synth(note)
   def play(%Chord{} = c, options) do
     name = "#{c.tonic} #{c.quality} #{c.inversion}"
 
@@ -38,11 +41,6 @@ defmodule Waveform.Synth do
     |> Enum.map(&synth(&1, options |> Enum.into(%{}) |> Map.merge(%{group: group})))
   end
 
-  def stop, do: Beat.stop()
-  def start, do: Beat.start()
-  def pause, do: Beat.pause()
-
-  def play(note), do: synth(note)
   def play(note, args), do: synth(note, args)
 
   def synth(note) when is_atom(note), do: note |> Note.to_midi() |> synth
@@ -55,7 +53,7 @@ defmodule Waveform.Synth do
 
     args
     |> calculate_sustain
-    |> Enum.reduce([:note, note], normalizer)
+    |> Enum.reduce([:note, note], normalizer())
     |> synth(group)
   end
 
@@ -64,11 +62,11 @@ defmodule Waveform.Synth do
   end
 
   def synth(args, %Group{
-        out_bus: out_bus,
+        in_bus: out_bus,
         id: group_id
       })
       when is_list(args) and out_bus != nil do
-    IO.inspect({"adding out bus"})
+    # IO.inspect({"adding out bus"})
     trigger_synth([:out_bus, out_bus | args], group_id)
   end
 
@@ -77,7 +75,7 @@ defmodule Waveform.Synth do
   end
 
   defp trigger_synth(args, group_id) do
-    %Node{id: node_id} = Node.next_node()
+    %Node{id: node_id} = Node.next_synth_node()
     synth_name = Manager.current_synth_value()
     add_action = :head
 

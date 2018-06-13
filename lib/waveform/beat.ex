@@ -31,10 +31,10 @@ defmodule Waveform.Beat do
       Beat.tick()
     end
 
-    def handle_callback(%Tick{group: group, over: over, beats: beats, func: func}, idx) do
+    def handle_callback(%Tick{group: group, over: _over, beats: _beats, func: func}, idx) do
       counter = :os.perf_counter(1000)
 
-      IO.inspect {group, self(), "#{over} over #{beats}", idx, counter}
+      # IO.inspect({group, self(), "#{over} over #{beats}", idx, counter})
 
       if Beat.state().started do
         Group.activate_synth_group(self(), group)
@@ -83,6 +83,7 @@ defmodule Waveform.Beat do
   def on_beat(beats, func) when is_integer(beats), do: on_beat(beats, beats, func)
 
   def on_beat(name, beats, func) when is_atom(name), do: on_beat(name, beats, beats, func)
+
   def on_beat(over, beats, func) when is_integer(beats) do
     GenServer.cast(@me, {:on_beat, nil, beats, over, func, nil})
   end
@@ -146,7 +147,7 @@ defmodule Waveform.Beat do
   def handle_call({:tick}, _from, state) do
     Enum.each(state.callbacks, fn %Tick{
                                     beats: beats,
-                                    over: over,
+                                    over: over
                                   } = s ->
       if beats == 1 || rem(state.current_beat, beats) == 1 do
         beat_value = beat_value(state)

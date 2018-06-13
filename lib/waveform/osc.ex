@@ -2,8 +2,6 @@ defmodule Waveform.OSC do
   use GenServer
 
   alias Waveform.AudioBus, as: AudioBus
-  alias Waveform.OSC.Node.ID, as: ID
-  alias Waveform.OSC.Node, as: Node
   alias Waveform.OSC.Group, as: Group
   alias Waveform.ServerInfo, as: ServerInfo
 
@@ -21,7 +19,7 @@ defmodule Waveform.OSC do
   @notify '/notify'
   @d_loadDir '/d_loadDir'
   @n_go '/n_go'
-  @n_end '/n_end'
+  # @n_end '/n_end'
   @server_info '/sonic-pi/server-info'
 
   @server_info_synth 'sonic-pi-server-info'
@@ -87,7 +85,6 @@ defmodule Waveform.OSC do
   end
 
   def load_synthdefs do
-    {:ok, cwd} = File.cwd()
     send_command([@d_loadDir, @synth_folder])
   end
 
@@ -129,10 +126,10 @@ defmodule Waveform.OSC do
       {:ok, {_ip, _port, the_message}} ->
         message = :osc.decode(the_message)
 
-        IO.inspect({"osc message:", message})
+        # IO.inspect({"osc message:", message})
 
         case message do
-          {:cmd, [@server_info, id, _ | response]} ->
+          {:cmd, [@server_info, _id, _ | response]} ->
             si = ServerInfo.set_state(response)
             OSC.clear_group(@synth_info_group)
 
@@ -163,7 +160,7 @@ defmodule Waveform.OSC do
   end
 
   defp osc(state, command) do
-    IO.inspect({"osc send:", command})
+    # IO.inspect({"osc send:", command})
     :ok = :gen_udp.send(state.socket, state.host, state.host_port, :osc.encode(command))
   end
 end

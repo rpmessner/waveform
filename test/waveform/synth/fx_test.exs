@@ -8,8 +8,10 @@ defmodule Waveform.Synth.FxTest do
   alias Waveform.OSC.Node, as: Node
   alias Waveform.Synth.FX, as: Subject
 
+  @bus_id 4
+
   setup do
-    Waveform.AudioBus.setup(100, 4)
+    Waveform.AudioBus.setup(100, @bus_id)
 
     on_exit(fn ->
       Waveform.AudioBus.reset()
@@ -25,33 +27,33 @@ defmodule Waveform.Synth.FxTest do
     with_mock OSC,
       new_group: fn _, _, _ -> nil end,
       new_synth: fn _, _, _, _, _ -> nil end do
-      parent = %Group{id: ID.next()}
+      parent = %Group{id: ID.next(), type: :track_container_group}
 
-      container_group_id = parent.id + 1
-      synth_group_id = parent.id + 2
-      synth_id = parent.id + 3
+      parent_id = parent.id
+      fx_group_id = parent_id + 1
+      synth_id = parent_id + 2
+      bus_id = @bus_id
 
       assert %Group{
-               id: ^container_group_id,
-               parent: ^parent,
-               out_bus: in_bus,
-               nodes: [
-                 %Node{id: ^synth_id}
-               ],
+               id: ^parent_id,
+               type: :track_container_group,
+               in_bus: ^bus_id,
                children: [
-                 %Group{id: ^synth_group_id}
+                 %Group{type: :fx_container_group, id: ^fx_group_id}
+               ],
+               nodes: [
+                 %Node{in_bus: ^bus_id, type: :fx, id: ^synth_id}
                ]
              } = Subject.add_fx(parent, :reverb, amp: 1)
 
-      assert called(OSC.new_group(container_group_id, :tail, parent.id))
-      assert called(OSC.new_group(synth_group_id, :head, container_group_id))
+      assert called(OSC.new_group(fx_group_id, :head, parent_id))
 
       assert called(
-               OSC.new_synth('sonic-pi-fx_reverb', synth_id, :tail, container_group_id, [
+               OSC.new_synth('sonic-pi-fx_reverb', synth_id, :head, fx_group_id, [
                  :amp,
                  1,
                  :in_bus,
-                 in_bus
+                 bus_id
                ])
              )
     end
@@ -61,39 +63,53 @@ defmodule Waveform.Synth.FxTest do
     with_mock OSC,
       new_group: fn _, _, _ -> nil end,
       new_synth: fn _, _, _, _, _ -> nil end do
+      parent = %Group{id: ID.next(), type: :track_container_group}
+      parent_id = parent.id
 
-      parent = %Group{id: ID.next()}
+      fx_group_id = parent_id + 1
+      synth_id = parent_id + 2
+      synth_id_2 = parent_id + 3
 
-      %Group{out_bus: in_bus} = fx_group = Subject.add_fx(parent, :reverb, amp: 1)
+      bus_id = @bus_id
+      bus_id_2 = bus_id + 2
 
-      synth_id = parent.id + 3
-      container_group_id_2 = synth_id + 1
-      synth_group_id_2 = synth_id + 2
-      synth_id_2 = synth_id + 3
-      in_bus_2 = in_bus + 2
+      parent =
+        parent
+        |> Subject.add_fx(:reverb, amp: 1)
+        |> Subject.add_fx(:wobble, phase: 2)
+
+      assert called(OSC.new_group(fx_group_id, :head, parent_id))
 
       assert %Group{
-               id: ^container_group_id_2,
-               out_bus: ^in_bus_2,
-               in_bus: ^in_bus,
-               type: :fx_container_group,
-               parent: ^fx_group,
-               nodes: [
-                 %Node{id: ^synth_id_2}
-               ],
+               id: ^parent_id,
+               in_bus: ^bus_id_2,
+               type: :track_container_group,
                children: [
-                 %Group{id: ^synth_group_id_2}
+                 %Group{type: :fx_container_group, id: ^fx_group_id},
+               ],
+               nodes: [
+                 %Node{in_bus: ^bus_id, id: ^synth_id},
+                 %Node{in_bus: ^bus_id_2, out_bus: ^bus_id, id: ^synth_id_2}
                ]
-             } = Subject.add_fx(fx_group, :wobble, phase: 2)
+             } = parent
 
       assert called(
-               OSC.new_synth('sonic-pi-fx_wobble', synth_id_2, :tail, container_group_id_2, [
+               OSC.new_synth('sonic-pi-fx_reverb', synth_id, :head, fx_group_id, [
+                 :amp,
+                 1,
+                 :in_bus,
+                 bus_id
+               ])
+             )
+
+      assert called(
+               OSC.new_synth('sonic-pi-fx_wobble', synth_id_2, :head, fx_group_id, [
                  :phase,
                  2,
                  :out_bus,
-                 in_bus,
+                 bus_id,
                  :in_bus,
-                 in_bus_2
+                 bus_id_2
                ])
              )
     end

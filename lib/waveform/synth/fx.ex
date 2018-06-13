@@ -1,4 +1,5 @@
 defmodule Waveform.Synth.FX do
+  alias Waveform.AudioBus, as: AudioBus
   alias Waveform.OSC, as: OSC
   alias Waveform.OSC.Node, as: Node
   alias Waveform.OSC.Group, as: Group
@@ -47,27 +48,35 @@ defmodule Waveform.Synth.FX do
     wobble: 'sonic-pi-fx_wobble'
   }
 
-  def add_fx(%Group{} = parent, type, options) do
+  def add_fx(%Group{nodes: []} = parent, type, options) do
+    fxg = Group.fx_container_group(parent.name, parent)
+    _add_fx(parent, type, options, nil, fxg)
+  end
+
+  def add_fx(%Group{children: [%Group{}=fxg], nodes: [%Node{in_bus: out_bus} | _]} = parent, type, options) do
+    _add_fx(parent, type, options, out_bus, fxg)
+  end
+
+  defp _add_fx(%Group{nodes: nodes} = parent, type, options, out_bus, fxg) do
     name = @enabled_fx[type]
 
     if name do
-      %Group{in_bus: out_bus} = container_group = Group.fx_container_group(type, parent)
-      %Group{out_bus: in_bus} = synth_group = Group.fx_synth_group(type, container_group)
+      in_bus = AudioBus.next()
 
-      synth_node = Node.next_node()
+      synth_node = %{Node.next_fx_node() | out_bus: out_bus, in_bus: in_bus}
 
-      default_options =
+      bus_options =
         if out_bus != nil do
           [:out_bus, out_bus, :in_bus, in_bus]
         else
           [:in_bus, in_bus]
         end
 
-      options = Enum.reduce(options, default_options, fn {k, v}, acc -> [k, v | acc] end)
+      options = Enum.reduce(options, bus_options, fn {k, v}, acc -> [k, v | acc] end)
 
-      OSC.new_synth(name, synth_node.id, :tail, container_group.id, options)
+      OSC.new_synth(name, synth_node.id, :head, fxg.id, options)
 
-      %{container_group | parent: parent, nodes: [synth_node], children: [synth_group]}
+      %{parent | children: [fxg], in_bus: in_bus, nodes: Enum.reverse [synth_node | nodes]}
     else
       parent
     end

@@ -3,9 +3,6 @@ defmodule Waveform.Track do
   alias Waveform.Synth.FX, as: FX
   alias Waveform.OSC.Group, as: Group
 
-  alias __MODULE__
-  @me __MODULE__
-
   @default_over 4
   @default_beats 4
   @default_fx []
@@ -47,7 +44,7 @@ defmodule Waveform.Track do
 
       container_group =
         Enum.reduce(unquote(fx), container_group, fn {name, options}, acc ->
-          container_group |> FX.add_fx(name, options)
+          acc |> FX.add_fx(name, options)
         end)
 
       unquote(function_definition)

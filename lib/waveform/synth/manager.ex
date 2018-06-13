@@ -65,7 +65,7 @@ defmodule Waveform.Synth.Manager do
     current_name = GenServer.call(@me, {:current})
 
     {name, _} =
-      Enum.find(@synth_names, fn {key, value} ->
+      Enum.find(@synth_names, fn {_key, value} ->
         value == current_name
       end)
 
@@ -77,7 +77,7 @@ defmodule Waveform.Synth.Manager do
   end
 
   def start_link(_state) do
-    GenServer.start_link(@me, default_state, name: @me)
+    GenServer.start_link(@me, default_state(), name: @me)
   end
 
   def init(state) do
@@ -100,12 +100,8 @@ defmodule Waveform.Synth.Manager do
     {:reply, current, state}
   end
 
-  def handle_call({:reset}, _from, state) do
-    {:reply, :ok, default_state}
-  end
-
-  defp default_state do
-    %State{current: [@default_synth]}
+  def handle_call({:reset}, _from, _state) do
+    {:reply, :ok, default_state()}
   end
 
   def handle_call({:rollback}, _from, %State{current: [h]} = state) do
@@ -114,5 +110,9 @@ defmodule Waveform.Synth.Manager do
 
   def handle_call({:rollback}, _from, %State{current: [h | t]} = state) do
     {:reply, h, %{state | current: t}}
+  end
+
+  defp default_state do
+    %State{current: [@default_synth]}
   end
 end

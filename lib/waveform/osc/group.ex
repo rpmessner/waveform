@@ -4,7 +4,6 @@ defmodule Waveform.OSC.Group do
   @me __MODULE__
   alias __MODULE__
 
-  alias Waveform.AudioBus, as: AudioBus
   alias Waveform.OSC.Node.ID, as: ID
   alias Waveform.OSC, as: OSC
 
@@ -56,26 +55,22 @@ defmodule Waveform.OSC.Group do
   end
 
   def chord_group(name) do
-    GenServer.call(@me, {:new_group, name, :chord_group, :head, synth_group(self()) || state().root_synth_group})
-  end
-
-  def chord_group(name, parent_group) do
-    GenServer.call(@me, {:new_group, name, :chord_group, :head, parent_group})
-  end
-
-  def fx_container_group(name, parent_group) do
     GenServer.call(
       @me,
-      {:new_group, name, :fx_container_group, :tail, AudioBus.next(), parent_group}
+      {:new_group, name, :chord_group, :head, synth_group(self()) || state().root_synth_group}
     )
   end
 
-  def fx_synth_group(name, container_group) do
-    GenServer.call(@me, {:new_group, name, :fx_synth_group, :head, container_group})
+  def chord_group(name, %Group{}=parent) do
+    GenServer.call(@me, {:new_group, name, :chord_group, :head, parent})
+  end
+
+  def fx_container_group(name, %Group{}=parent) do
+    GenServer.call(@me, {:new_group, name, :fx_container_group, :head, parent})
   end
 
   def track_container_group(name) do
-    GenServer.call(@me, {:new_group, name, :track_container_group, :head})
+    GenServer.call(@me, {:new_group, name, :track_container_group, :tail})
   end
 
   def start_link(_state) do
@@ -92,7 +87,7 @@ defmodule Waveform.OSC.Group do
 
   def handle_call({:restore_synth_group, pid}, _from, %State{active_synth_group: asg} = state) do
     [_ | t] = asg[pid] || []
-    asg = Map.put asg, pid, t
+    asg = Map.put(asg, pid, t)
     {:reply, {:ok, List.first(t)}, %{state | active_synth_group: asg}}
   end
 
@@ -104,9 +99,13 @@ defmodule Waveform.OSC.Group do
     {:reply, :ok, %{state | root_synth_group: group}}
   end
 
-  def handle_call({:activate_group, pid, %Group{} = g}, _from, %State{active_synth_group: asg} = state) do
+  def handle_call(
+        {:activate_group, pid, %Group{} = g},
+        _from,
+        %State{active_synth_group: asg} = state
+      ) do
     pid_groups = asg[pid] || []
-    asg = Map.put asg, pid, [g | pid_groups]
+    asg = Map.put(asg, pid, [g | pid_groups])
     {:reply, :ok, %{state | active_synth_group: asg}}
   end
 
@@ -119,7 +118,7 @@ defmodule Waveform.OSC.Group do
         _from,
         state
       ) do
-    new_group = %Group{out_bus: out_bus, name: name, type: type, id: ID.next(), parent: parent}
+    new_group = %Group{parent: parent, out_bus: out_bus, name: name, type: type, id: ID.next()}
 
     create_group(new_group.id, action, parent_id)
 
@@ -127,21 +126,24 @@ defmodule Waveform.OSC.Group do
   end
 
   def handle_call(
-        {:new_group, name, type, action, out_bus, %Group{id: parent_id, out_bus: in_bus} = parent},
+        {:new_group, name, type, action, out_bus,
+         %Group{id: parent_id, out_bus: in_bus} = parent},
         _from,
         state
       ) do
 
-    new_group =
-        %Group{out_bus: out_bus, in_bus: in_bus, name: name, type: type, id: ID.next(), parent: parent}
+    new_group = %Group{
+      parent: parent,
+      out_bus: out_bus,
+      in_bus: in_bus,
+      name: name,
+      type: type,
+      id: ID.next()
+    }
 
     create_group(new_group.id, action, parent_id)
 
     {:reply, new_group, state}
-  end
-
-  defp create_group(id, action, parent) do
-    OSC.new_group(id, action, parent)
   end
 
   def handle_call({:reset}, _from, _state) do
@@ -150,5 +152,9 @@ defmodule Waveform.OSC.Group do
 
   def handle_call({:state}, _from, state) do
     {:reply, state, state}
+  end
+
+  defp create_group(id, action, parent) do
+    OSC.new_group(id, action, parent)
   end
 end

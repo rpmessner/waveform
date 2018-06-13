@@ -5,10 +5,16 @@ defmodule Waveform.OSC.Node do
 
   defstruct(
     type: nil,
-    id: nil
+    id: nil,
+    out_bus: nil,
+    in_bus: nil
   )
 
-  def next_node do
+  def next_fx_node do
+    %Node{type: :fx, id: ID.next()}
+  end
+
+  def next_synth_node do
     %Node{type: :synth, id: ID.next()}
   end
 end
