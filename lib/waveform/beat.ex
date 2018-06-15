@@ -2,6 +2,7 @@ defmodule Waveform.Beat do
   use GenServer
 
   alias Waveform.OSC.Group, as: Group
+  alias Waveform.Synth.Manager, as: Manager
 
   alias __MODULE__
   @me __MODULE__
@@ -20,6 +21,7 @@ defmodule Waveform.Beat do
   defmodule Tick do
     defstruct(
       group: nil,
+      synth: nil,
       beats: 3,
       over: 4,
       name: nil,
@@ -31,15 +33,26 @@ defmodule Waveform.Beat do
       Beat.tick()
     end
 
-    def handle_callback(%Tick{group: group, over: _over, beats: _beats, func: func}, idx) do
+    def handle_callback(
+          %Tick{synth: synth, group: group, over: _over, beats: _beats, func: func},
+          idx
+        ) do
       counter = :os.perf_counter(1000)
 
       # IO.inspect({group, self(), "#{over} over #{beats}", idx, counter})
 
       if Beat.state().started do
+        if synth != nil do
+          Manager.set_current_synth(self(), synth)
+        end
+
         Group.activate_synth_group(self(), group)
         func.(%{beat: idx, counter: counter})
         Group.restore_synth_group(self())
+
+        if synth != nil do
+          Manager.use_last_synth(self())
+        end
       end
     end
   end
@@ -80,35 +93,44 @@ defmodule Waveform.Beat do
     GenServer.start_link(@me, %State{}, name: @me)
   end
 
-  def on_beat(beats, func) when is_integer(beats), do: on_beat(beats, beats, func)
+  def on_beat(beats, func) when is_integer(beats),
+    do: on_beat(beats: beats, over: beats, func: func)
 
-  def on_beat(name, beats, func) when is_atom(name), do: on_beat(name, beats, beats, func)
+  def on_beat(name, beats, func) when is_atom(name),
+    do: on_beat(name: name, beats: beats, over: beats, func: func)
 
-  def on_beat(over, beats, func) when is_integer(beats) do
-    GenServer.cast(@me, {:on_beat, nil, beats, over, func, nil})
-  end
+  def on_beat(over, beats, func) when is_integer(beats),
+    do: on_beat(beats: beats, over: beats, func: func)
 
-  def on_beat(name, over, beats, func) when is_atom(name) do
-    GenServer.cast(@me, {:on_beat, name, beats, over, func, nil})
-  end
+  def on_beat(name, over, beats, func) when is_atom(name),
+    do: on_beat(name: name, beats: beats, over: beats, func: func)
 
-  def on_beat(name, beats, func, %Group{} = group) when is_atom(name),
-    do: on_beat(name, beats, beats, func, group)
+  def on_beat(name, beats, func, group) when is_atom(name),
+    do: on_beat(name: name, beats: beats, over: beats, func: func, group: group)
 
-  def on_beat(name, over, beats, func, %Group{} = group) when is_integer(beats) do
-    GenServer.cast(@me, {:on_beat, name, beats, over, func, group})
+  def on_beat(options \\ []) do
+    GenServer.cast(@me, {
+      :on_beat,
+      options[:name],
+      options[:over],
+      options[:beats],
+      options[:func],
+      options[:group],
+      options[:synth]
+    })
   end
 
   def init(state) do
     {:ok, state}
   end
 
-  def handle_cast({:on_beat, name, beats, over, func, %Group{} = group}, state) do
+  def handle_cast({:on_beat, name, beats, over, func, group, synth}, state) do
     {:noreply,
      %{
        state
        | callbacks: [
-           %Tick{group: group, name: name, over: over, beats: beats, func: func} | state.callbacks
+           %Tick{group: group, name: name, over: over, beats: beats, func: func, synth: synth}
+           | state.callbacks
          ]
      }}
   end

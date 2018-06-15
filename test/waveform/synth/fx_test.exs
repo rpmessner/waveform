@@ -85,11 +85,11 @@ defmodule Waveform.Synth.FxTest do
                in_bus: ^bus_id_2,
                type: :track_container_group,
                children: [
-                 %Group{type: :fx_container_group, id: ^fx_group_id},
+                 %Group{type: :fx_container_group, id: ^fx_group_id}
                ],
                nodes: [
-                 %Node{in_bus: ^bus_id, id: ^synth_id},
-                 %Node{in_bus: ^bus_id_2, out_bus: ^bus_id, id: ^synth_id_2}
+                 %Node{in_bus: ^bus_id_2, out_bus: ^bus_id, id: ^synth_id_2},
+                 %Node{in_bus: ^bus_id, id: ^synth_id}
                ]
              } = parent
 

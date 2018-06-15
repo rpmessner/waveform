@@ -53,7 +53,11 @@ defmodule Waveform.Synth.FX do
     _add_fx(parent, type, options, nil, fxg)
   end
 
-  def add_fx(%Group{children: [%Group{}=fxg], nodes: [%Node{in_bus: out_bus} | _]} = parent, type, options) do
+  def add_fx(
+        %Group{children: [%Group{} = fxg], nodes: [%Node{in_bus: out_bus} | _]} = parent,
+        type,
+        options
+      ) do
     _add_fx(parent, type, options, out_bus, fxg)
   end
 
@@ -76,7 +80,7 @@ defmodule Waveform.Synth.FX do
 
       OSC.new_synth(name, synth_node.id, :head, fxg.id, options)
 
-      %{parent | children: [fxg], in_bus: in_bus, nodes: Enum.reverse [synth_node | nodes]}
+      %{parent | children: [fxg], in_bus: in_bus, nodes: [synth_node | nodes]}
     else
       parent
     end

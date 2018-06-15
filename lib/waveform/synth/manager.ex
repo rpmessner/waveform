@@ -43,26 +43,27 @@ defmodule Waveform.Synth.Manager do
     tri: 'sonic-pi-tri',
     zawa: 'sonic-pi-zawa'
   }
+  @default_synth_name :prophet
   @default_synth @synth_names[:prophet]
 
   defmodule State do
-    defstruct(current: [])
+    defstruct(current: %{})
   end
 
-  def use_last_synth() do
-    GenServer.call(@me, {:rollback})
+  def use_last_synth(pid) do
+    GenServer.call(@me, {:rollback, pid})
   end
 
   def reset() do
     GenServer.call(@me, {:reset})
   end
 
-  def set_current_synth(next) do
-    GenServer.call(@me, {:set_current, next})
+  def set_current_synth(pid, next) do
+    GenServer.call(@me, {:set_current, pid, next})
   end
 
-  def current_synth_name() do
-    current_name = GenServer.call(@me, {:current})
+  def current_synth_name(pid) do
+    current_name = GenServer.call(@me, {:current, pid})
 
     {name, _} =
       Enum.find(@synth_names, fn {_key, value} ->
@@ -72,8 +73,8 @@ defmodule Waveform.Synth.Manager do
     name
   end
 
-  def current_synth_value() do
-    GenServer.call(@me, {:current})
+  def current_synth_value(pid) do
+    GenServer.call(@me, {:current, pid})
   end
 
   def start_link(_state) do
@@ -84,18 +85,25 @@ defmodule Waveform.Synth.Manager do
     {:ok, state}
   end
 
-  def handle_call({:set_current, new}, _from, state) do
+  def handle_call({:set_current, pid, new}, _from, %State{current: current} = state) do
     name = @synth_names[new]
 
     if name do
-      {:reply, name, %{state | current: [name | state.current]}}
+      pid_synths = current[pid] || []
+      current = Map.put(current, pid, [name | pid_synths])
+      {:reply, name, %{state | current: current}}
     else
       {:reply, nil, state}
     end
   end
 
-  def handle_call({:current}, _from, state) do
-    [current | _] = state.current
+  def handle_call({:current, pid}, _from, state) do
+    current =
+      case state.current[pid] do
+        [current | _] -> current
+        [] -> @default_synth
+        nil -> @default_synth
+      end
 
     {:reply, current, state}
   end
@@ -104,15 +112,21 @@ defmodule Waveform.Synth.Manager do
     {:reply, :ok, default_state()}
   end
 
-  def handle_call({:rollback}, _from, %State{current: [h]} = state) do
-    {:reply, h, state}
-  end
+  def handle_call({:rollback, pid}, _from, %State{current: current} = state) do
+    case current[pid] do
+      [h | t] ->
+        current = Map.put(current, pid, t)
+        {:reply, h, %{state | current: current}}
 
-  def handle_call({:rollback}, _from, %State{current: [h | t]} = state) do
-    {:reply, h, %{state | current: t}}
+      [] ->
+        {:reply, nil, state}
+
+      nil ->
+        {:reply, nil, state}
+    end
   end
 
   defp default_state do
-    %State{current: [@default_synth]}
+    %State{current: %{}}
   end
 end

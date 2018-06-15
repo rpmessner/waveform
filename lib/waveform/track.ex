@@ -13,13 +13,14 @@ defmodule Waveform.Track do
       %{
         beats: options[:beats] || @default_beats,
         over: options[:over] || @default_over,
-        fx: options[:fx] || @default_fx
+        fx: options[:fx] || @default_fx,
+        synth: options[:synth]
       },
       body
     )
   end
 
-  defp make_track(name, %{over: over, beats: beats, fx: fx}, body) do
+  defp make_track(name, %{synth: synth, over: over, beats: beats, fx: fx}, body) do
     function_definition =
       case body do
         [{:->, _, _} | _] ->
@@ -50,11 +51,12 @@ defmodule Waveform.Track do
       unquote(function_definition)
 
       Beat.on_beat(
-        unquote(name),
-        unquote(beats),
-        unquote(over),
-        track_func,
-        container_group
+        func: track_func,
+        group: container_group,
+        name: unquote(name),
+        beats: unquote(beats),
+        over: unquote(over),
+        synth: unquote(synth)
       )
     end
   end

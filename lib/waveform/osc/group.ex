@@ -61,11 +61,11 @@ defmodule Waveform.OSC.Group do
     )
   end
 
-  def chord_group(name, %Group{}=parent) do
+  def chord_group(name, %Group{} = parent) do
     GenServer.call(@me, {:new_group, name, :chord_group, :head, parent})
   end
 
-  def fx_container_group(name, %Group{}=parent) do
+  def fx_container_group(name, %Group{} = parent) do
     GenServer.call(@me, {:new_group, name, :fx_container_group, :head, parent})
   end
 
@@ -131,7 +131,6 @@ defmodule Waveform.OSC.Group do
         _from,
         state
       ) do
-
     new_group = %Group{
       parent: parent,
       out_bus: out_bus,
