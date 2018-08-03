@@ -1,5 +1,6 @@
 defmodule Waveform.Music.Chord do
   alias Waveform.Music.Note, as: Note
+  alias Waveform.Music.Util, as: Util
   alias __MODULE__
 
   defstruct(
@@ -50,35 +51,14 @@ defmodule Waveform.Music.Chord do
     dim7: dim7
   }
 
-  @interval_steps %{
-    :"1P" => 0,
-    :"2m" => 1,
-    :"2M" => 2,
-    :"3m" => 3,
-    :"3M" => 4,
-    :"4P" => 5,
-    :"4A" => 6,
-    :"5b" => 6,
-    :"5P" => 7,
-    :"5A" => 8,
-    :"6m" => 8,
-    :"6M" => 9,
-    :"7bb" => 9,
-    :"7m" => 10,
-    :"7M" => 11,
-    :O => 12
-  }
-
-  @octave_steps @interval_steps[:O]
-
   def notes(%Chord{} = c) do
     @chord_qualities[c.quality]
     |> Enum.with_index()
     |> Enum.map(fn {interval, idx} ->
-      note = Note.to_midi(c.tonic) + @interval_steps[interval]
+      note = Note.to_midi(c.tonic) + Util.interval_steps()[interval]
 
       if idx < c.inversion do
-        note + @octave_steps
+        note + Util.octave_steps()
       else
         note
       end

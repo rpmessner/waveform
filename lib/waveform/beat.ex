@@ -13,7 +13,7 @@ defmodule Waveform.Beat do
       started: false,
       start_time: nil,
       tref: nil,
-      current_beat: 1,
+      current_beat: 0,
       callbacks: []
     )
   end
@@ -35,19 +35,20 @@ defmodule Waveform.Beat do
 
     def handle_callback(
           %Tick{synth: synth, group: group, over: _over, beats: _beats, func: func},
-          idx
+          idx,
+          beat
         ) do
       counter = :os.perf_counter(1000)
 
-      # IO.inspect({group, self(), "#{over} over #{beats}", idx, counter})
+      %State{started: started} = state = Beat.state()
 
-      if Beat.state().started do
+      if started do
         if synth != nil do
           Manager.set_current_synth(self(), synth)
         end
 
         Group.activate_synth_group(self(), group)
-        func.(%{beat: idx, counter: counter})
+        func.(%{beat: beat, measure_beat: idx, counter: counter})
         Group.restore_synth_group(self())
 
         if synth != nil do
@@ -179,7 +180,7 @@ defmodule Waveform.Beat do
             (beat_value * (beats / over) * idx)
             |> Float.round()
             |> Kernel.trunc()
-            |> :timer.apply_after(Tick, :handle_callback, [s, idx])
+            |> :timer.apply_after(Tick, :handle_callback, [s, idx, state.current_beat])
           end)
         end)
       end

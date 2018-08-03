@@ -6,6 +6,7 @@ defmodule Waveform.Application do
       {Waveform.AudioBus, nil},
       {Waveform.Beat, nil},
       {Waveform.Lang, nil},
+      {Waveform.Midi, nil},
       {Waveform.OSC, nil},
       {Waveform.OSC.Node.ID, 3},
       {Waveform.OSC.Group, nil},

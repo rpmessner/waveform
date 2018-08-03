@@ -160,7 +160,7 @@ defmodule Waveform.OSC do
   end
 
   defp osc(state, command) do
-    # IO.inspect({"osc send:", command})
+    IO.inspect({"osc send:", command})
     :ok = :gen_udp.send(state.socket, state.host, state.host_port, :osc.encode(command))
   end
 end

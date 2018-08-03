@@ -14,7 +14,7 @@ defmodule Waveform.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      applications: [:porcelain],
+      applications: [:porcelain, :portmidi],
       extra_applications: [:logger],
       mod: {Waveform.Application, []}
     ]
@@ -24,7 +24,8 @@ defmodule Waveform.MixProject do
   defp deps do
     [
       {:porcelain, "~> 2.0"},
-      {:mock, "~> 0.3.0", only: :test}
+      {:mock, "~> 0.3.0", only: :test},
+      {:portmidi, "~> 5.1.1"}
     ]
   end
 end
