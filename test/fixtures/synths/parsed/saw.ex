@@ -17,7 +17,7 @@
         4.0,
         5.0
       ],
-      name: "Waveform.Saw",
+      name: "Saw",
       param_names: ["note", "out_bus", "foo", "bar"],
       param_values: [
         # A 440

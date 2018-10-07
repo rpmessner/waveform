@@ -38,6 +38,7 @@ defmodule Waveform.Synth.Def do
 
   @ugens %{
     SinOsc: %{rate: 2, special: 0, outputs: [2]},
+    Saw: %{rate: 2, special: 0, outputs: [2]},
     Out: %{rate: 2, special: 0}
   }
 
@@ -199,10 +200,8 @@ defmodule Waveform.Synth.Def do
 
   defp parse_line(%Synth{} = synth, [line | rest]) do
     case line do
-      # {:=, _, assignment} ->
-
-      {:<-, _, [{output_name, _, nil}, assignment]} ->
-        parse_patch(synth, output_name, assignment)
+      {op, _, [{assign_name, _, nil}, expression]} when op in [:<-, :=] ->
+        parse_assignment(synth, assign_name, expression)
 
       _ ->
         IO.inspect(line)
@@ -211,16 +210,29 @@ defmodule Waveform.Synth.Def do
     |> parse_line(rest)
   end
 
-  defp parse_patch(
-         %Synth{
-           ugens: ugens,
-           constants: constants,
-           parameters: params,
-           assigns: assigns
-         } = synth,
-         output_name,
-         {:%, _, [{_, _, [ugen_name]}, {:%{}, _, options}]}
-       ) do
+  defp parse_assignment(%Synth{} = synth, output_name, expression) do
+    synth = %Synth{ugens: ugens, assigns: assigns} =
+      case expression do
+        {:%, _, ugen} ->
+          parse_ugen(synth, output_name, ugen)
+
+        _ ->
+          {synth, _} = parse_expression(synth, expression)
+          synth
+      end
+
+    assigns = Map.put(assigns, output_name, %{
+      ugen: List.last(ugens), index: Enum.count(ugens) - 1
+    })
+
+    %{synth | assigns: assigns}
+  end
+
+  defp parse_ugen(%Synth{assigns: assigns} = synth, output_name, [
+         {_, _, [ugen_name]},
+         {:%{}, _, options}
+       ]) do
+
     ugen_opts =
       Map.merge(
         %{name: to_string(ugen_name)},
@@ -236,89 +248,106 @@ defmodule Waveform.Synth.Def do
         constants: constants
       } = synth,
       _
-    } = parse_ugen({ugen, synth, options})
+    } = parse_ugen_options({ugen, synth, options})
 
-    index = Enum.count(ugens)
-    assigns = Map.put(assigns, output_name, %{ugen: ugen, index: index})
-
-    %{synth | ugens: ugens ++ [ugen], constants: constants, parameters: params, assigns: assigns}
+    %{synth | ugens: ugens ++ [ugen]}
   end
 
-  defp parse_ugen({%Ugen{} = ugen, %Synth{} = synth, []}), do: {ugen, synth, []}
+  defp parse_ugen_options({%Ugen{} = ugen, %Synth{} = synth, []}), do: {ugen, synth, []}
 
-  defp parse_ugen({
-         %Ugen{inputs: inputs} = ugen,
-         %Synth{constants: consts} = synth,
-         [{name, value} | rest_options]
-       })
-       when is_float(value) do
-    parse_ugen({
-      %{ugen | inputs: inputs ++ [%Ugen.Input{src: -1, constant_index: Enum.count(consts)}]},
-      %{synth | constants: consts ++ [value]},
-      rest_options
-    })
-  end
-
-  defp parse_ugen({
-         %Ugen{inputs: inputs} = ugen,
-         %Synth{assigns: assigns, parameters: params} = synth,
-         [{_name, {assign, _, nil}} = options | rest_options]
-       }) do
-    saved_assign = Map.get(assigns, assign)
-    saved_param = Map.get(params, assign)
-
-    options =
-      cond do
-        saved_assign ->
-          %{src: Map.get(saved_assign, :index), constant_index: 0}
-
-        saved_param ->
-          saved_param
-
-        true ->
-          raise "unknown constant #{assign} when parsing: #{Macro.to_string(options)}"
-      end
-
-    parse_ugen({
-      %{ugen | inputs: inputs ++ [struct(Ugen.Input, options)]},
-      synth,
-      rest_options
-    })
-  end
-
-  defp parse_ugen({
+  defp parse_ugen_options({
          %Ugen{inputs: inputs} = ugen,
          synth,
-         [expression | rest_options]
+         [{_, expression} | rest_options]
        }) do
 
-    synth = %Synth{ugens: ugens} = parse_expression(synth, expression)
+    {synth = %Synth{ugens: ugens}, input} = parse_expression(synth, expression)
 
-    index = Enum.count(ugens)
-
-    parse_ugen({
-      %{ugen | inputs: inputs ++ [%Input{constant_index: 0, src: index - 1}]},
+    parse_ugen_options({
+      %{ugen | inputs: inputs ++ [input]},
       synth,
       rest_options
     })
   end
 
-  def parse_expression(
-        %Synth{ugens: ugens, parameters: params} = synth,
-        {name, {operator, _, [{arg_name, _, _}]}}
+  defp assignment_input(name, assigns, params) do
+    saved_assign = Map.get(assigns, name)
+    saved_param = Map.get(params, name)
+
+    cond do
+      saved_assign ->
+        %Input{src: Map.get(saved_assign, :index), constant_index: 0}
+
+      saved_param ->
+        struct(Input, saved_param)
+
+      true ->
+        raise "unknown constant #{name}"
+    end
+  end
+
+  defp expression_input(%Synth{assigns: assigns, parameters: params}=synth, {arg_name, _, nil}) do
+    {synth, assignment_input(arg_name, assigns, params)}
+  end
+
+  defp expression_input(%Synth{constants: constants}=synth, arg)
+    when is_float(arg) or is_integer(arg) do
+
+    {
+      %{synth | constants: constants ++ [arg + 0.0]},
+      %Input{src: -1, constant_index: Enum.count(constants)}
+    }
+  end
+
+  defp parse_expression(
+        %Synth{ugens: ugens, assigns: assigns, parameters: params, constants: constants} = synth,
+        {operator, _, [arg1, arg2]}
+      )  do
+
+    {synth, input1} = expression_input(synth, arg1)
+    {synth, input2} = expression_input(synth, arg2)
+
+    special = Map.get(@binary_op_specials, operator)
+
+    operator = %Ugen{
+      rate: 1,
+      special: special,
+      inputs: [input1, input2],
+      outputs: [1],
+      name: "BinaryOpUgen"
+    }
+
+    {
+      %{synth | ugens: ugens ++ [operator]},
+      %Input{src: Enum.count(ugens), constant_index: 0}
+    }
+  end
+
+  defp parse_expression(
+        %Synth{ugens: ugens, assigns: assigns, parameters: params} = synth,
+        {operator, _, [arg]}
       ) do
-    options = Map.get(params, arg_name)
+
+    {synth, input} = expression_input(synth, arg)
+
     special = Map.get(@unary_op_specials, operator)
 
     operator = %Ugen{
       rate: 1,
       special: special,
-      inputs: [struct(Input, options)],
+      inputs: [input],
       outputs: [1],
       name: "UnaryOpUgen"
     }
 
-    %{synth | ugens: ugens ++ [operator]}
+    {
+      %{synth | ugens: ugens ++ [operator]},
+      %Input{src: Enum.count(ugens), constant_index: 0}
+    }
+  end
+
+  defp parse_expression(%Synth{} = synth, value) do
+    expression_input(synth, value)
   end
 
   def compile(%Def{} = data, version \\ 1) do
