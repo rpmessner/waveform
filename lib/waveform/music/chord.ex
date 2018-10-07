@@ -6,7 +6,8 @@ defmodule Waveform.Music.Chord do
   defstruct(
     tonic: :c4,
     quality: :major7,
-    inversion: 0
+    inversion: 0,
+    negative: false
   )
 
   maj = [:"1P", :"3M", :"5P"]

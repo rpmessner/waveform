@@ -10,8 +10,8 @@ defmodule Waveform.Synth.DefTest do
             |> Path.join("../../fixtures/")
             |> to_charlist
 
-  @synthdef "#{@fixtures}/beep.scsyndef"
-  @synthdata "#{@fixtures}/beep.ex"
+  @synthdef "#{@fixtures}/synths/compiled/beep.scsyndef"
+  @synthdata "#{@fixtures}/synths/compiled/beep.ex"
 
   test "compiles a synth def ast into binary" do
     {:ok, filepid} = File.open(@synthdef)
@@ -43,9 +43,47 @@ defmodule Waveform.Synth.DefTest do
     end)
   end
 
+  @sinosc "#{@fixtures}/synths/parsed/sinosc.ex"
+  @saw "#{@fixtures}/synths/parsed/saw.ex"
+
   test "compiles a synth def into %Def" do
-    synthdef =
-      defsynth Foo,
+    {%Subject{synthdefs: [expected]} = sinosc, _} =
+      @sinosc
+      |> File.read!()
+      |> Code.eval_string()
+
+    %Subject{
+      synthdefs: [
+        %Subject.Synth{
+          ugens: ugens,
+          constants: constants,
+          param_names: param_names,
+          param_values: param_values,
+          name: name
+        }
+      ]
+    } =
+      defsynth SinOscDef,
+        # midi A4
+        note: 69,
+        out_bus: 0,
+        compile: false do
+        sin_osc <- %SinOsc{freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0}
+        out <- %Out{out_bus: out_bus, mono: sin_osc}
+      end
+
+    # IO.inspect({sinosc, synthdef})
+
+    assert name == expected.name
+    assert ugens == expected.ugens
+    assert constants == expected.constants
+    assert param_names == expected.param_names
+    assert param_values == expected.param_values
+
+    expected = Subject.compile(sinosc)
+
+    compiled =
+      defsynth SinOscDef,
         # midi A4
         note: 69,
         out_bus: 0 do
@@ -53,68 +91,45 @@ defmodule Waveform.Synth.DefTest do
         out <- %Out{out_bus: out_bus, mono: sin_osc}
       end
 
-    assert %Subject{
-      synthdefs: [
-        %Subject.Synth{
-          constants: [
-            0.0, #phase
-            1.0, #mul
-            2.0, #add
-          ],
-          name: "Foo",
-          param_names: ["note","out_bus"],
-          params: [
-            69.0, #A 440
-            0.0 #out_bus
-          ],
-          ugens: [
-            %Subject.Ugen{
-              name: "Control",
-              inputs: [],
-              outputs: [
-                1,
-                1
-              ],
-              rate: 1, #lfo
-              special: 0,
-            },
-            %Subject.Ugen{
-              name: "UnaryOpUgen",
-              rate: 1,
-              special: 17,
-              inputs: [
-                 %Subject.Ugen.Input{src: 0, constant_index: 0}, #midi
-              ],
-              outputs: [
-                1
-              ]
-            },
-            %Subject.Ugen{
-               name: "SinOsc",
-               inputs: [
-                 %Subject.Ugen.Input{src: 1, constant_index: 0}, #freq
-                 %Subject.Ugen.Input{src: -1, constant_index: 0}, #phase
-                 %Subject.Ugen.Input{src: -1, constant_index: 1}, #mul
-                 %Subject.Ugen.Input{src: -1, constant_index: 2} #add
-               ],
-               rate: 2,
-               special: 0,
-               outputs: [2],
-             },
-             %Subject.Ugen{
-               inputs: [
-                 %Subject.Ugen.Input{constant_index: 1, src: 0}, #out_bus
-                 %Subject.Ugen.Input{constant_index: 0, src: 2}, #sin_osc out0
-               ],
-               name: "Out",
-               rate: 2, #hfo
-               special: 0
-             }
-           ]
-        }
-      ]
-    } = synthdef
+    assert expected == compiled
   end
+
+  # test "compiles a more complex synth def into %Def" do
+  #   {saw, _} =
+  #     @saw
+  #     |> File.read!()
+  #     |> Code.eval_string()
+
+  #   synthdef =
+  #     defsynth Saw,
+  #       # midi A4
+  #       note: 69,
+  #       out_bus: 0,
+  #       foo: 0,
+  #       bar: 0,
+  #       compile: false do
+
+  #       freq = midicps(note)
+  #       freq2 = freq * 2
+  #       sawfreq = if foo > 0.5, do: freq, else: freq2
+
+  #       saw <- %Saw{
+  #         freq: sawfreq,
+  #         phase: 0.0,
+  #         mul: 1.0,
+  #         add: 2.0
+  #       }
+
+  #       # pulse <- %Pulse{
+  #       #   freq: if bar > 0, do: midicps(note), else: midicps(note * 2.0)
+  #       #   mul: 3.0,
+  #       #   add: 4.0
+  #       # }
+  #       out <- %Out{out_bus: out_bus, mono: sin_osc}
+  #     end
+
+  #   assert synthdef = saw
+  # end
 
   # test "compiles synth with submodules into ast" do
   #   defsubmodule Bar(

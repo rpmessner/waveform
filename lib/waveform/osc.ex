@@ -17,9 +17,11 @@ defmodule Waveform.OSC do
   @g_deepFree '/g_deepFree'
   @g_freeAll '/g_freeAll'
   @notify '/notify'
+  @d_load '/d_load'
+  @d_recv '/d_recv'
   @d_loadDir '/d_loadDir'
   @n_go '/n_go'
-  # @n_end '/n_end'
+  @n_end '/n_end'
   @server_info '/sonic-pi/server-info'
 
   @server_info_synth 'sonic-pi-server-info'
@@ -52,6 +54,10 @@ defmodule Waveform.OSC do
   def setup do
     load_synthdefs()
     request_notifications()
+  end
+
+  def send_synthdef(bytes) do
+    send_command([@d_recv, bytes])
   end
 
   def new_synth(name, id, action, group_id, args) do
