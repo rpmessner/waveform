@@ -47,7 +47,11 @@ defmodule Waveform.Synth.Manager do
   @default_synth @synth_names[:prophet]
 
   defmodule State do
-    defstruct(current: %{})
+    defstruct(user_defined: %{}, current: %{})
+  end
+
+  def create_synth(name, bytes) do
+    GenServer.call(@me, {:create, name, bytes})
   end
 
   def use_last_synth(pid) do
@@ -85,8 +89,8 @@ defmodule Waveform.Synth.Manager do
     {:ok, state}
   end
 
-  def handle_call({:set_current, pid, new}, _from, %State{current: current} = state) do
-    name = @synth_names[new]
+  def handle_call({:set_current, pid, new}, _from, %State{user_defined: ud, current: current} = state) do
+    name = ud[new] || @synth_names[new]
 
     if name do
       pid_synths = current[pid] || []
@@ -95,6 +99,11 @@ defmodule Waveform.Synth.Manager do
     else
       {:reply, nil, state}
     end
+  end
+
+  def handle_call({:create, name, bytes}, _from, %State{user_defined: ud} = state) do
+    OSC.send_synthdef(bytes)
+    %{ state | user_defined: Map.put(ud, :"#{Recase.to_snake(name)}", name) }
   end
 
   def handle_call({:current, pid}, _from, state) do

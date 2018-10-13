@@ -12,16 +12,21 @@ defmodule Waveform.OSC do
                 |> Path.join("../../synthdefs/compiled")
                 |> to_charlist
 
+  @user_synth_folder __ENV__.file
+                |> Path.dirname()
+                |> Path.join("../../user_synthdefs/compiled")
+                |> to_charlist
+
   @s_new '/s_new'
   @g_new '/g_new'
   @g_deepFree '/g_deepFree'
   @g_freeAll '/g_freeAll'
   @notify '/notify'
-  @d_load '/d_load'
+  # @d_load '/d_load'
   @d_recv '/d_recv'
   @d_loadDir '/d_loadDir'
   @n_go '/n_go'
-  @n_end '/n_end'
+  # @n_end '/n_end'
   @server_info '/sonic-pi/server-info'
 
   @server_info_synth 'sonic-pi-server-info'
@@ -37,7 +42,8 @@ defmodule Waveform.OSC do
     before: 2,
     # add the new group just after the node specified by the add target ID.
     after: 3,
-    # the new node replaces the node specified by the add target ID. The target node is freed.
+    # the new node replaces the node specified by the add target ID.
+    # The target node is freed.
     replace: 4
   }
 
@@ -54,6 +60,12 @@ defmodule Waveform.OSC do
   def setup do
     load_synthdefs()
     request_notifications()
+  end
+
+  def save_synthdef(name, bytes) do
+    path = Path.join(@user_synth_folder, "#{name}.scsyndef")
+    IO.inspect({@user_synth_folder, name, path});
+    File.write(path, bytes)
   end
 
   def send_synthdef(bytes) do
@@ -88,6 +100,10 @@ defmodule Waveform.OSC do
   def request_server_info() do
     new_group(@synth_info_group, 0, 0)
     send_command([@s_new, @server_info_synth, @synth_info_node, 0, @synth_info_group])
+  end
+
+  def load_user_synthdefs do
+    send_command([@d_loadDir, @user_synth_folder])
   end
 
   def load_synthdefs do
@@ -132,7 +148,7 @@ defmodule Waveform.OSC do
       {:ok, {_ip, _port, the_message}} ->
         message = :osc.decode(the_message)
 
-        # IO.inspect({"osc message:", message})
+        IO.inspect({"osc receieve:", message})
 
         case message do
           {:cmd, [@server_info, _id, _ | response]} ->
@@ -166,7 +182,7 @@ defmodule Waveform.OSC do
   end
 
   defp osc(state, command) do
-    # IO.inspect({"osc send:", command})
+    IO.inspect({"osc send:", command})
     :ok = :gen_udp.send(state.socket, state.host, state.host_port, :osc.encode(command))
   end
 end

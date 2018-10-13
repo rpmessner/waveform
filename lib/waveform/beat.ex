@@ -40,7 +40,7 @@ defmodule Waveform.Beat do
         ) do
       counter = :os.perf_counter(1000)
 
-      %State{started: started} = state = Beat.state()
+      %State{started: started} = _state = Beat.state()
 
       if started do
         if synth != nil do
@@ -100,14 +100,15 @@ defmodule Waveform.Beat do
   def on_beat(name, beats, func) when is_atom(name),
     do: on_beat(name: name, beats: beats, over: beats, func: func)
 
-  def on_beat(over, beats, func) when is_integer(beats),
-    do: on_beat(beats: beats, over: beats, func: func)
+  def on_beat(over, beats, func) when is_integer(over) and is_integer(beats),
+    do: on_beat(beats: beats, over: over, func: func)
 
   def on_beat(name, over, beats, func) when is_atom(name),
-    do: on_beat(name: name, beats: beats, over: beats, func: func)
+    do: on_beat(name: name, beats: beats, over: over, func: func)
 
-  def on_beat(name, beats, func, group) when is_atom(name),
-    do: on_beat(name: name, beats: beats, over: beats, func: func, group: group)
+  def on_beat(name, beats, func, group)
+      when is_integer(beats) and is_function(func) and is_atom(name),
+      do: on_beat(name: name, beats: beats, over: beats, func: func, group: group)
 
   def on_beat(options \\ []) do
     GenServer.cast(@me, {

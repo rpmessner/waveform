@@ -20,7 +20,7 @@ defmodule Waveform.Music.Form do
   default_inversion = 0
 
   @default_inversion default_inversion
-  @default_octave default_octave
+  # @default_octave default_octave
 
   defstruct(
     bpm: default_bpm,
@@ -118,7 +118,7 @@ defmodule Waveform.Music.Form do
   def chord_at(%Form{} = form, options) do
     %Form{bpm: bpm, measures: measures, key: key, octave: octave} = form
 
-    total_beats = bpm * Enum.count(List.flatten(measures))
+    # total_beats = bpm * Enum.count(List.flatten(measures))
 
     beat = options[:beat] || 0
     measure_beat = if beat == bpm, do: beat, else: rem(beat, bpm)
@@ -136,7 +136,6 @@ defmodule Waveform.Music.Form do
     measure = Enum.at(measures, opts.measure)
 
     %Measure{quality: quality, roman: roman, transpose: transpose} =
-      m =
       case measure do
         %Measure{} = m ->
           m

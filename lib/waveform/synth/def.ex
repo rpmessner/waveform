@@ -1,17 +1,22 @@
 defmodule Waveform.Synth.Def do
-  alias __MODULE__
+  alias Waveform.Synth.Def.Submodule, as: Submodule
   alias Waveform.OSC, as: OSC
+
+  alias __MODULE__
 
   defstruct(synthdefs: [])
 
   defmodule Synth do
     defstruct(
+      # outputted to .synthdef
       name: nil,
       constants: [],
       param_values: [],
       param_names: [],
       ugens: [],
       variants: [],
+
+      # internal state
       parameters: %{},
       assigns: %{}
     )
@@ -54,7 +59,7 @@ defmodule Waveform.Synth.Def do
     modulo: 5,
     %: 5,
     eq: 6,
-    =: 6,
+    ==: 6,
     lt: 8,
     <: 8,
     gt: 9,
@@ -99,6 +104,7 @@ defmodule Waveform.Synth.Def do
 
   @unary_op_specials %{
     neg: 0,
+    -: 0,
     notpos: 1,
     abs: 5,
     ceil: 8,
@@ -111,6 +117,7 @@ defmodule Waveform.Synth.Def do
     exp: 15,
     reciprocal: 16,
     midicps: 17,
+    to_htz: 17,
     cpsmidi: 18,
     midiratio: 19,
     ratiomidi: 20,
@@ -148,26 +155,32 @@ defmodule Waveform.Synth.Def do
     scurve: 53
   }
 
+  defmacro defsubmodule({_, _, [name]}, params, do: {:__block__, _, submodule_forms}) do
+    Submodule.define(name, params, submodule_forms)
+  end
+
   defmacro defsynth({_, _, [name]}, params, do: {:__block__, _, ugen_forms}) do
-    compile = Keyword.get(params, :compile)
-    compile = if compile == nil, do: true, else: compile
-    params = Keyword.delete(params, :compile)
+    name = parse_synthdef_name(name)
 
-    synthdef = parse_synthdef(name, params, ugen_forms, %Def{})
+    %Def{} = synthdef = parse_synthdef(name, params, ugen_forms, %Def{})
 
-    if !compile do
-      quote do
-        unquote(Macro.escape(synthdef))
-      end
-    else
-      compile(synthdef)
+
+    compiled = compile(synthdef)
+    Manager.create_synth(name, compiled)
+
+    quote do
+      { unquote(Macro.escape(synthdef)), unquote(compiled) }
     end
+  end
+
+  def parse_synthdef_name(name) do
+    to_string(name) |> String.split() |> List.last() |> Recase.to_kebab()
   end
 
   def parse_synthdef(name, params, lines, %Def{synthdefs: synths} = sdef) do
     param_names = Keyword.keys(params) |> Enum.map(&to_string(&1))
     param_values = Keyword.values(params) |> Enum.map(&(&1 + 0.0))
-    control_outputs = Enum.map(param_values, &(1 || &1))
+    control_outputs = Enum.map(param_values, fn _ -> 1 end)
 
     control = %Ugen{name: "Control", rate: 1, special: 0, outputs: control_outputs}
 
@@ -175,14 +188,14 @@ defmodule Waveform.Synth.Def do
       Keyword.keys(params)
       |> Enum.with_index()
       |> Enum.map(fn {name, i} ->
-        {name, %{src: 0, constant_index: i}}
+        {name, %Input{src: 0, constant_index: i}}
       end)
       |> Enum.into(%{})
 
     synth =
       parse_line(
         %Synth{
-          name: to_string(name) |> String.split() |> List.last(),
+          name: name,
           constants: [],
           param_names: param_names,
           param_values: param_values,
@@ -204,49 +217,65 @@ defmodule Waveform.Synth.Def do
         parse_assignment(synth, assign_name, expression)
 
       _ ->
-        IO.inspect(line)
         raise "cannot parse line #{Macro.to_string(line)}"
     end
     |> parse_line(rest)
   end
 
   defp parse_assignment(%Synth{} = synth, output_name, expression) do
-    synth = %Synth{ugens: ugens, assigns: assigns} =
+    {%Synth{assigns: assigns} = synth, input} =
       case expression do
-        {:%, _, ugen} ->
-          parse_ugen(synth, output_name, ugen)
+        {:%, _, _} = ugen ->
+          synth = parse_ugen(synth, ugen)
+
+          {
+            synth,
+            %Input{src: Enum.count(synth.ugens) - 1, constant_index: 0}
+          }
 
         _ ->
-          {synth, _} = parse_expression(synth, expression)
-          synth
+          parse_expression(synth, expression)
       end
 
-    assigns = Map.put(assigns, output_name, %{
-      ugen: List.last(ugens), index: Enum.count(ugens) - 1
-    })
+    assigns = Map.put(assigns, output_name, input)
 
     %{synth | assigns: assigns}
   end
 
-  defp parse_ugen(%Synth{assigns: assigns} = synth, output_name, [
-         {_, _, [ugen_name]},
-         {:%{}, _, options}
-       ]) do
+  defp parse_ugen_name(ugen_name) do
+    {ugen_name, ugen_opts} = case ugen_name do
+      {_, _, [name]} -> {name, Map.get(@ugens, name) || %{}}
+      _ -> raise "can't parse #{Macro.to_string(ugen_name)}"
+    end
+
+
+    # unless ugen_opts do
+    #   raise "unknown ugen: %#{to_string(ugen_name)}{}"
+    # end
 
     ugen_opts =
       Map.merge(
         %{name: to_string(ugen_name)},
-        Map.get(@ugens, ugen_name)
+        ugen_opts
       )
 
     ugen = struct(Ugen, ugen_opts)
+  end
+
+  defp parse_ugen(
+         %Synth{} = synth,
+         {:%, _,
+          [
+            ugen_name,
+            {:%{}, _, options}
+          ]} = ugen
+       ) do
+
+    ugen = parse_ugen_name(ugen_name)
 
     {
       ugen,
-      %Synth{
-        ugens: ugens,
-        constants: constants
-      } = synth,
+      %Synth{ugens: ugens} = synth,
       _
     } = parse_ugen_options({ugen, synth, options})
 
@@ -260,8 +289,7 @@ defmodule Waveform.Synth.Def do
          synth,
          [{_, expression} | rest_options]
        }) do
-
-    {synth = %Synth{ugens: ugens}, input} = parse_expression(synth, expression)
+    {%Synth{} = synth, input} = parse_expression(synth, expression)
 
     parse_ugen_options({
       %{ugen | inputs: inputs ++ [input]},
@@ -275,24 +303,21 @@ defmodule Waveform.Synth.Def do
     saved_param = Map.get(params, name)
 
     cond do
-      saved_assign ->
-        %Input{src: Map.get(saved_assign, :index), constant_index: 0}
-
-      saved_param ->
-        struct(Input, saved_param)
-
-      true ->
-        raise "unknown constant #{name}"
+      saved_assign -> saved_assign
+      saved_param -> saved_param
+      true -> raise "unknown constant #{name}"
     end
   end
 
-  defp expression_input(%Synth{assigns: assigns, parameters: params}=synth, {arg_name, _, nil}) do
+  defp expression_input(
+         %Synth{assigns: assigns, parameters: params} = synth,
+         {arg_name, _, nil}
+       ) do
     {synth, assignment_input(arg_name, assigns, params)}
   end
 
-  defp expression_input(%Synth{constants: constants}=synth, arg)
-    when is_float(arg) or is_integer(arg) do
-
+  defp expression_input(%Synth{constants: constants} = synth, arg)
+       when is_float(arg) or is_integer(arg) do
     {
       %{synth | constants: constants ++ [arg + 0.0]},
       %Input{src: -1, constant_index: Enum.count(constants)}
@@ -300,21 +325,48 @@ defmodule Waveform.Synth.Def do
   end
 
   defp parse_expression(
-        %Synth{ugens: ugens, assigns: assigns, parameters: params, constants: constants} = synth,
-        {operator, _, [arg1, arg2]}
-      )  do
+         %Synth{} = synth,
+         {:if, _, [condition, [do: arg1, else: arg2]]}
+       ) do
+    {synth, input1} = parse_expression(synth, condition)
+    {synth, input2} = parse_expression(synth, arg1)
+    {synth, input3} = parse_expression(synth, arg2)
 
-    {synth, input1} = expression_input(synth, arg1)
-    {synth, input2} = expression_input(synth, arg2)
+    operator = %Ugen{
+      rate: 1,
+      special: 0,
+      inputs: [input1, input2, input3],
+      outputs: [1],
+      name: "Select"
+    }
 
+    {
+      %{synth | ugens: synth.ugens ++ [operator]},
+      %Input{src: Enum.count(synth.ugens), constant_index: 0}
+    }
+  end
+
+  defp parse_expression(
+         %Synth{ugens: ugens} = synth,
+         {operator, _, [arg1, arg2]} = expression
+       ) do
     special = Map.get(@binary_op_specials, operator)
+
+    if special == nil do
+      raise "unknown operator #{operator} when parsing #{Macro.to_string(expression)}"
+    end
+
+    {synth, input1} = parse_expression(synth, arg1)
+    {synth, input2} = parse_expression(synth, arg2)
+
+    # IO.inspect({Macro.to_string(expression), expression, input1, input2})
 
     operator = %Ugen{
       rate: 1,
       special: special,
       inputs: [input1, input2],
       outputs: [1],
-      name: "BinaryOpUgen"
+      name: "BinaryOpUGen"
     }
 
     {
@@ -324,20 +376,23 @@ defmodule Waveform.Synth.Def do
   end
 
   defp parse_expression(
-        %Synth{ugens: ugens, assigns: assigns, parameters: params} = synth,
-        {operator, _, [arg]}
-      ) do
-
-    {synth, input} = expression_input(synth, arg)
-
+         %Synth{ugens: ugens} = synth,
+         {operator, _, [arg]} = expression
+       ) do
     special = Map.get(@unary_op_specials, operator)
+
+    if special == nil do
+      raise "unknown operator #{operator} when parsing #{Macro.to_string(expression)}"
+    end
+
+    {synth, input} = parse_expression(synth, arg)
 
     operator = %Ugen{
       rate: 1,
       special: special,
       inputs: [input],
       outputs: [1],
-      name: "UnaryOpUgen"
+      name: "UnaryOpUGen"
     }
 
     {
@@ -346,8 +401,17 @@ defmodule Waveform.Synth.Def do
     }
   end
 
-  defp parse_expression(%Synth{} = synth, value) do
+  defp parse_expression(%Synth{} = synth, {_, _, nil} = value) do
     expression_input(synth, value)
+  end
+
+  defp parse_expression(%Synth{} = synth, value)
+       when is_float(value) or is_integer(value) do
+    expression_input(synth, value)
+  end
+
+  defp parse_expression(%Synth{}, value) do
+    raise "Cannot parse expression #{Macro.to_string(value)}"
   end
 
   def compile(%Def{} = data, version \\ 1) do
@@ -379,7 +443,7 @@ defmodule Waveform.Synth.Def do
   defp num_outputs(%Ugen{outputs: outputs}, 2), do: <<Enum.count(outputs)::size(32)>>
   defp num_outputs(%Ugen{outputs: outputs}, 1), do: <<Enum.count(outputs)::size(16)>>
 
-  defp definitions(%Def{synthdefs: [synthdefs | rest]}, version) do
+  defp definitions(%Def{synthdefs: [synthdefs | _rest]}, version) do
     Enum.reduce([synthdefs], "", fn %Synth{name: name} = synth, acc ->
       acc <>
         <<String.length(name)>> <>

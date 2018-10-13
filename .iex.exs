@@ -19,3 +19,7 @@ alias Waveform.Synth.Manager, as: SynthManager
 
 alias Waveform.Track, as: Track
 
+alias Waveform.Synth.Def, as: Def
+
+require Def
+import Def

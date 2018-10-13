@@ -84,6 +84,15 @@ encode_string(S) ->
   3 -> [S,0]
     end.
 
+encode_binary(S) ->
+    %% pad to 4 byte boundary
+    case length(S) rem 4 of
+  0 -> [S];
+  1 -> [S, 0, 0, 0];
+  2 -> [S, 0, 0];
+  3 -> [S, 0]
+    end.
+
 encode_flags(L) when is_list(L) ->
     %% flags starts with , and is terminated with a zero
     %% so it's really a string :-)
@@ -95,13 +104,20 @@ encode_flag({time,_})             -> $t;
 encode_flag(I) when is_integer(I) -> $i;
 encode_flag(X) when is_list(X)    -> $s;
 encode_flag(X) when is_atom(X)    -> $s;
-encode_flag(X) when is_float(X)   -> $f.
+encode_flag(X) when is_float(X)   -> $f;
+encode_flag(X) when is_binary(X)  -> $b.
 
 encode_arg(X) when is_list(X)    -> encode_string(X);
 encode_arg(X) when is_atom(X)    -> encode_string(atom_to_list(X));
 encode_arg(X) when is_integer(X) -> <<X:32>>;
 encode_arg(X) when is_float(X)   -> <<X:32/float>>; %
-encode_arg({int64,X})            -> <<X:64/unsigned-little-integer>>.
+encode_arg({int64,X})            -> <<X:64/unsigned-little-integer>>;
+encode_arg(X) when is_binary(X)  -> 
+  BinList = binary:bin_to_list(X),
+  L = length(BinList),
+  Length = <<L:32>>,
+  Data = encode_binary(BinList),
+  lists:flatten([Length, Data]).
 
 %% bundles
 

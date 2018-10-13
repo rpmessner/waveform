@@ -24,6 +24,7 @@ defmodule Waveform.MixProject do
   defp deps do
     [
       {:porcelain, "~> 2.0"},
+      {:recase, "~> 0.2"},
       {:mock, "~> 0.3.0", only: :test},
       {:portmidi, "~> 5.1.1"}
     ]

@@ -40,7 +40,7 @@ defmodule Waveform.Midi do
 
   defp midi_receive(input, state) do
     receive do
-      {^input, [{event, time}]} ->
+      {^input, [{event, _time}]} ->
         Enum.map(state.callbacks, fn callback ->
           callback.(event)
         end)

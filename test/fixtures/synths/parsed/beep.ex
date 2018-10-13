@@ -1,7 +1,7 @@
 %Waveform.Synth.Def{
   synthdefs: [
     %Waveform.Synth.Def.Synth{
-      name: "sonic-pi-beep",
+      name: "waveform-beep",
       constants: [
         0.0,
         0.0,

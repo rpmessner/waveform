@@ -12,12 +12,12 @@
         # saw mul
         1.0,
         # saw add
-        2.0,
-        3.0,
-        4.0,
-        5.0
+        2.0
+        # 3.0,
+        # 4.0,
+        # 5.0
       ],
-      name: "Saw",
+      name: "saw-def",
       param_names: ["note", "out_bus", "foo", "bar"],
       param_values: [
         # A 440
@@ -48,7 +48,7 @@
         # 1
         # midicps(note)
         %Waveform.Synth.Def.Ugen{
-          name: "UnaryOpUgen",
+          name: "UnaryOpUGen",
           rate: 1,
           special: 17,
           inputs: [
@@ -59,7 +59,7 @@
         },
 
         # 2
-        # freq * 2
+        # freq * 2.0
         %Waveform.Synth.Def.Ugen{
           name: "BinaryOpUGen",
           rate: 1,
@@ -94,6 +94,7 @@
             %Waveform.Synth.Def.Ugen.Input{src: 2, constant_index: 0}
           ],
           rate: 1,
+          special: 0,
           outputs: [1]
         },
 
@@ -119,18 +120,20 @@
         # 6
         # out <- %Out{}
         %Waveform.Synth.Def.Ugen{
+          name: "Out",
+          rate: 2,
+          special: 0,
+          outputs: [],
           inputs: [
             # out_bus
             %Waveform.Synth.Def.Ugen.Input{constant_index: 1, src: 0},
             # sin_osc out0
-            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 2}
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 5},
           ],
-          name: "Out",
           # hfo
-          rate: 2,
-          special: 0
         }
-      ]
+      ],
+      variants: []
     }
   ]
 }

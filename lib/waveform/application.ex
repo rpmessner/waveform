@@ -10,8 +10,9 @@ defmodule Waveform.Application do
       {Waveform.OSC, nil},
       {Waveform.OSC.Node.ID, 3},
       {Waveform.OSC.Group, nil},
+      {Waveform.ServerInfo, nil},
       {Waveform.Synth.Manager, nil},
-      {Waveform.ServerInfo, nil}
+      {Waveform.Synth.Def.Submodule, nil}
     ]
 
     opts = [strategy: :one_for_one, name: Waveform.Supervisor]
