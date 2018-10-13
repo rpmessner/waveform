@@ -1,5 +1,6 @@
 defmodule Waveform.Synth.Manager do
   use GenServer
+  alias Waveform.OSC, as: OSC
 
   @me __MODULE__
 
@@ -67,18 +68,11 @@ defmodule Waveform.Synth.Manager do
   end
 
   def current_synth_name(pid) do
-    current_name = GenServer.call(@me, {:current, pid})
-
-    {name, _} =
-      Enum.find(@synth_names, fn {_key, value} ->
-        value == current_name
-      end)
-
-    name
+    GenServer.call(@me, {:current, pid})
   end
 
   def current_synth_value(pid) do
-    GenServer.call(@me, {:current, pid})
+    GenServer.call(@me, {:current_value, pid})
   end
 
   def start_link(_state) do
@@ -103,16 +97,41 @@ defmodule Waveform.Synth.Manager do
 
   def handle_call({:create, name, bytes}, _from, %State{user_defined: ud} = state) do
     OSC.send_synthdef(bytes)
-    %{ state | user_defined: Map.put(ud, :"#{Recase.to_snake(name)}", name) }
+    ud = Map.put(ud, :"#{Recase.to_snake(to_string(name))}", name)
+    state = %{ state | user_defined: ud }
+    {:reply, nil, state }
   end
 
-  def handle_call({:current, pid}, _from, state) do
-    current =
-      case state.current[pid] do
-        [current | _] -> current
-        [] -> @default_synth
-        nil -> @default_synth
-      end
+  defp synth_value(pid, %State{} = state) do
+    case state.current[pid] do
+      [current | _] -> current
+      [] -> @default_synth
+      nil -> @default_synth
+    end
+  end
+
+  defp synth_name(pid, %State{} = state) do
+    current = synth_value(pid, state)
+
+    {current, _} =
+      Enum.find(state.user_defined, fn {_key, value} ->
+        value == current
+      end) ||
+      Enum.find(@synth_names, fn {_key, value} ->
+        value == current
+      end)
+
+    current
+  end
+
+  def handle_call({:current_value, pid}, _from, %State{} = state) do
+    current = synth_value(pid, state)
+
+    {:reply, current, state}
+  end
+
+  def handle_call({:current, pid}, _from, %State{} = state) do
+    current = synth_name(pid, state)
 
     {:reply, current, state}
   end

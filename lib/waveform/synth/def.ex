@@ -1,5 +1,6 @@
 defmodule Waveform.Synth.Def do
   alias Waveform.Synth.Def.Submodule, as: Submodule
+  alias Waveform.Synth.Manager, as: Manager
   alias Waveform.OSC, as: OSC
 
   alias __MODULE__
