@@ -48,38 +48,30 @@ defmodule Waveform.Synth.DefTest do
   @sinosc "#{@fixtures}/synths/parsed/sinosc.ex"
   @saw "#{@fixtures}/synths/parsed/saw.ex"
 
-  test "compiles a synth def into %Def" do
-    {expected, _} =
-      @sinosc
-      |> File.read!()
-      |> Code.eval_string()
+  {sinosc, _} =
+    @sinosc
+    |> File.read!()
+    |> Code.eval_string()
+  @sinosc_def sinosc
 
-    {synthdef, compiled} =
+  test "compiles a synth def into %Def" do
+    assert_synthdef(@sinosc_def,
       defsynth SinOscDef,
         # midi A4
         note: 69,
         out_bus: 0 do
-        sin_osc <- %SinOsc{freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0}
+        sin_osc = %SinOsc{freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0}
         out <- %Out{out_bus: out_bus, mono: sin_osc}
-      end
-
-    assert_synthdef(
-      expected,
-      synthdef
-    )
-
-    expected = Subject.compile(expected)
-
-    assert expected == compiled
+      end)
   end
 
-  test "compiles a more complex synth def into %Def" do
-    { expected, _ } =
-      @saw
-      |> File.read!()
-      |> Code.eval_string()
+  { saw, _ } = @saw
+    |> File.read!()
+    |> Code.eval_string()
+  @saw_def saw
 
-    {synthdef, compiled} =
+  test "compiles a more complex synth def into %Def" do
+    assert_synthdef(@saw_def,
       defsynth SawDef,
         # midi A4
         note: 69,
@@ -92,7 +84,7 @@ defmodule Waveform.Synth.DefTest do
 
         sawfreq = if foo > 0.5, do: freq, else: freq2
 
-        saw <- %Saw{
+        saw = %Saw{
           freq: freq,
           phase: 0.0,
           mul: 1.0,
@@ -100,35 +92,19 @@ defmodule Waveform.Synth.DefTest do
         }
 
         out <- %Out{out_bus: out_bus, mono: saw}
-      end
-
-    assert_synthdef(
-      expected,
-      synthdef
-    )
-
-    expected = Subject.compile(expected)
-
-    assert expected == compiled
+      end)
   end
 
   test "compiles synth with submodules into %Def" do
-    {expected, _} =
-      @sinosc
-      |> File.read!()
-      |> Code.eval_string()
-
     defsubmodule AwesomeSubmodule, note: 69 do
       freq = midicps(note)
       out <- %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
     end
 
-    {synthdef, compiled} =
+    assert_synthdef(@sinosc_def,
       defsynth SinOscDef, note: 69, out_bus: 0 do
-        bar <- %AwesomeSubmodule{note: note}
+        bar = %AwesomeSubmodule{note: note}
         out <- %Out{out_bus: out_bus, mono: bar}
-      end
-
-    assert_synthdef synthdef, expected
+      end)
   end
 end
