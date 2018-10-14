@@ -65,6 +65,17 @@ defmodule Waveform.Synth.DefTest do
       end)
   end
 
+  test "compiles ar/kr syntax into %Def" do
+    assert_synthdef(@sinosc_def,
+      defsynth SinOscDef,
+        # midi A4
+        note: 69,
+        out_bus: 0 do
+        sin_osc = %SinOsc.ar{freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0}
+        out <- %Out{out_bus: out_bus, mono: sin_osc}
+      end)
+  end
+
   { saw, _ } = @saw
     |> File.read!()
     |> Code.eval_string()

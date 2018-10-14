@@ -257,10 +257,16 @@ defmodule Waveform.Synth.Def do
 
   defp parse_ugen_name(ugen_name) do
     {ugen_name, ugen_opts} = case ugen_name do
-      {_, _, [name]} -> {
-        name, Map.get(@ugens, name) || @kr
-      }
-      _ -> raise "can't parse #{Macro.to_string(ugen_name)}"
+      {:__aliases__, _, [name]} ->
+        { name, Map.get(@ugens, name) || @kr }
+
+      {{:., _, [{:__aliases__, _, [name]}, :kr]}, _, _} ->
+        { name, @kr }
+
+      {{:., _, [{:__aliases__, _, [name]}, :ar]}, _, _} ->
+        { name, @ar }
+
+      _ -> IO.inspect(ugen_name) && raise "can't parse #{Macro.to_string(ugen_name)}"
     end
 
     ugen_opts =
@@ -273,12 +279,14 @@ defmodule Waveform.Synth.Def do
   end
 
   defp parse_submodule(synth, name, options) do
-    {:__aliases__, _, [name]} = name
+    case name do
+      {:__aliases__, _, [name]} ->
+        submodule = Submodule.lookup(name)
 
-    submodule = Submodule.lookup(name)
-
-    if submodule do
-      parse_lines(synth, submodule.forms)
+        if submodule do
+          parse_lines(synth, submodule.forms)
+        end
+      _ -> nil
     end
   end
 

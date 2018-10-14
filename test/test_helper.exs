@@ -8,7 +8,7 @@ defmodule Waveform.Assertions do
     %Waveform.Synth.Def{synthdefs: [expected]} = synthdef
 
     assert actual.name == expected.name, "Name does not match"
-    assert actual.ugens == expected.ugens, "Ugens do not match"
+    assert actual.ugens == expected.ugens
     assert actual.constants == expected.constants, "Constants do not match"
     assert actual.param_names == expected.param_names, "Param names do not match"
     assert actual.param_values == expected.param_values, "Param values do not match"
