@@ -157,14 +157,17 @@ defmodule Waveform.Synth.Def do
   }
 
   defmacro defsubmodule({_, _, [name]}, params, do: {:__block__, _, submodule_forms}) do
-    Submodule.define(name, params, submodule_forms)
+    submodule = Submodule.define(name, params, submodule_forms)
+
+    quote do
+      unquote(Macro.escape(submodule))
+    end
   end
 
   defmacro defsynth({_, _, [name]}, params, do: {:__block__, _, ugen_forms}) do
     name = parse_synthdef_name(name)
 
     %Def{} = synthdef = parse_synthdef(name, params, ugen_forms, %Def{})
-
 
     compiled = compile(synthdef)
     Manager.create_synth(name, compiled)
@@ -180,7 +183,13 @@ defmodule Waveform.Synth.Def do
 
   def parse_synthdef(name, params, lines, %Def{synthdefs: synths} = sdef) do
     param_names = Keyword.keys(params) |> Enum.map(&to_string(&1))
-    param_values = Keyword.values(params) |> Enum.map(&(&1 + 0.0))
+    param_values = Keyword.values(params)
+
+    unless Enum.all?(param_values, &is_number(&1)) do
+      raise "Default param values must be numbers: #{Macro.to_string(params)}"
+    end
+
+    param_values = param_values |> Enum.map(&(&1 + 0.0))
     control_outputs = Enum.map(param_values, fn _ -> 1 end)
 
     control = %Ugen{name: "Control", rate: 1, special: 0, outputs: control_outputs}
@@ -194,7 +203,7 @@ defmodule Waveform.Synth.Def do
       |> Enum.into(%{})
 
     synth =
-      parse_line(
+      parse_lines(
         %Synth{
           name: name,
           constants: [],
@@ -210,9 +219,9 @@ defmodule Waveform.Synth.Def do
     %{sdef | synthdefs: [synth | synths]}
   end
 
-  defp parse_line(%Synth{} = synth, []), do: synth
+  defp parse_lines(%Synth{} = synth, []), do: synth
 
-  defp parse_line(%Synth{} = synth, [line | rest]) do
+  defp parse_lines(%Synth{} = synth, [line | rest]) do
     case line do
       {op, _, [{assign_name, _, nil}, expression]} when op in [:<-, :=] ->
         parse_assignment(synth, assign_name, expression)
@@ -220,7 +229,7 @@ defmodule Waveform.Synth.Def do
       _ ->
         raise "cannot parse line #{Macro.to_string(line)}"
     end
-    |> parse_line(rest)
+    |> parse_lines(rest)
   end
 
   defp parse_assignment(%Synth{} = synth, output_name, expression) do
@@ -243,16 +252,16 @@ defmodule Waveform.Synth.Def do
     %{synth | assigns: assigns}
   end
 
+  @kr %{outputs: [1], rate: 1, special: 0}
+  @ar  %{outputs: [2], rate: 2, special: 0}
+
   defp parse_ugen_name(ugen_name) do
     {ugen_name, ugen_opts} = case ugen_name do
-      {_, _, [name]} -> {name, Map.get(@ugens, name) || %{}}
+      {_, _, [name]} -> {
+        name, Map.get(@ugens, name) || @kr
+      }
       _ -> raise "can't parse #{Macro.to_string(ugen_name)}"
     end
-
-
-    # unless ugen_opts do
-    #   raise "unknown ugen: %#{to_string(ugen_name)}{}"
-    # end
 
     ugen_opts =
       Map.merge(
@@ -260,7 +269,17 @@ defmodule Waveform.Synth.Def do
         ugen_opts
       )
 
-    ugen = struct(Ugen, ugen_opts)
+    struct(Ugen, ugen_opts)
+  end
+
+  defp parse_submodule(synth, name, options) do
+    {:__aliases__, _, [name]} = name
+
+    submodule = Submodule.lookup(name)
+
+    if submodule do
+      parse_lines(synth, submodule.forms)
+    end
   end
 
   defp parse_ugen(
@@ -272,15 +291,17 @@ defmodule Waveform.Synth.Def do
           ]} = ugen
        ) do
 
-    ugen = parse_ugen_name(ugen_name)
-
-    {
-      ugen,
-      %Synth{ugens: ugens} = synth,
-      _
-    } = parse_ugen_options({ugen, synth, options})
-
-    %{synth | ugens: ugens ++ [ugen]}
+    case parse_submodule(synth, ugen_name, options) do
+      nil ->
+        ugen = parse_ugen_name(ugen_name)
+        {
+          ugen,
+          %Synth{ugens: ugens} = synth,
+          _
+        } = parse_ugen_options({ugen, synth, options})
+        %{synth | ugens: ugens ++ [ugen]}
+      synth -> synth
+    end
   end
 
   defp parse_ugen_options({%Ugen{} = ugen, %Synth{} = synth, []}), do: {ugen, synth, []}
@@ -459,7 +480,7 @@ defmodule Waveform.Synth.Def do
     end)
   end
 
-  defp ugens(%Synth{ugens: ugens}, version) do
+  defp ugens(%Synth{ugens: ugens}=s, version) do
     Enum.reduce(ugens, "", fn %Ugen{name: name, rate: rate, special: special} = u, acc ->
       acc <>
         <<String.length(name)>> <>

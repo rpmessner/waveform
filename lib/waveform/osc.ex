@@ -64,7 +64,6 @@ defmodule Waveform.OSC do
 
   def save_synthdef(name, bytes) do
     path = Path.join(@user_synth_folder, "#{name}.scsyndef")
-    IO.inspect({@user_synth_folder, name, path});
     File.write(path, bytes)
   end
 
@@ -148,7 +147,7 @@ defmodule Waveform.OSC do
       {:ok, {_ip, _port, the_message}} ->
         message = :osc.decode(the_message)
 
-        IO.inspect({"osc receieve:", message})
+        # IO.inspect({"osc receieve:", message})
 
         case message do
           {:cmd, [@server_info, _id, _ | response]} ->
@@ -182,7 +181,7 @@ defmodule Waveform.OSC do
   end
 
   defp osc(state, command) do
-    IO.inspect({"osc send:", command})
+    # IO.inspect({"osc send:", command})
     :ok = :gen_udp.send(state.socket, state.host, state.host_port, :osc.encode(command))
   end
 end

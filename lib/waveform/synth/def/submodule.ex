@@ -16,7 +16,10 @@ defmodule Waveform.Synth.Def.Submodule do
 
   def define(name, params, forms) do
     GenServer.call(@me, {:define, name, params, forms})
-    nil
+  end
+
+  def lookup(name) do
+    GenServer.call(@me, {:lookup, name})
   end
 
   def start_link(_state) do
@@ -25,6 +28,12 @@ defmodule Waveform.Synth.Def.Submodule do
 
   def init(state) do
     {:ok, state}
+  end
+
+  def handle_call({:lookup, name}, _from, %State{}=state) do
+    submodule = Map.get(state.submodules, name)
+
+    {:reply, submodule, state}
   end
 
   def handle_call({:define, name, params, forms}, _from, %State{}=state) do

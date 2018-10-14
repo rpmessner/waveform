@@ -30,8 +30,6 @@ defmodule Waveform.Synth.DefTest do
 
     compiled = Subject.compile(code)
 
-    {:ok, counter} = Agent.start(fn -> 0 end)
-
     chunk_size = 8
 
     expected_chunks =
@@ -40,12 +38,10 @@ defmodule Waveform.Synth.DefTest do
     actual_chunks =
       for <<actual::size(chunk_size) <- compiled>>, do: <<actual::size(chunk_size)>>
 
-    Enum.map(Enum.zip(expected_chunks, actual_chunks), fn {expected_byte, actual_byte} ->
-      idx = Agent.get(counter, fn state -> state end)
-
+    Enum.zip(expected_chunks, actual_chunks)
+    |> Enum.with_index()
+    |> Enum.map(fn {{expected_byte, actual_byte}, idx} ->
       assert {^idx, ^expected_byte} = {idx, actual_byte}
-
-      Agent.update(counter, &(&1 + 1))
     end)
   end
 
@@ -83,7 +79,6 @@ defmodule Waveform.Synth.DefTest do
       |> File.read!()
       |> Code.eval_string()
 
-
     {synthdef, compiled} =
       defsynth SawDef,
         # midi A4
@@ -117,22 +112,23 @@ defmodule Waveform.Synth.DefTest do
     assert expected == compiled
   end
 
-  # test "compiles synth with submodules into %Def" do
-  #   {expected, _} =
-  #     @sinosc
-  #     |> File.read!()
-  #     |> Code.eval_string()
+  test "compiles synth with submodules into %Def" do
+    {expected, _} =
+      @sinosc
+      |> File.read!()
+      |> Code.eval_string()
 
-  #   defsubmodule Bar, note: 69 do
-  #     freq = midicps(note)
-  #     out <- %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
-  #   end
+    defsubmodule AwesomeSubmodule, note: 69 do
+      freq = midicps(note)
+      out <- %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
+    end
 
-  #   assert_synthdef(expected,
-  #     defsynth Foo, note: 69, out_bus: 0, compile: false do
-  #       bar <- %Bar{note: note}
-  #       out <- %Out{out_bus: out_bus, mono: bar}
-  #     end
-  #   )
-  # end
+    {synthdef, compiled} =
+      defsynth SinOscDef, note: 69, out_bus: 0 do
+        bar <- %AwesomeSubmodule{note: note}
+        out <- %Out{out_bus: out_bus, mono: bar}
+      end
+
+    assert_synthdef synthdef, expected
+  end
 end
