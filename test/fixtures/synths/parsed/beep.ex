@@ -797,102 +797,133 @@
           rate: 1,
           special: 0,
           inputs: [
+            # 1.0 gate
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 3
             },
+            # 1.0 levelScale
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 3
             },
+            # levelBias 0.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 0
             },
+            # timeScale 1.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 3
             },
+            # done: :free - 2.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 2
             },
+
+            # -- shaped-adsr --
+            # 0.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 0
             },
+            # 4.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 6
             },
+            # -99.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 7
             },
+            # -99.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 7
             },
+            # attack_level: 1
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 16
             },
+            # attack: 0
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 12
             },
+            # env_curve: 0
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 19
             },
+            # 0.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 0
             },
+
+            # decay_level/sustain_level
             %Waveform.Synth.Def.Ugen.Input{
               src: 34,
               constant_index: 0
             },
+
+            # decay: 0
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 13
             },
+            # env_curve: 0
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 19
             },
+            # 0.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 0
             },
+
+            # sustain_level: 0
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 18
             },
+            # sustain: 0
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 14
             },
+            # env_curve: 0
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 19
             },
+            # 0.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 0
             },
+
+            # 0.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 0
             },
+            # release 1
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 15
             },
+            # env_curve: 0
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 19
             },
+            # 0.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 0

@@ -54,9 +54,15 @@ defsynth Beep, [
 
   snd = %SinOsc{freq: freq, phase: 0, mul: 1, add: 0}
 
-  envelope = shaped_adsr(
-    attack, decay, sustain, release,
-    attack_level, decay_level, sustain_level, env_curve
+  envelope = Util.envelope(
+    attack: attack,
+    decay: decay,
+    sustain: sustain,
+    release: release,
+    attack_level: attack_level,
+    decay_level: decay_level,
+    sustain_level: sustain_level,
+    env_curve: env_curve
   )
 
   env = %EnvGen.kr{envelope: envelope, action: :free}

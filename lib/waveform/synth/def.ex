@@ -1,7 +1,9 @@
 defmodule Waveform.Synth.Def do
   alias Waveform.Synth.Def.Submodule, as: Submodule
+  alias Waveform.Synth.Def.Compile, as: Compile
+  alias Waveform.Synth.Def.Expression, as: Expression
+
   alias Waveform.Synth.Manager, as: Manager
-  alias Waveform.OSC, as: OSC
 
   alias __MODULE__
 
@@ -25,11 +27,15 @@ defmodule Waveform.Synth.Def do
 
   defmodule Ugen do
     defstruct(
+      # outputted to .synthdef
       name: nil,
       rate: nil,
       special: nil,
       inputs: [],
-      outputs: []
+      outputs: [],
+
+      #internal state
+      arguments: []
     )
   end
 
@@ -42,119 +48,7 @@ defmodule Waveform.Synth.Def do
 
   alias Ugen.Input, as: Input
 
-  @ugens %{
-    SinOsc: %{rate: 2, special: 0, outputs: [2]},
-    Saw: %{rate: 2, special: 0, outputs: [2]},
-    Out: %{rate: 2, special: 0}
-  }
-
-  @binary_op_specials %{
-    add: 0,
-    +: 0,
-    sub: 1,
-    -: 1,
-    mul: 2,
-    *: 2,
-    div: 4,
-    /: 4,
-    modulo: 5,
-    %: 5,
-    eq: 6,
-    ==: 6,
-    lt: 8,
-    <: 8,
-    gt: 9,
-    >: 9,
-    lte: 10,
-    <=: 10,
-    gte: 11,
-    >=: 11,
-    min: 12,
-    max: 13,
-    and: 14,
-    or: 15,
-    xor: 16,
-    lcm: 17,
-    gcd: 18,
-    round: 19,
-    roundup: 20,
-    trunc: 21,
-    atan2: 22,
-    hypot: 23,
-    hypotapx: 24,
-    pow: 25,
-    expon: 25,
-    ^: 25,
-    ring1: 30,
-    ring2: 31,
-    ring3: 32,
-    ring4: 33,
-    difsqr: 34,
-    sumsqr: 35,
-    sqrsum: 36,
-    sqrdif: 37,
-    absdif: 38,
-    thresh: 39,
-    amclip: 40,
-    scaleneg: 41,
-    clip2: 42,
-    excess: 43,
-    fold2: 44,
-    wrap2: 45
-  }
-
-  @unary_op_specials %{
-    neg: 0,
-    -: 0,
-    notpos: 1,
-    abs: 5,
-    ceil: 8,
-    floor: 9,
-    frac: 10,
-    sign: 11,
-    squared: 12,
-    cubed: 13,
-    sqrt: 14,
-    exp: 15,
-    reciprocal: 16,
-    midicps: 17,
-    to_htz: 17,
-    cpsmidi: 18,
-    midiratio: 19,
-    ratiomidi: 20,
-    dbamp: 21,
-    ampdb: 22,
-    octcps: 23,
-    cpsoct: 24,
-    log: 25,
-    log2: 26,
-    log10: 27,
-    sin: 28,
-    cos: 29,
-    tan: 30,
-    asin: 31,
-    acos: 32,
-    atan: 33,
-    sinh: 34,
-    cosh: 35,
-    tanh: 36,
-    rand: 37,
-    rand2: 38,
-    linrand: 39,
-    bilinrand: 40,
-    sum3rand: 41,
-    distort: 42,
-    softclip: 43,
-    coin: 44,
-    silence: 46,
-    thru: 47,
-    rectWindow: 48,
-    hanWindow: 49,
-    welWindow: 50,
-    triWindow: 51,
-    ramp: 52,
-    scurve: 53
-  }
+  @ugens Def.Ugens.definitions
 
   defmacro defsubmodule({_, _, [name]}, params, do: {:__block__, _, submodule_forms}) do
     submodule = Submodule.define(name, params, submodule_forms)
@@ -169,7 +63,7 @@ defmodule Waveform.Synth.Def do
 
     %Def{} = synthdef = parse_synthdef(name, params, ugen_forms, %Def{})
 
-    compiled = compile(synthdef)
+    compiled = Compile.compile(synthdef)
     Manager.create_synth(name, compiled)
 
     quote do
@@ -183,7 +77,10 @@ defmodule Waveform.Synth.Def do
 
   def parse_synthdef(name, params, lines, %Def{synthdefs: synths} = sdef) do
     param_names = Keyword.keys(params) |> Enum.map(&to_string(&1))
-    param_values = Keyword.values(params)
+    param_values = Keyword.values(params) |> Enum.map(fn p ->
+      {result, _ } = Code.eval_quoted(p)
+      result
+    end)
 
     unless Enum.all?(param_values, &is_number(&1)) do
       raise "Default param values must be numbers: #{Macro.to_string(params)}"
@@ -244,7 +141,7 @@ defmodule Waveform.Synth.Def do
           }
 
         _ ->
-          parse_expression(synth, expression)
+          Expression.parse(synth, expression)
       end
 
     assigns = Map.put(assigns, output_name, input)
@@ -253,32 +150,46 @@ defmodule Waveform.Synth.Def do
   end
 
   @kr %{outputs: [1], rate: 1, special: 0}
-  @ar  %{outputs: [2], rate: 2, special: 0}
+  @ar %{outputs: [2], rate: 2, special: 0}
 
-  defp parse_ugen_name(ugen_name) do
-    {ugen_name, ugen_opts} = case ugen_name do
-      {:__aliases__, _, [name]} ->
-        { name, Map.get(@ugens, name) || @kr }
+  defp build_ugen(name, base), do: build_ugen(name, base, priority: :low)
+  defp build_ugen(name, base, priority: priority) do
+    ugen_def = Map.get(@ugens, name)
 
-      {{:., _, [{:__aliases__, _, [name]}, :kr]}, _, _} ->
-        { name, @kr }
+    unless ugen_def, do: raise "Unknown or unimplemented ugen #{name}"
 
-      {{:., _, [{:__aliases__, _, [name]}, :ar]}, _, _} ->
-        { name, @ar }
+    %{defaults: ugen_base, arguments: arguments} = ugen_def
+    ugen_name = %{name: to_string(name)}
 
-      _ -> IO.inspect(ugen_name) && raise "can't parse #{Macro.to_string(ugen_name)}"
+    options = if priority == :high do
+      [base, ugen_base, ugen_name]
+    else
+      [ugen_base, base, ugen_name]
     end
 
-    ugen_opts =
-      Map.merge(
-        %{name: to_string(ugen_name)},
-        ugen_opts
-      )
-
-    struct(Ugen, ugen_opts)
+    ugen = Enum.reduce(options, %{}, &Map.merge(&1, &2))
+    { ugen, arguments }
   end
 
-  defp parse_submodule(synth, name, options) do
+  defp parse_ugen_name(ugen_name) do
+    {ugen_opts, arguments} = case ugen_name do
+      {:__aliases__, _, [name]} ->
+        build_ugen(name, @kr)
+
+      {{:., _, [{:__aliases__, _, [name]}, :kr]}, _, _} ->
+        build_ugen(name, @kr, priority: :high)
+
+      {{:., _, [{:__aliases__, _, [name]}, :ar]}, _, _} ->
+        build_ugen(name, @ar, priority: :high)
+
+      _ ->
+        IO.inspect("error") && raise "can't parse #{Macro.to_string(ugen_name)}"
+    end
+
+    { struct(Ugen, ugen_opts), arguments }
+  end
+
+  defp parse_submodule(synth, name, _options) do
     case name do
       {:__aliases__, _, [name]} ->
         submodule = Submodule.lookup(name)
@@ -301,12 +212,20 @@ defmodule Waveform.Synth.Def do
 
     case parse_submodule(synth, ugen_name, options) do
       nil ->
-        ugen = parse_ugen_name(ugen_name)
+        { ugen, arguments } = parse_ugen_name(ugen_name)
+
+        # sort options by order of arguments list
+        options =
+          Enum.sort_by(options, fn {key, _value} ->
+            Enum.find_index(arguments, &(&1 == key))
+          end)
+
         {
           ugen,
           %Synth{ugens: ugens} = synth,
           _
         } = parse_ugen_options({ugen, synth, options})
+
         %{synth | ugens: ugens ++ [ugen]}
       synth -> synth
     end
@@ -319,229 +238,12 @@ defmodule Waveform.Synth.Def do
          synth,
          [{_, expression} | rest_options]
        }) do
-    {%Synth{} = synth, input} = parse_expression(synth, expression)
+    {%Synth{} = synth, input} = Expression.parse(synth, expression)
 
     parse_ugen_options({
-      %{ugen | inputs: inputs ++ [input]},
+      %{ugen | inputs: List.flatten(inputs ++ [input])},
       synth,
       rest_options
     })
-  end
-
-  defp assignment_input(name, assigns, params) do
-    saved_assign = Map.get(assigns, name)
-    saved_param = Map.get(params, name)
-
-    cond do
-      saved_assign -> saved_assign
-      saved_param -> saved_param
-      true -> raise "unknown constant #{name}"
-    end
-  end
-
-  defp expression_input(
-         %Synth{assigns: assigns, parameters: params} = synth,
-         {arg_name, _, nil}
-       ) do
-    {synth, assignment_input(arg_name, assigns, params)}
-  end
-
-  defp expression_input(%Synth{constants: constants} = synth, arg)
-       when is_float(arg) or is_integer(arg) do
-    {
-      %{synth | constants: constants ++ [arg + 0.0]},
-      %Input{src: -1, constant_index: Enum.count(constants)}
-    }
-  end
-
-  defp parse_expression(
-         %Synth{} = synth,
-         {:if, _, [condition, [do: arg1, else: arg2]]}
-       ) do
-    {synth, input1} = parse_expression(synth, condition)
-    {synth, input2} = parse_expression(synth, arg1)
-    {synth, input3} = parse_expression(synth, arg2)
-
-    operator = %Ugen{
-      rate: 1,
-      special: 0,
-      inputs: [input1, input2, input3],
-      outputs: [1],
-      name: "Select"
-    }
-
-    {
-      %{synth | ugens: synth.ugens ++ [operator]},
-      %Input{src: Enum.count(synth.ugens), constant_index: 0}
-    }
-  end
-
-  defp parse_expression(
-         %Synth{ugens: ugens} = synth,
-         {operator, _, [arg1, arg2]} = expression
-       ) do
-    special = Map.get(@binary_op_specials, operator)
-
-    if special == nil do
-      raise "unknown operator #{operator} when parsing #{Macro.to_string(expression)}"
-    end
-
-    {synth, input1} = parse_expression(synth, arg1)
-    {synth, input2} = parse_expression(synth, arg2)
-
-    # IO.inspect({Macro.to_string(expression), expression, input1, input2})
-
-    operator = %Ugen{
-      rate: 1,
-      special: special,
-      inputs: [input1, input2],
-      outputs: [1],
-      name: "BinaryOpUGen"
-    }
-
-    {
-      %{synth | ugens: ugens ++ [operator]},
-      %Input{src: Enum.count(ugens), constant_index: 0}
-    }
-  end
-
-  defp parse_expression(
-         %Synth{ugens: ugens} = synth,
-         {operator, _, [arg]} = expression
-       ) do
-    special = Map.get(@unary_op_specials, operator)
-
-    if special == nil do
-      raise "unknown operator #{operator} when parsing #{Macro.to_string(expression)}"
-    end
-
-    {synth, input} = parse_expression(synth, arg)
-
-    operator = %Ugen{
-      rate: 1,
-      special: special,
-      inputs: [input],
-      outputs: [1],
-      name: "UnaryOpUGen"
-    }
-
-    {
-      %{synth | ugens: ugens ++ [operator]},
-      %Input{src: Enum.count(ugens), constant_index: 0}
-    }
-  end
-
-  defp parse_expression(%Synth{} = synth, {_, _, nil} = value) do
-    expression_input(synth, value)
-  end
-
-  defp parse_expression(%Synth{} = synth, value)
-       when is_float(value) or is_integer(value) do
-    expression_input(synth, value)
-  end
-
-  defp parse_expression(%Synth{}, value) do
-    raise "Cannot parse expression #{Macro.to_string(value)}"
-  end
-
-  def compile(%Def{} = data, version \\ 1) do
-    prefix() <> version(version) <> num_defs(data, version) <> definitions(data, version)
-  end
-
-  defp prefix(), do: "SCgf"
-  defp version(1), do: <<1::size(32)>>
-  defp version(2), do: <<2::size(32)>>
-
-  defp num_defs(%Def{synthdefs: synthdefs}, _), do: <<Enum.count(synthdefs)::size(16)>>
-  defp num_variants(_, _), do: <<0::size(16)>>
-
-  defp num_constants(%Synth{constants: constants}, 2), do: <<Enum.count(constants)::size(32)>>
-  defp num_constants(%Synth{constants: constants}, 1), do: <<Enum.count(constants)::size(16)>>
-  defp num_params(%Synth{param_values: params}, 2), do: <<Enum.count(params)::size(32)>>
-  defp num_params(%Synth{param_values: params}, 1), do: <<Enum.count(params)::size(16)>>
-
-  defp num_param_names(%Synth{param_names: param_names}, 2),
-    do: <<Enum.count(param_names)::size(32)>>
-
-  defp num_param_names(%Synth{param_names: param_names}, 1),
-    do: <<Enum.count(param_names)::size(16)>>
-
-  defp num_ugens(%Synth{ugens: ugens}, 2), do: <<Enum.count(ugens)::size(32)>>
-  defp num_ugens(%Synth{ugens: ugens}, 1), do: <<Enum.count(ugens)::size(16)>>
-  defp num_inputs(%Ugen{inputs: inputs}, 2), do: <<Enum.count(inputs)::size(32)>>
-  defp num_inputs(%Ugen{inputs: inputs}, 1), do: <<Enum.count(inputs)::size(16)>>
-  defp num_outputs(%Ugen{outputs: outputs}, 2), do: <<Enum.count(outputs)::size(32)>>
-  defp num_outputs(%Ugen{outputs: outputs}, 1), do: <<Enum.count(outputs)::size(16)>>
-
-  defp definitions(%Def{synthdefs: [synthdefs | _rest]}, version) do
-    Enum.reduce([synthdefs], "", fn %Synth{name: name} = synth, acc ->
-      acc <>
-        <<String.length(name)>> <>
-        name <>
-        num_constants(synth, version) <>
-        constants(synth) <>
-        num_params(synth, version) <>
-        parameters(synth) <>
-        num_param_names(synth, version) <>
-        param_names(synth, version) <>
-        num_ugens(synth, version) <> ugens(synth, version) <> num_variants(synth, version)
-    end)
-  end
-
-  defp ugens(%Synth{ugens: ugens}=s, version) do
-    Enum.reduce(ugens, "", fn %Ugen{name: name, rate: rate, special: special} = u, acc ->
-      acc <>
-        <<String.length(name)>> <>
-        name <>
-        <<rate::size(8)>> <>
-        num_inputs(u, version) <>
-        num_outputs(u, version) <> <<special::size(16)>> <> inputs(u, version) <> outputs(u)
-    end)
-  end
-
-  defp inputs(%Ugen{inputs: inputs}, 2) do
-    Enum.reduce(inputs, "", fn %Input{src: src, constant_index: constant_index}, acc ->
-      acc <> <<src::size(32)>> <> <<constant_index::size(32)>>
-    end)
-  end
-
-  defp inputs(%Ugen{inputs: inputs}, 1) do
-    Enum.reduce(inputs, "", fn %Input{src: src, constant_index: constant_index}, acc ->
-      acc <> <<src::size(16)>> <> <<constant_index::size(16)>>
-    end)
-  end
-
-  defp outputs(%Ugen{outputs: outputs}) do
-    Enum.reduce(outputs, "", fn k, acc ->
-      acc <> <<k::size(8)>>
-    end)
-  end
-
-  defp param_names(%Synth{param_names: param_names}, 2) do
-    param_names
-    |> Enum.with_index()
-    |> Enum.reduce("", fn {i, k}, acc ->
-      acc <> k <> <<i::size(32)>>
-    end)
-  end
-
-  defp param_names(%Synth{param_names: param_names}, 1) do
-    param_names
-    |> Enum.with_index()
-    |> Enum.reduce("", fn {k, i}, acc ->
-      acc <> <<String.length(k)>> <> k <> <<i::size(16)>>
-    end)
-  end
-
-  defp parameters(%Synth{param_values: params}) do
-    Enum.reduce(params, "", fn k, acc ->
-      acc <> <<k::size(32)-float>>
-    end)
-  end
-
-  defp constants(%Synth{constants: constants}) do
-    Enum.reduce(constants, "", fn k, acc ->
-      acc <> <<k::size(32)-float>>
-    end)
   end
 end

@@ -44,7 +44,7 @@ defmodule Waveform.Synth.Manager do
     tri: 'sonic-pi-tri',
     zawa: 'sonic-pi-zawa'
   }
-  @default_synth_name :prophet
+
   @default_synth @synth_names[:prophet]
 
   defmodule State do
@@ -102,28 +102,6 @@ defmodule Waveform.Synth.Manager do
     {:reply, nil, state }
   end
 
-  defp synth_value(pid, %State{} = state) do
-    case state.current[pid] do
-      [current | _] -> current
-      [] -> @default_synth
-      nil -> @default_synth
-    end
-  end
-
-  defp synth_name(pid, %State{} = state) do
-    current = synth_value(pid, state)
-
-    {current, _} =
-      Enum.find(state.user_defined, fn {_key, value} ->
-        value == current
-      end) ||
-      Enum.find(@synth_names, fn {_key, value} ->
-        value == current
-      end)
-
-    current
-  end
-
   def handle_call({:current_value, pid}, _from, %State{} = state) do
     current = synth_value(pid, state)
 
@@ -152,6 +130,28 @@ defmodule Waveform.Synth.Manager do
       nil ->
         {:reply, nil, state}
     end
+  end
+
+  defp synth_value(pid, %State{} = state) do
+    case state.current[pid] do
+      [current | _] -> current
+      [] -> @default_synth
+      nil -> @default_synth
+    end
+  end
+
+  defp synth_name(pid, %State{} = state) do
+    current = synth_value(pid, state)
+
+    {current, _} =
+      Enum.find(state.user_defined, fn {_key, value} ->
+        value == current
+      end) ||
+      Enum.find(@synth_names, fn {_key, value} ->
+        value == current
+      end)
+
+    current
   end
 
   defp default_state do
