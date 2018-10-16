@@ -7,8 +7,6 @@
         # foo > 0.5
         0.5,
 
-        # saw phase
-        0.0,
         # saw mul
         1.0,
         # saw add
@@ -105,12 +103,10 @@
           inputs: [
             # freq
             %Waveform.Synth.Def.Ugen.Input{src: 1, constant_index: 0},
-            # phase
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 2},
             # mul
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 3},
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 2},
             # add
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 4}
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 3}
           ],
           rate: 2,
           special: 0,

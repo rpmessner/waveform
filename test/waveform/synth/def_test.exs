@@ -62,7 +62,7 @@ defmodule Waveform.Synth.DefTest do
         note: 69,
         out_bus: 0 do
         sin_osc = %SinOsc{freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0}
-        out <- %Out{out_bus: out_bus, mono: sin_osc}
+        out <- %Out{bus: out_bus, channels: sin_osc}
       end)
   end
 
@@ -73,7 +73,7 @@ defmodule Waveform.Synth.DefTest do
         note: 69,
         out_bus: 0 do
         sin_osc = %SinOsc{freq: midicps(note), mul: 1.0, add: 2.0, phase: 0.0}
-        out <- %Out{out_bus: out_bus, mono: sin_osc}
+        out <- %Out{bus: out_bus, channels: sin_osc}
       end)
   end
 
@@ -84,7 +84,7 @@ defmodule Waveform.Synth.DefTest do
         note: 69,
         out_bus: 0 do
         sin_osc = %SinOsc.ar{freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0}
-        out <- %Out{out_bus: out_bus, mono: sin_osc}
+        out <- %Out{bus: out_bus, channels: sin_osc}
       end)
   end
 
@@ -109,12 +109,11 @@ defmodule Waveform.Synth.DefTest do
 
         saw = %Saw{
           freq: freq,
-          phase: 0.0,
           mul: 1.0,
           add: 2.0
         }
 
-        out <- %Out{out_bus: out_bus, mono: saw}
+        out <- %Out{bus: out_bus, channels: saw}
       end)
   end
 
@@ -127,7 +126,7 @@ defmodule Waveform.Synth.DefTest do
     assert_synthdef(@sinosc_def,
       defsynth SinOscDef, note: 69, out_bus: 0 do
         bar = %AwesomeSubmodule{note: note}
-        out <- %Out{out_bus: out_bus, mono: bar}
+        out <- %Out{bus: out_bus, channels: bar}
       end)
   end
 
@@ -181,7 +180,7 @@ defmodule Waveform.Synth.DefTest do
           done_action: 2
         }
 
-        out <- %Out{out_bus: out_bus, mono: sin_osc * envelope}
+        out <- %Out{bus: out_bus, channels: sin_osc * envelope}
 
       end)
   end

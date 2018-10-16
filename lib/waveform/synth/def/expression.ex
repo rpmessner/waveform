@@ -1,116 +1,75 @@
 defmodule Waveform.Synth.Def.Expression do
+  alias Waveform.Synth.Def.Submodule, as: Submodule
   alias Waveform.Synth.Def.Synth, as: Synth
   alias Waveform.Synth.Def.Ugen, as: Ugen
-  alias Waveform.Synth.Def.Util, as: Util
   alias Waveform.Synth.Def.Ugen.Input, as: Input
+  alias Waveform.Synth.Def.Ugens, as: Ugens
+  alias Waveform.Synth.Def.Util, as: Util
 
-  @binary_op_specials %{
-    add: 0,
-    +: 0,
-    sub: 1,
-    -: 1,
-    mul: 2,
-    *: 2,
-    div: 4,
-    /: 4,
-    modulo: 5,
-    %: 5,
-    eq: 6,
-    ==: 6,
-    lt: 8,
-    <: 8,
-    gt: 9,
-    >: 9,
-    lte: 10,
-    <=: 10,
-    gte: 11,
-    >=: 11,
-    min: 12,
-    max: 13,
-    and: 14,
-    or: 15,
-    xor: 16,
-    lcm: 17,
-    gcd: 18,
-    round: 19,
-    roundup: 20,
-    trunc: 21,
-    atan2: 22,
-    hypot: 23,
-    hypotapx: 24,
-    pow: 25,
-    expon: 25,
-    ^: 25,
-    ring1: 30,
-    ring2: 31,
-    ring3: 32,
-    ring4: 33,
-    difsqr: 34,
-    sumsqr: 35,
-    sqrsum: 36,
-    sqrdif: 37,
-    absdif: 38,
-    thresh: 39,
-    amclip: 40,
-    scaleneg: 41,
-    clip2: 42,
-    excess: 43,
-    fold2: 44,
-    wrap2: 45
-  }
+  @ugens Ugens.definitions
 
-  @unary_op_specials %{
-    neg: 0,
-    -: 0,
-    notpos: 1,
-    abs: 5,
-    ceil: 8,
-    floor: 9,
-    frac: 10,
-    sign: 11,
-    squared: 12,
-    cubed: 13,
-    sqrt: 14,
-    exp: 15,
-    reciprocal: 16,
-    midicps: 17,
-    to_htz: 17,
-    cpsmidi: 18,
-    midiratio: 19,
-    ratiomidi: 20,
-    dbamp: 21,
-    ampdb: 22,
-    octcps: 23,
-    cpsoct: 24,
-    log: 25,
-    log2: 26,
-    log10: 27,
-    sin: 28,
-    cos: 29,
-    tan: 30,
-    asin: 31,
-    acos: 32,
-    atan: 33,
-    sinh: 34,
-    cosh: 35,
-    tanh: 36,
-    rand: 37,
-    rand2: 38,
-    linrand: 39,
-    bilinrand: 40,
-    sum3rand: 41,
-    distort: 42,
-    softclip: 43,
-    coin: 44,
-    silence: 46,
-    thru: 47,
-    rectWindow: 48,
-    hanWindow: 49,
-    welWindow: 50,
-    triWindow: 51,
-    ramp: 52,
-    scurve: 53
-  }
+  @unary_op_specials Ugens.BasicOps.unary_ops
+  @binary_op_specials Ugens.BasicOps.binary_ops
+
+  def parse_lines(%Synth{} = synth, []), do: synth
+
+  def parse_lines(%Synth{} = synth, [line | rest]) do
+    case line do
+      {op, _, [{assign_name, _, nil}, expression]} when op in [:<-, :=] ->
+        { synth, _input } = parse(synth, line)
+        synth
+      _ ->
+        raise "cannot parse line #{Macro.to_string(line)}"
+    end
+    |> parse_lines(rest)
+  end
+
+  def parse(
+         %Synth{} = synth,
+         {op, _, [{output_name, _, nil}, expression]}
+       ) when op in [:<-, :=] do
+
+    {%Synth{assigns: assigns} = synth, input} = parse(synth, expression)
+
+    assigns = Map.put(assigns, output_name, input)
+
+    {%{synth | assigns: assigns}, input}
+  end
+
+  def parse(
+         %Synth{} = synth,
+         {:%, _,
+          [
+            ugen_name,
+            {:%{}, _, options}
+          ]} = ugen
+       ) do
+
+    synth =
+      case parse_submodule(synth, ugen_name, options) do
+        nil ->
+          { ugen, arguments } = parse_ugen_name(ugen_name)
+
+          options =
+            Enum.sort_by(options, fn {key, _value} ->
+              Enum.find_index(Keyword.keys(arguments), &(&1 == key))
+            end)
+
+          {
+            ugen,
+            %Synth{ugens: ugens} = synth,
+            _
+          } = parse_ugen_options({ugen, synth, options})
+
+          %{synth | ugens: ugens ++ [ugen]}
+        synth -> synth
+      end
+
+    {
+      synth,
+      %Input{src: Enum.count(synth.ugens) - 1, constant_index: 0}
+    }
+  end
 
   def parse(
          %Synth{} = synth,
@@ -252,4 +211,72 @@ defmodule Waveform.Synth.Def.Expression do
     end
   end
 
+  @kr %{outputs: [1], rate: 1, special: 0}
+  @ar %{outputs: [2], rate: 2, special: 0}
+
+  defp build_ugen(name, base), do: build_ugen(name, base, priority: :low)
+  defp build_ugen(name, base, priority: priority) do
+    ugen_def = Map.get(@ugens, name)
+
+    unless ugen_def, do: raise "Unknown or unimplemented ugen #{name}"
+
+    %{defaults: ugen_base, arguments: arguments} = ugen_def
+    ugen_name = %{name: to_string(name)}
+
+    options = if priority == :high do
+      [base, ugen_base, ugen_name]
+    else
+      [ugen_base, base, ugen_name]
+    end
+
+    ugen = Enum.reduce(options, %{}, &Map.merge(&1, &2))
+    { ugen, arguments }
+  end
+
+  defp parse_ugen_name(ugen_name) do
+    {ugen_opts, arguments} = case ugen_name do
+      {:__aliases__, _, [name]} ->
+        build_ugen(name, @kr)
+
+      {{:., _, [{:__aliases__, _, [name]}, :kr]}, _, _} ->
+        build_ugen(name, @kr, priority: :high)
+
+      {{:., _, [{:__aliases__, _, [name]}, :ar]}, _, _} ->
+        build_ugen(name, @ar, priority: :high)
+
+      _ ->
+        IO.inspect("error") && raise "can't parse #{Macro.to_string(ugen_name)}"
+    end
+
+    { struct(Ugen, ugen_opts), arguments }
+  end
+
+  defp parse_submodule(synth, name, _options) do
+    case name do
+      {:__aliases__, _, [name]} ->
+        submodule = Submodule.lookup(name)
+
+        if submodule do
+          parse_lines(synth, submodule.forms)
+        end
+      _ -> nil
+    end
+  end
+
+  defp parse_ugen_options({%Ugen{} = ugen, %Synth{} = synth, []}),
+    do: {ugen, synth, []}
+
+  defp parse_ugen_options({
+         %Ugen{inputs: inputs} = ugen,
+         synth,
+         [{_, expression} | rest_options]
+       }) do
+    {%Synth{} = synth, input} = parse(synth, expression)
+
+    parse_ugen_options({
+      %{ugen | inputs: List.flatten(inputs ++ [input])},
+      synth,
+      rest_options
+    })
+  end
 end
