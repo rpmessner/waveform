@@ -163,6 +163,7 @@ defmodule Waveform.Synth.DefTest do
         sustain_level: 1,
         env_curve: 1,
         out_bus: 0 do
+        #
         freq = midicps(note)
 
         sin_osc = %SinOsc.ar{

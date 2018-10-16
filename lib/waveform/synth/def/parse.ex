@@ -11,12 +11,19 @@ defmodule Waveform.Synth.Def.Parse do
   @unary_op_specials Ugens.BasicOps.unary_ops()
   @binary_op_specials Ugens.BasicOps.binary_ops()
 
+  @kr %{outputs: [1], rate: 1, special: 0}
+  @ar %{outputs: [2], rate: 2, special: 0}
+
+  def parse(%Synth{} = synth, definition), do: parse({synth, nil}, definition)
+
   def parse({%Synth{} = synth, i}, []), do: {synth, i}
 
+  # parse lines
   def parse({%Synth{} = synth, i}, [line | rest]) do
     parse({synth, i}, line) |> parse(rest)
   end
 
+  # parse assignment
   def parse(
         {%Synth{} = synth, i},
         {op, _, [{output_name, _, nil}, expression]}
@@ -29,6 +36,7 @@ defmodule Waveform.Synth.Def.Parse do
     {%{synth | assigns: assigns}, input}
   end
 
+  # parse ugen/submodule
   def parse(
         {%Synth{} = synth, i},
         {:%, _,
@@ -37,10 +45,12 @@ defmodule Waveform.Synth.Def.Parse do
            {:%{}, _, options}
          ]} = ugen
       ) do
+
     {synth, _i} =
       case parse_submodule({synth, i}, ugen_name, options) do
         nil ->
-          {ugen, arguments} = parse_ugen_name(ugen_name)
+
+          {ugen, %{arguments: arguments}} = parse_ugen(ugen_name)
 
           options =
             Enum.sort_by(options, fn {key, _value} ->
@@ -59,12 +69,26 @@ defmodule Waveform.Synth.Def.Parse do
           {synth, i}
       end
 
-    {
-      synth,
-      %Input{src: Enum.count(synth.ugens) - 1, constant_index: 0}
-    }
+    src = Enum.count(synth.ugens) - 1
+
+    inputs = List.last(synth.ugens).outputs
+             |> Enum.with_index()
+             |> Enum.map(fn {_output, i} ->
+               %Input{src: src, constant_index: i}
+             end)
+
+    { synth, inputs }
   end
 
+  # parse util fn
+  def parse(
+        {%Synth{} = synth, i},
+        {{:., _, [{:__aliases__, _, [:Util]}, function]}, _, [options]}
+      ) do
+    apply(Util, function, [{synth, i}, options])
+  end
+
+  # parse if/else
   def parse(
         {%Synth{} = synth, i},
         {:if, _, [condition, [do: arg1, else: arg2]]}
@@ -87,6 +111,7 @@ defmodule Waveform.Synth.Def.Parse do
     }
   end
 
+  # parse binary op
   def parse(
         {%Synth{ugens: ugens} = synth, i},
         {operator, _, [arg1, arg2]} = expression
@@ -94,7 +119,8 @@ defmodule Waveform.Synth.Def.Parse do
     special = Map.get(@binary_op_specials, operator)
 
     if special == nil do
-      raise "unknown operator #{operator} when parsing #{Macro.to_string(expression)}"
+      raise "unknown operator #{Macro.to_string(operator)} " <>
+              "when parsing #{Macro.to_string(expression)}"
     end
 
     {synth, input1} = parse({synth, i}, arg1)
@@ -104,8 +130,6 @@ defmodule Waveform.Synth.Def.Parse do
     rate2 = lookup_rate(synth, input2)
 
     rate = max(rate1, rate2)
-
-    # IO.inspect({Macro.to_string(expression), expression, input1, input2})
 
     operator = %Ugen{
       rate: rate,
@@ -121,13 +145,7 @@ defmodule Waveform.Synth.Def.Parse do
     }
   end
 
-  def parse(
-        {%Synth{} = synth, i},
-        {{:., _, [{:__aliases__, _, [:Util]}, function]}, _, [options]}
-      ) do
-    apply(Util, function, [{synth, i}, options])
-  end
-
+  # parse unary op
   def parse(
         {%Synth{ugens: ugens} = synth, i},
         {operator, _, [arg]} = expression
@@ -135,8 +153,6 @@ defmodule Waveform.Synth.Def.Parse do
     special = Map.get(@unary_op_specials, operator)
 
     if special == nil do
-      IO.inspect(operator)
-
       raise "unknown operator #{Macro.to_string(operator)} " <>
               "when parsing #{Macro.to_string(expression)}"
     end
@@ -159,95 +175,52 @@ defmodule Waveform.Synth.Def.Parse do
     }
   end
 
-  def parse({%Synth{} = synth, _i}, {_, _, nil} = value) do
-    expression_input(synth, value)
+  # parse variable
+  def parse(
+         {%Synth{assigns: assigns, parameters: params} = synth, _i},
+         {name, _, nil}
+       ) do
+
+    saved_assign = Map.get(assigns, name)
+    saved_param = Map.get(params, name)
+
+    input =
+      cond do
+        saved_assign -> saved_assign
+        saved_param -> saved_param
+        true -> raise "unknown variable #{name}"
+      end
+
+    {synth, input}
   end
 
-  def parse({%Synth{} = synth, _i}, value)
-      when is_float(value) or is_integer(value) do
-    expression_input(synth, value)
+  # parse constant
+  def parse({%Synth{constants: constants} = synth, _i}, arg)
+       when is_float(arg) or is_integer(arg) do
+    {
+      %{synth | constants: constants ++ [arg + 0.0]},
+      [%Input{src: -1, constant_index: Enum.count(constants)}]
+    }
   end
 
   def parse({%Synth{}, _i}, value) do
     raise "Cannot parse expression #{Macro.to_string(value)}"
   end
 
-  defp lookup_rate(_synth, %Input{src: -1}), do: 1
-  # out
-  defp lookup_rate(_synth, []), do: 2
-  defp lookup_rate(%Synth{} = s, [%Input{} = i]), do: lookup_rate(s, i)
+  defp parse_ugen(ugen_name) do
+    case ugen_name do
+      {:__aliases__, _, [name]} ->
+        build_ugen(name, @kr)
 
-  defp lookup_rate(%Synth{ugens: ugens}, %Input{src: sidx, constant_index: _cidx}) do
-    Enum.at(ugens, sidx).rate
-  end
+      {{:., _, [{:__aliases__, _, [name]}, :kr]}, _, _} ->
+        build_ugen(name, @kr, priority: :high)
 
-  defp expression_input(
-         %Synth{assigns: assigns, parameters: params} = synth,
-         {arg_name, _, nil}
-       ) do
-    {synth, assignment_input(arg_name, assigns, params)}
-  end
+      {{:., _, [{:__aliases__, _, [name]}, :ar]}, _, _} ->
+        build_ugen(name, @ar, priority: :high)
 
-  defp expression_input(%Synth{constants: constants} = synth, arg)
-       when is_float(arg) or is_integer(arg) do
-    {
-      %{synth | constants: constants ++ [arg + 0.0]},
-      %Input{src: -1, constant_index: Enum.count(constants)}
-    }
-  end
-
-  defp assignment_input(name, assigns, params) do
-    saved_assign = Map.get(assigns, name)
-    saved_param = Map.get(params, name)
-
-    cond do
-      saved_assign -> saved_assign
-      saved_param -> saved_param
-      true -> raise "unknown constant #{name}"
+      _ ->
+        raise "can't parse ugen/submodule name: #{Macro.to_string(ugen_name)}"
     end
-  end
-
-  @kr %{outputs: [1], rate: 1, special: 0}
-  @ar %{outputs: [2], rate: 2, special: 0}
-
-  defp build_ugen(name, base), do: build_ugen(name, base, priority: :low)
-
-  defp build_ugen(name, base, priority: priority) do
-    ugen_def = Map.get(@ugens, name)
-
-    unless ugen_def, do: raise("Unknown or unimplemented ugen #{name}")
-
-    %{defaults: ugen_base, arguments: arguments} = ugen_def
-    ugen_name = %{name: to_string(name)}
-
-    options =
-      if priority == :high do
-        [base, ugen_base, ugen_name]
-      else
-        [ugen_base, base, ugen_name]
-      end
-
-    ugen = Enum.reduce(options, %{}, &Map.merge(&1, &2))
-    {ugen, arguments}
-  end
-
-  defp parse_ugen_name(ugen_name) do
-    {ugen_opts, arguments} =
-      case ugen_name do
-        {:__aliases__, _, [name]} ->
-          build_ugen(name, @kr)
-
-        {{:., _, [{:__aliases__, _, [name]}, :kr]}, _, _} ->
-          build_ugen(name, @kr, priority: :high)
-
-        {{:., _, [{:__aliases__, _, [name]}, :ar]}, _, _} ->
-          build_ugen(name, @ar, priority: :high)
-
-        _ ->
-          IO.inspect("error") && raise "can't parse #{Macro.to_string(ugen_name)}"
-      end
-
-    {struct(Ugen, ugen_opts), arguments}
   end
 
   defp parse_submodule({synth, i}, name, _options) do
@@ -264,13 +237,16 @@ defmodule Waveform.Synth.Def.Parse do
     end
   end
 
-  defp parse_ugen_options({%Ugen{} = ugen, {%Synth{} = synth, i}, []}), do: {ugen, {synth, i}, []}
+  defp parse_ugen_options(
+    {%Ugen{} = ugen, {%Synth{} = synth, i}, []}
+  ), do: {ugen, {synth, i}, []}
 
   defp parse_ugen_options({
          %Ugen{inputs: inputs} = ugen,
          {synth, i},
          [{_, expression} | rest_options]
        }) do
+
     {%Synth{} = synth, input} = parse({synth, i}, expression)
 
     parse_ugen_options({
@@ -278,5 +254,36 @@ defmodule Waveform.Synth.Def.Parse do
       {synth, input},
       rest_options
     })
+  end
+
+  defp lookup_rate(_synth, %Input{src: -1}), do: 1
+  defp lookup_rate(_synth, []), do: 2
+  defp lookup_rate(%Synth{} = s, [%Input{} = i]), do: lookup_rate(s, i)
+
+  defp lookup_rate(%Synth{ugens: ugens}, %Input{src: sidx, constant_index: cidx}) do
+    Enum.at(ugens, sidx).outputs |> Enum.at(cidx)
+  end
+
+  defp build_ugen(name, base), do: build_ugen(name, base, priority: :low)
+
+  defp build_ugen(name, base, priority: priority) do
+    ugen_def = Map.get(@ugens, name)
+
+    unless ugen_def, do: raise("Unknown or unimplemented ugen #{name}")
+
+    %{defaults: ugen_base} = ugen_def
+
+    ugen_name = %{name: to_string(name)}
+
+    options =
+      if priority == :high do
+        [base, ugen_base, ugen_name]
+      else
+        [ugen_base, base, ugen_name]
+      end
+
+    ugen = Enum.reduce(options, %{}, &Map.merge(&1, &2))
+
+    {struct(Ugen, ugen), ugen_def}
   end
 end

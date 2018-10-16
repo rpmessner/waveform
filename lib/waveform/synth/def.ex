@@ -99,19 +99,16 @@ defmodule Waveform.Synth.Def do
       end)
       |> Enum.into(%{})
 
-    {synth, _input} =
+    {synth, _} =
       Parse.parse(
-        {
-          %Synth{
-            name: name,
-            constants: [],
-            param_names: param_names,
-            param_values: param_values,
-            parameters: parameters,
-            assigns: %{},
-            ugens: [control]
-          },
-          nil
+        %Synth{
+          name: name,
+          constants: [],
+          param_names: param_names,
+          param_values: param_values,
+          parameters: parameters,
+          assigns: %{},
+          ugens: [control]
         },
         lines
       )
