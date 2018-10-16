@@ -26,7 +26,17 @@ defmodule Waveform.Synth.Def.Ugens.Buffer do
     Phasor: %{},
     PlayBuf: %{},
     RecordBuf: %{
-      arguments: [bufnum: 0, offset: 0, rec_level: 1, pre_level: 0, run: 1, loop: 1, trigger: 1, done: 0, inputs: :last]
+      arguments: [
+        bufnum: 0,
+        offset: 0,
+        rec_level: 1,
+        pre_level: 0,
+        run: 1,
+        loop: 1,
+        trigger: 1,
+        done: 0,
+        inputs: :last
+      ]
     },
     ScopeOut: %{
       arguments: [inputs: :last]

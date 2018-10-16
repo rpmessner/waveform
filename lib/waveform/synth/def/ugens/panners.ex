@@ -12,7 +12,7 @@ defmodule Waveform.Synth.Def.Ugens.Panners do
     SplayZ: %{},
     VBAP: %{},
     VBAPSpeaker: %{},
-    VBAPSpeakerArray: %{},
+    VBAPSpeakerArray: %{}
   }
 
   def definitions do

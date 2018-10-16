@@ -4,7 +4,7 @@ defmodule Waveform.Synth.Def.Ugens.InOut do
     DiskIn: %{},
     DiskOut: %{
       defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bufnum: nil, channels: :last],
+      arguments: [bufnum: nil, channels: :last]
     },
     In: %{},
     InBus: %{},
@@ -14,13 +14,13 @@ defmodule Waveform.Synth.Def.Ugens.InOut do
     LocalIn: %{},
     LocalOut: %{
       defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [channels: nil],
+      arguments: [channels: nil]
     },
     MaxLocalBufs: %{},
     OffsetOut: %{},
     Out: %{
       defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bus: 0, channels: :last],
+      arguments: [bus: 0, channels: :last]
     },
     ReplaceOut: %{},
     SharedIn: %{},

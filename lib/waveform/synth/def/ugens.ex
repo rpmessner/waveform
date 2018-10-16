@@ -12,18 +12,19 @@ defmodule Waveform.Synth.Def.Ugens do
   alias Waveform.Synth.Def.Ugens.Triggers, as: Triggers
 
   @definitions [
-    Buffer.definitions(),
-    Chaotic.definitions(),
-    Demand.definitions(),
-    Deterministic.definitions(),
-    Envelopes.definitions(),
-    Filters.definitions(),
-    InOut.definitions(),
-    Panners.definitions(),
-    Select.definitions(),
-    Stochastic.definitions(),
-    Triggers.definitions()
-  ] |> Enum.reduce(%{}, &Map.merge(&1, &2))
+                 Buffer.definitions(),
+                 Chaotic.definitions(),
+                 Demand.definitions(),
+                 Deterministic.definitions(),
+                 Envelopes.definitions(),
+                 Filters.definitions(),
+                 InOut.definitions(),
+                 Panners.definitions(),
+                 Select.definitions(),
+                 Stochastic.definitions(),
+                 Triggers.definitions()
+               ]
+               |> Enum.reduce(%{}, &Map.merge(&1, &2))
 
   def definitions do
     @definitions

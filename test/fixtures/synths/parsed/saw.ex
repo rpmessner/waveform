@@ -124,8 +124,8 @@
             # out_bus
             %Waveform.Synth.Def.Ugen.Input{constant_index: 1, src: 0},
             # sin_osc out0
-            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 5},
-          ],
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 5}
+          ]
           # hfo
         }
       ],

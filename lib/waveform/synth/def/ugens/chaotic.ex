@@ -48,7 +48,7 @@ defmodule Waveform.Synth.Def.Ugens.Chaotic do
     StandardN: %{},
     TermanWang: %{},
     WeaklyNonlinear: %{},
-    WeaklyNonlinear2: %{},
+    WeaklyNonlinear2: %{}
   }
 
   def definitions do

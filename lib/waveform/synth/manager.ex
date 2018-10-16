@@ -83,7 +83,11 @@ defmodule Waveform.Synth.Manager do
     {:ok, state}
   end
 
-  def handle_call({:set_current, pid, new}, _from, %State{user_defined: ud, current: current} = state) do
+  def handle_call(
+        {:set_current, pid, new},
+        _from,
+        %State{user_defined: ud, current: current} = state
+      ) do
     name = ud[new] || @synth_names[new]
 
     if name do
@@ -98,8 +102,8 @@ defmodule Waveform.Synth.Manager do
   def handle_call({:create, name, bytes}, _from, %State{user_defined: ud} = state) do
     OSC.send_synthdef(bytes)
     ud = Map.put(ud, :"#{Recase.to_snake(to_string(name))}", name)
-    state = %{ state | user_defined: ud }
-    {:reply, nil, state }
+    state = %{state | user_defined: ud}
+    {:reply, nil, state}
   end
 
   def handle_call({:current_value, pid}, _from, %State{} = state) do
@@ -147,9 +151,9 @@ defmodule Waveform.Synth.Manager do
       Enum.find(state.user_defined, fn {_key, value} ->
         value == current
       end) ||
-      Enum.find(@synth_names, fn {_key, value} ->
-        value == current
-      end)
+        Enum.find(@synth_names, fn {_key, value} ->
+          value == current
+        end)
 
     current
   end

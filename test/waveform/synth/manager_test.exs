@@ -50,7 +50,7 @@ defmodule Waveform.Synth.ManagerTest do
 
   test "saves user synth" do
     assert Subject.current_synth_name(self()) == :prophet
-    Subject.create_synth('wave-synth', <<83,88,88,0,0,0,0>>)
+    Subject.create_synth('wave-synth', <<83, 88, 88, 0, 0, 0, 0>>)
     Subject.set_current_synth(self(), :wave_synth)
     assert Subject.current_synth_name(self()) == :wave_synth
     assert Subject.current_synth_value(self()) == 'wave-synth'

@@ -33,7 +33,7 @@ defmodule Waveform.Synth.Def.Ugens.Triggers do
     ToggleFF: %{},
     Trig: %{},
     Trig1: %{},
-    WrapSummer: %{},
+    WrapSummer: %{}
   }
 
   def definitions do

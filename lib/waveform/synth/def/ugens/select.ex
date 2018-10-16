@@ -5,7 +5,7 @@ defmodule Waveform.Synth.Def.Ugens.Select do
     Select: %{},
     SelectX: %{},
     SelectXFocus: %{},
-    XFade2: %{},
+    XFade2: %{}
   }
 
   def definitions do

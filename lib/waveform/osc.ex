@@ -13,9 +13,9 @@ defmodule Waveform.OSC do
                 |> to_charlist
 
   @user_synth_folder __ENV__.file
-                |> Path.dirname()
-                |> Path.join("../../user_synthdefs/compiled")
-                |> to_charlist
+                     |> Path.dirname()
+                     |> Path.join("../../user_synthdefs/compiled")
+                     |> to_charlist
 
   @s_new '/s_new'
   @g_new '/g_new'

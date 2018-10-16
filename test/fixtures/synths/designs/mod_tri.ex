@@ -1,4 +1,4 @@
-defsynth ModTri, [
+defsynth ModTri,
   note: 52,
   note_slide: 0,
   note_slide_shape: 1,
@@ -38,10 +38,10 @@ defsynth ModTri, [
   mod_phase_offset: 0,
   mod_wave: 1,
   mod_invert_wave: 0,
-  out_bus: 0
-], do
+  out_bus: 0 do
+  #
   decay_level = %Select.kr{
-    which: (decay_level == -1),
+    which: decay_level == -1,
     from: [decay_level, sustain_level]
   }
 
@@ -82,7 +82,7 @@ defsynth ModTri, [
     slide_shape: mod_phase_slide_shape
   }
 
-  mod_rate = 1 /  mod_phase
+  mod_rate = 1 / mod_phase
 
   mod_range = %Varlag{
     value: mod_range,
@@ -101,14 +101,14 @@ defsynth ModTri, [
   min_note = note
   max_note = mod_range + note
 
-  mod_double_phase_offset =  mod_phase_offset * 2
+  mod_double_phase_offset = mod_phase_offset * 2
 
   ctl_wave = %Select.kr{
     which: mod_wave,
     from: [
       %LFSaw.kr{
         freq: mod_rate,
-        iphase: (mod_double_phase_offset + 1),
+        iphase: mod_double_phase_offset + 1,
         mul: -1
       },
       %LFPulse.kr{
@@ -118,30 +118,40 @@ defsynth ModTri, [
         mul: 2,
         add: -1
       },
-      %LFTri.kr{freq: mod_rate, iphase: (mod_double_phase_offset + 1)},
-      %SinOsc.kr{freq: mod_rate, (mod_phase_offset + 0.25) * (PI * 2)}
+      %LFTri.kr{freq: mod_rate, iphase: mod_double_phase_offset + 1},
+      %SinOsc.kr{freq: mod_rate, mul: (mod_phase_offset + 0.25) * (PI * 2)}
     ]
   }
 
-  ctl_wave_mul = (mod_invert_wave > 0) * 2) - 1
-  ctl_wave = (ctl_wave * ctl_wave_mul) * -1
+  ctl_wave_mul = (mod_invert_wave > 0) * 2 - 1
+  ctl_wave = ctl_wave * ctl_wave_mul * -1
+
   mod_note = %LinLin{
     in: ctl_wave,
-    srclo: -1, srchi: 1,
-    dstlo: min_note, dsthi: max_note
+    srclo: -1,
+    srchi: 1,
+    dstlo: min_note,
+    dsthi: max_note
   }
 
-  freq        midicps(mod_note)
-  cutoff_freq midicps(cutoff)
+  freq(midicps(mod_note))
+  cutoff_freq(midicps(cutoff))
 
   snd = %LFTri{freq: freq}
   snd = %LPF{in: snd, freq: cutoff_freq}
   snd = %Normalizer{in: snd}
 
-  env = shaped_adsr(
-    attack, decay, sustain, release,
-    attack_level, decay_level, sustain_level, env_curve
-  )
+  env =
+    shaped_adsr(
+      attack,
+      decay,
+      sustain,
+      release,
+      attack_level,
+      decay_level,
+      sustain_level,
+      env_curve
+    )
 
   env = %EnvGen{
     envelope: env,
@@ -149,9 +159,9 @@ defsynth ModTri, [
   }
 
   out <- %Out{
-    out_bus: out_bus,
+    bus: out_bus,
     channels: %Pan2{
-      in: (amp_fudge * env * snd),
+      in: amp_fudge * env * snd,
       pos: pan,
       level: amp
     }

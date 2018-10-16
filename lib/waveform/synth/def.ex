@@ -1,6 +1,6 @@
 defmodule Waveform.Synth.Def do
   alias Waveform.Synth.Def.Compile, as: Compile
-  alias Waveform.Synth.Def.Expression, as: Expression
+  alias Waveform.Synth.Def.Parse, as: Parse
   alias Waveform.Synth.Def.Submodule, as: Submodule
   alias Waveform.Synth.Manager, as: Manager
 
@@ -33,7 +33,7 @@ defmodule Waveform.Synth.Def do
       inputs: [],
       outputs: [],
 
-      #internal state
+      # internal state
       arguments: []
     )
   end
@@ -64,7 +64,7 @@ defmodule Waveform.Synth.Def do
     Manager.create_synth(name, compiled)
 
     quote do
-      { unquote(Macro.escape(synthdef)), unquote(compiled) }
+      {unquote(Macro.escape(synthdef)), unquote(compiled)}
     end
   end
 
@@ -74,10 +74,13 @@ defmodule Waveform.Synth.Def do
 
   defp parse_synthdef(name, params, lines, %Def{synthdefs: synths} = sdef) do
     param_names = Keyword.keys(params) |> Enum.map(&to_string(&1))
-    param_values = Keyword.values(params) |> Enum.map(fn p ->
-      {result, _ } = Code.eval_quoted(p)
-      result
-    end)
+
+    param_values =
+      Keyword.values(params)
+      |> Enum.map(fn p ->
+        {result, _} = Code.eval_quoted(p)
+        result
+      end)
 
     unless Enum.all?(param_values, &is_number(&1)) do
       raise "Default param values must be numbers: #{Macro.to_string(params)}"
@@ -96,16 +99,19 @@ defmodule Waveform.Synth.Def do
       end)
       |> Enum.into(%{})
 
-    synth =
-      Expression.parse_lines(
-        %Synth{
-          name: name,
-          constants: [],
-          param_names: param_names,
-          param_values: param_values,
-          parameters: parameters,
-          assigns: %{},
-          ugens: [control]
+    {synth, _input} =
+      Parse.parse(
+        {
+          %Synth{
+            name: name,
+            constants: [],
+            param_names: param_names,
+            param_values: param_values,
+            parameters: parameters,
+            assigns: %{},
+            ugens: [control]
+          },
+          nil
         },
         lines
       )

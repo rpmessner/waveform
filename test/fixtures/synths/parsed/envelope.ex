@@ -2,33 +2,35 @@
   synthdefs: [
     %Waveform.Synth.Def.Synth{
       constants: [
-        #phase
+        # phase
         0.0,
-        #mul
+        # mul
         1.0,
-        #add
+        # add
         0.0,
 
-        #envelope
-        0.0, #min
+        # envelope
+        # min
+        0.0,
         4.0,
         -99.0,
         -99.0,
         1.0,
         0.0,
         0.0,
-        0.0, #min
+        # min
+        0.0,
         0.0,
 
-        #gate
+        # gate
         1.0,
-        #level_scale,
+        # level_scale,
         1.0,
-        #level_bias,
+        # level_bias,
         0.0,
-        #time_scale
+        # time_scale
         1.0,
-        #done_action
+        # done_action
         2.0
       ],
       name: "envelope-def",
@@ -64,7 +66,7 @@
         # env_curve
         1.0,
         # out_bus
-        0.0,
+        0.0
       ],
       ugens: [
         # 0
@@ -153,7 +155,7 @@
               constant_index: 16
             },
 
-            #min
+            # min
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 3
@@ -170,7 +172,6 @@
               src: -1,
               constant_index: 6
             },
-
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 5
@@ -187,7 +188,6 @@
               src: -1,
               constant_index: 7
             },
-
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 6
@@ -204,7 +204,6 @@
               src: -1,
               constant_index: 8
             },
-
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
               constant_index: 7
@@ -221,7 +220,6 @@
               src: -1,
               constant_index: 9
             },
-
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 10
@@ -237,8 +235,7 @@
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 11
-            },
-
+            }
           ],
           outputs: [
             1
@@ -254,7 +251,7 @@
           outputs: [2],
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 2},
-            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 3},
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 3}
           ]
         },
 
@@ -269,8 +266,8 @@
             # out_bus
             %Waveform.Synth.Def.Ugen.Input{constant_index: 9, src: 0},
             # sin_osc out0
-            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 4},
-          ],
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 4}
+          ]
           # hfo
         }
       ],

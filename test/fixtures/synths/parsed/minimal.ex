@@ -9,7 +9,7 @@
       ],
       param_values: [
         69.0,
-        0.0,
+        0.0
       ],
       param_names: ["note", "out_bus"],
       ugens: [
@@ -20,7 +20,7 @@
           inputs: [],
           outputs: [
             1,
-            1,
+            1
           ]
         },
         %Waveform.Synth.Def.Ugen{
@@ -66,7 +66,7 @@
             %Waveform.Synth.Def.Ugen.Input{
               src: 2,
               constant_index: 0
-            },
+            }
           ],
           outputs: []
         }

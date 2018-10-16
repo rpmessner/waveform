@@ -30,17 +30,17 @@ defmodule Waveform.Synth.Def.Submodule do
     {:ok, state}
   end
 
-  def handle_call({:lookup, name}, _from, %State{}=state) do
+  def handle_call({:lookup, name}, _from, %State{} = state) do
     submodule = Map.get(state.submodules, name)
 
     {:reply, submodule, state}
   end
 
-  def handle_call({:define, name, params, forms}, _from, %State{}=state) do
+  def handle_call({:define, name, params, forms}, _from, %State{} = state) do
     submodule = %Submodule{name: name, params: params, forms: forms}
     state = %{state | submodules: Map.put(state.submodules, name, submodule)}
 
-    {:reply, submodule, state }
+    {:reply, submodule, state}
   end
 
   def handle_call({:reset}, _from, _state) do

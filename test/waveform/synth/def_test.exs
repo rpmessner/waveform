@@ -35,8 +35,7 @@ defmodule Waveform.Synth.DefTest do
     expected_chunks =
       for <<expected::size(chunk_size) <- result>>, do: <<expected::size(chunk_size)>>
 
-    actual_chunks =
-      for <<actual::size(chunk_size) <- compiled>>, do: <<actual::size(chunk_size)>>
+    actual_chunks = for <<actual::size(chunk_size) <- compiled>>, do: <<actual::size(chunk_size)>>
 
     Enum.zip(expected_chunks, actual_chunks)
     |> Enum.with_index()
@@ -53,55 +52,64 @@ defmodule Waveform.Synth.DefTest do
     @sinosc
     |> File.read!()
     |> Code.eval_string()
+
   @sinosc_def sinosc
 
   test "compiles a synth def into %Def" do
-    assert_synthdef(@sinosc_def,
+    assert_synthdef(
+      @sinosc_def,
       defsynth SinOscDef,
         # midi A4
         note: 69,
         out_bus: 0 do
         sin_osc = %SinOsc{freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0}
         out <- %Out{bus: out_bus, channels: sin_osc}
-      end)
+      end
+    )
   end
 
   test "ugen args are in correct order when compiled into %Def" do
-    assert_synthdef(@sinosc_def,
+    assert_synthdef(
+      @sinosc_def,
       defsynth SinOscDef,
         # midi A4
         note: 69,
         out_bus: 0 do
         sin_osc = %SinOsc{freq: midicps(note), mul: 1.0, add: 2.0, phase: 0.0}
         out <- %Out{bus: out_bus, channels: sin_osc}
-      end)
+      end
+    )
   end
 
   test "compiles ar/kr syntax into %Def" do
-    assert_synthdef(@sinosc_def,
+    assert_synthdef(
+      @sinosc_def,
       defsynth SinOscDef,
         # midi A4
         note: 69,
         out_bus: 0 do
         sin_osc = %SinOsc.ar{freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0}
         out <- %Out{bus: out_bus, channels: sin_osc}
-      end)
+      end
+    )
   end
 
-  { saw, _ } = @saw
+  {saw, _} =
+    @saw
     |> File.read!()
     |> Code.eval_string()
+
   @saw_def saw
 
   test "compiles a more complex synth def into %Def" do
-    assert_synthdef(@saw_def,
+    assert_synthdef(
+      @saw_def,
       defsynth SawDef,
         # midi A4
         note: 69,
         out_bus: 0,
         foo: 0,
         bar: 0 do
-
         freq = midicps(note)
         freq2 = freq * 2.0
 
@@ -114,7 +122,8 @@ defmodule Waveform.Synth.DefTest do
         }
 
         out <- %Out{bus: out_bus, channels: saw}
-      end)
+      end
+    )
   end
 
   test "compiles synth with submodules into %Def" do
@@ -123,20 +132,25 @@ defmodule Waveform.Synth.DefTest do
       out <- %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
     end
 
-    assert_synthdef(@sinosc_def,
+    assert_synthdef(
+      @sinosc_def,
       defsynth SinOscDef, note: 69, out_bus: 0 do
         bar = %AwesomeSubmodule{note: note}
         out <- %Out{bus: out_bus, channels: bar}
-      end)
+      end
+    )
   end
 
-  { envelope_def, _ } = @envelope
+  {envelope_def, _} =
+    @envelope
     |> File.read!()
     |> Code.eval_string()
+
   @envelope_def envelope_def
 
   test "compiles synth with an envelope into %Def" do
-    assert_synthdef(@envelope_def,
+    assert_synthdef(
+      @envelope_def,
       defsynth EnvelopeDef,
         # midi A4
         note: 69,
@@ -148,9 +162,7 @@ defmodule Waveform.Synth.DefTest do
         decay_level: -1,
         sustain_level: 1,
         env_curve: 1,
-        out_bus: 0
-      do
-
+        out_bus: 0 do
         freq = midicps(note)
 
         sin_osc = %SinOsc.ar{
@@ -160,16 +172,17 @@ defmodule Waveform.Synth.DefTest do
           add: 0.0
         }
 
-        envelope = Util.envelope(
-          attack: attack,
-          decay: decay,
-          sustain: sustain,
-          release: release,
-          attack_level: attack_level,
-          decay_level: decay_level,
-          sustain_level: sustain_level,
-          env_curve: env_curve
-        )
+        envelope =
+          Util.envelope(
+            attack: attack,
+            decay: decay,
+            sustain: sustain,
+            release: release,
+            attack_level: attack_level,
+            decay_level: decay_level,
+            sustain_level: sustain_level,
+            env_curve: env_curve
+          )
 
         envelope = %EnvGen.kr{
           envelope: envelope,
@@ -181,8 +194,7 @@ defmodule Waveform.Synth.DefTest do
         }
 
         out <- %Out{bus: out_bus, channels: sin_osc * envelope}
-
-      end)
+      end
+    )
   end
-
 end

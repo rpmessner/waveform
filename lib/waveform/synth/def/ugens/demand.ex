@@ -43,7 +43,7 @@ defmodule Waveform.Synth.Def.Ugens.Demand do
     Dxrand: %{},
     TDuty: %{},
     Unpack1FFT: %{},
-    UnpackFFT: %{},
+    UnpackFFT: %{}
   }
 
   def definitions do

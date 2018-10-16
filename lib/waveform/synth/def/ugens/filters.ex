@@ -50,7 +50,7 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
     BLowPass: %{},
     BLowPass4: %{},
     BLowShelf: %{},
-    BPeakEQ: %{},
+    BPeakEQ: %{}
   }
 
   def definitions do
