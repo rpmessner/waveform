@@ -1,81 +1,65 @@
-defmodule Waveform.Synth.Def.Ugens.InOut do
+defmodule Waveform.Synth.Def.Ugens.Physical do
   @ugens %{
-    AudioIn: %{
+    DWGBowed: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    DiskIn: %{
+    DWGBowedSimple: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    DiskOut: %{
-      defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bufnum: nil, channels: :last]
-    },
-    In: %{
+    DWGBowedTor: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    InBus: %{
+    DWGPlucked: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    InFeedback: %{
+    DWGPlucked2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    InTrig: %{
+    DWGPluckedStiff: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    LagIn: %{
+    DiodeRingMod: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    LocalIn: %{
+    MdaPiano: %{
+      defaults: %{rate: 2, special: 0, outputs: [2,2]},
+      arguments: []
+    },
+    NTube: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    LocalOut: %{
-      defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [channels: nil]
-    },
-    MaxLocalBufs: %{
+    OteyPiano: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    OffsetOut: %{
+    OteyPianoStrings: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    Out: %{
-      defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bus: 0, channels: :last]
-    },
-    ReplaceOut: %{
+    Stk: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    SharedIn: %{
+    StkGlobals: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    SharedOut: %{
+    StkInst: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    SoundIn: %{
+    TwoTube: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    VDiskIn: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
-    },
-    XOut: %{
-      defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bus: nil, xfade: nil, channels: :last]
-    }
   }
 
   def definitions do

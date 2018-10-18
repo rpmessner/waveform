@@ -1,81 +1,102 @@
-defmodule Waveform.Synth.Def.Ugens.InOut do
+defmodule Waveform.Synth.Def.Ugens.Delays do
   @ugens %{
-    AudioIn: %{
+    AllpassC: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    DiskIn: %{
+    AllpassL: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    DiskOut: %{
-      defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bufnum: nil, channels: :last]
-    },
-    In: %{
+    AllpassN: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    InBus: %{
+    CombC: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    InFeedback: %{
+    CombL: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    InTrig: %{
+    CombN: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    LagIn: %{
+    DelTapRd: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    LocalIn: %{
+    DelTapWr: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    LocalOut: %{
-      defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [channels: nil]
-    },
-    MaxLocalBufs: %{
+    Delay1: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    OffsetOut: %{
+    Delay2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    Out: %{
-      defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bus: 0, channels: :last]
-    },
-    ReplaceOut: %{
+    DelayC: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    SharedIn: %{
+    DelayL: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    SharedOut: %{
+    DelayN: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    SoundIn: %{
+    DoubleNestedAllpassC: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    VDiskIn: %{
+    DoubleNestedAllpassL: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
     },
-    XOut: %{
-      defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bus: nil, xfade: nil, channels: :last]
-    }
+    DoubleNestedAllpassN: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: []
+    },
+    Greyhole: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: []
+    },
+    GreyholeRaw: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: []
+    },
+    NestedAllpassC: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: []
+    },
+    NestedAllpassL: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: []
+    },
+    NestedAllpassN: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: []
+    },
+    Pluck: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: []
+    },
+    SwitchDelay: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: []
+    },
+    TDelay: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: []
+    },
+
   }
 
   def definitions do

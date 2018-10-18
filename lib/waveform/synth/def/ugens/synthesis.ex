@@ -1,44 +1,53 @@
-defmodule Waveform.Synth.Def.Ugens.Envelopes do
+defmodule Waveform.Synth.Def.Ugens.Synthesis do
   @ugens %{
-    Decay: %{
+    AtsAmp: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    Decay2: %{
+    AtsFile: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    DemandEnvGen: %{
+    AtsFreq: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    EnvGen: %{
-      defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [
-        gate: 1,
-        level_scale: 1,
-        level_bias: 0,
-        time_scale: 1,
-        done_action: 0,
-        envelope: :last
-      ]
-    },
-    IEnvGen: %{
+    AtsNoiSynth: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    Line: %{
+    AtsNoise: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    Linen: %{
+    AtsParInfo: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    XLine: %{
+    AtsPartial: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
-    }
+    },
+    AtsSynth: %{
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: []
+    },
+    AtsUGen: %{
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: []
+    },
+    LPCSynth: %{
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: []
+    },
+    LPCVals: %{
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: []
+    },
+    Maxamp: %{
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: []
+    },
   }
 
   def definitions do

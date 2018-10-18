@@ -1,4 +1,4 @@
-defmodule Waveform.Synth.Def.Ugens.BasicOps do
+defmodule Waveform.Synth.Def.Ugens.Algebraic do
   @binary_op_specials %{
     add: 0,
     +: 0,
@@ -107,11 +107,34 @@ defmodule Waveform.Synth.Def.Ugens.BasicOps do
     scurve: 53
   }
 
+  @ugens %{
+    BinaryOpUGen: %{
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [selector: nil, a: nil, b: nil]
+    },
+    Sum3: %{
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [in0: nil, in1: nil, in2: nil]
+    },
+    Sum4: %{
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [in0: nil, in1: nil, in2: nil, in3: nil]
+    },
+    UnaryOpUGen: %{
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [selector: nil, a: nil]
+    },
+  }
+
   def unary_ops do
     @unary_op_specials
   end
 
   def binary_ops do
     @binary_op_specials
+  end
+
+  def definitions do
+    @ugens
   end
 end

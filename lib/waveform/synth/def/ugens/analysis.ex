@@ -1,86 +1,90 @@
-defmodule Waveform.Synth.Def.Ugens.Filters do
+defmodule Waveform.Synth.Def.Ugens.Analysis do
   @ugens %{
-    Allpass1: %{
+    AmpComp: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    Allpass2: %{
+    AmpCompA: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BAllPass: %{
+    Amplitude: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BBandPass: %{
+    AmplitudeMod: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BBandStop: %{
+    AnalyseEvents2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BEQSuite: %{
+    ArrayMax: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BHiPass4: %{
+    ArrayMin: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BHiPass: %{
+    AttackSlope: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BHiShelf: %{
+    AutoTrack: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BLowPass4: %{
+    AverageOutput: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BLowPass: %{
+    BeatStatistics: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BLowShelf: %{
+    BufMax: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BMoog: %{
+    BufMin: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    BPeakEQ: %{
+    Chromagram: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    CrossoverDistortion: %{
+    Coyote: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    DFM1: %{
+    Crest: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    Decimator: %{
+    DetectSilence: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    DiodeRingMod: %{
+    DrumTrack: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    Disintegrator: %{
+    EnvDetect: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    Filter: %{
+    EnvFollow: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    Friction: %{
+    FeatureSave: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    FrameCompare: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
@@ -88,39 +92,51 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    Goertzel: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
-    },
     HairCell: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    IIRFilter: %{
+    KMeansRT: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    InsideOut: %{
+    KeyClarity: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    LTI: %{
+    KeyMode: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    Lag2UD: %{
+    KeyTrack: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    Lag3UD: %{
+    LPCAnalyzer: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    LagUD: %{
+    LPCError: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    MeanTriggered: %{
+    Loudness: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    MFCC: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    MatchingP: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    MatchingPResynth: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    Max: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
@@ -128,79 +144,99 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    MedianTriggered: %{
+    NearestN: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    MoogFF: %{
+    OnsetStatistics: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    MoogLadder: %{
+    Onsets: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    MoogVCF: %{
+    Peak: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    NL2: %{
+    PeakFollower: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    NL: %{
+    Pitch: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    NLFiltC: %{
+    Qitch: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    NLFiltL: %{
+    RMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    NLFiltN: %{
+    RunningSum: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    RLPFD: %{
+    SLOnset: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    RMEQ: %{
+    SMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    RMEQSuite: %{
+    SOMRd: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    RMShelf2: %{
+    SOMTrain: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    RMShelf: %{
+    SendPeakRMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    RegaliaMitraEQ: %{
+    SensoryDissonance: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    SVF: %{
+    Slope: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    SineShaper: %{
+    SpectralEntropy: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    SmoothDecimator: %{
+    TPV: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
-    Streson: %{
+    Tartini: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    TrigAvg: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    WAmp: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    WalshHadamard: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    WaveletDaub: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    ZeroCrossing: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [],
     },
@@ -208,5 +244,5 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
 
   def definitions do
     @ugens
-  end
+ end
 end

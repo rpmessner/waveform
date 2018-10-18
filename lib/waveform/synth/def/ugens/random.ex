@@ -1,44 +1,29 @@
-defmodule Waveform.Synth.Def.Ugens.Envelopes do
+defmodule Waveform.Synth.Def.Ugens.Random do
   @ugens %{
-    Decay: %{
+    ExpRand: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    Decay2: %{
+    Hasher: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    DemandEnvGen: %{
+    LinRand: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    EnvGen: %{
-      defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [
-        gate: 1,
-        level_scale: 1,
-        level_bias: 0,
-        time_scale: 1,
-        done_action: 0,
-        envelope: :last
-      ]
-    },
-    IEnvGen: %{
+    NRand: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    Line: %{
+    Rand: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    Linen: %{
+    TChoose: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
     },
-    XLine: %{
-      defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
-    }
   }
 
   def definitions do

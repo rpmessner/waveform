@@ -1,31 +1,99 @@
 defmodule Waveform.Synth.Def.Ugens.Buffer do
   @ugens %{
-    BufRd: %{},
+    BufRd: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
     BufWr: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [bufnum: 0, phase: 0, loop: 1, inputs: :last]
     },
-    Dbufrd: %{},
-    Dbufwr: %{},
-    DelTapRd: %{},
-    DelTapWr: %{},
-    DetectIndex: %{},
-    DiskIn: %{},
-    DiskOut: %{},
-    GrainBuf: %{},
-    Harmonics: %{},
-    Index: %{},
-    IndexInBetween: %{},
-    IndexL: %{},
-    ListTrig: %{},
-    ListTrig2: %{},
-    LocalBuf: %{},
-    Logger: %{},
-    LoopBuf: %{},
-    MatchingPResynth: %{},
-    MultiTap: %{},
-    Phasor: %{},
-    PlayBuf: %{},
+    Dbufrd: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    Dbufwr: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    DelTapRd: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    DelTapWr: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    DetectIndex: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    DiskIn: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    DiskOut: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    GrainBuf: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    Harmonics: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    Index: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    IndexInBetween: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    IndexL: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    ListTrig: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    ListTrig2: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    LocalBuf: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    Logger: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    LoopBuf: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    MatchingPResynth: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    MultiTap: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    Phasor: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    PlayBuf: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
     RecordBuf: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [
         bufnum: 0,
         offset: 0,
@@ -39,22 +107,57 @@ defmodule Waveform.Synth.Def.Ugens.Buffer do
       ]
     },
     ScopeOut: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [inputs: :last]
     },
     ScopeOut2: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: [scope_num: 0, max_frames: 4096, scope_frames: nil, inputs: :last]
     },
-    Shaper: %{},
-    SortBuf: %{},
-    TGrains: %{},
-    TGrains2: %{},
-    TGrains3: %{},
-    Tap: %{},
-    VDiskIn: %{},
-    VMScan2D: %{},
-    Warp1: %{},
-    WaveTerrain: %{},
-    WrapIndex: %{}
+    Shaper: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    SortBuf: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    TGrains: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    TGrains2: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    TGrains3: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    Tap: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    VDiskIn: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    VMScan2D: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    Warp1: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    WaveTerrain: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    },
+    WrapIndex: %{
+      defaults: %{rate: 2, special: 0, outputs: [2]},
+      arguments: [],
+    }
   }
 
   def definitions do

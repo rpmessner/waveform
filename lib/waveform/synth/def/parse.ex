@@ -8,8 +8,8 @@ defmodule Waveform.Synth.Def.Parse do
 
   @ugens Ugens.definitions()
 
-  @unary_op_specials Ugens.BasicOps.unary_ops()
-  @binary_op_specials Ugens.BasicOps.binary_ops()
+  @unary_op_specials Ugens.Algebraic.unary_ops()
+  @binary_op_specials Ugens.Algebraic.binary_ops()
 
   @kr %{outputs: [1], rate: 1, special: 0}
   @ar %{outputs: [2], rate: 2, special: 0}
@@ -111,6 +111,11 @@ defmodule Waveform.Synth.Def.Parse do
     }
   end
 
+  def parse({%Synth{}=s, i},
+            {:|>, _, _}=expression ) do
+    {s, i}
+  end
+
   # parse binary op
   def parse(
         {%Synth{ugens: ugens} = synth, i},
@@ -204,6 +209,7 @@ defmodule Waveform.Synth.Def.Parse do
   end
 
   def parse({%Synth{}, _i}, value) do
+    IO.puts(value)
     raise "Cannot parse expression #{Macro.to_string(value)}"
   end
 
