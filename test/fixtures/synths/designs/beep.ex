@@ -21,7 +21,7 @@ defsynth Beep,
   env_curve: 1,
   out_bus: 0 do
   #
-  decay_level = %Select.kr{
+  decay_level = %Select.kr(){
     which: decay_level == -1,
     from: [decay_level, sustain_level]
   }
@@ -65,7 +65,7 @@ defsynth Beep,
       env_curve: env_curve
     )
 
-  env = %EnvGen.kr{envelope: envelope, action: :free}
+  env = %EnvGen.kr(){envelope: envelope, action: :free}
 
   channels = %Pan2{in: amp_fudge * env * snd, pos: pan, level: amp}
 

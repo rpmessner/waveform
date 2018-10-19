@@ -2,247 +2,247 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
   @ugens %{
     AmpComp: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     AmpCompA: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Amplitude: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     AmplitudeMod: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     AnalyseEvents2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     ArrayMax: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     ArrayMin: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     AttackSlope: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     AutoTrack: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     AverageOutput: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BeatStatistics: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BufMax: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BufMin: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Chromagram: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Coyote: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Crest: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     DetectSilence: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     DrumTrack: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     EnvDetect: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     EnvFollow: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     FeatureSave: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     FrameCompare: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Gammatone: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     HairCell: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     KMeansRT: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     KeyClarity: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     KeyMode: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     KeyTrack: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     LPCAnalyzer: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     LPCError: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Loudness: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     MFCC: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     MatchingP: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     MatchingPResynth: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Max: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Meddis: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     NearestN: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     OnsetStatistics: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Onsets: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Peak: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     PeakFollower: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Pitch: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Qitch: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     RMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     RunningSum: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SLOnset: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SOMRd: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SOMTrain: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SendPeakRMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SensoryDissonance: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Slope: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SpectralEntropy: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     TPV: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Tartini: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     TrigAvg: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     WAmp: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     WalshHadamard: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     WaveletDaub: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     ZeroCrossing: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
-    },
+      arguments: []
+    }
   }
 
   def definitions do
     @ugens
- end
+  end
 end

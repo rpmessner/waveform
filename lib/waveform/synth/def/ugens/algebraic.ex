@@ -123,7 +123,7 @@ defmodule Waveform.Synth.Def.Ugens.Algebraic do
     UnaryOpUGen: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: [selector: nil, a: nil]
-    },
+    }
   }
 
   def unary_ops do

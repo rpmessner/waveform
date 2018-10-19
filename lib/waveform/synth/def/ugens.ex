@@ -53,4 +53,8 @@ defmodule Waveform.Synth.Def.Ugens do
   def definitions do
     @definitions
   end
+
+  def lookup(name) do
+    Map.get(@definitions, name)
+  end
 end

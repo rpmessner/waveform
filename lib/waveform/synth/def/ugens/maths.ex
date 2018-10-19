@@ -71,7 +71,7 @@ defmodule Waveform.Synth.Def.Ugens.Maths do
     Wrap: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
-    },
+    }
   }
 
   def definitions do

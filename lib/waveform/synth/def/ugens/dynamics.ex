@@ -15,7 +15,7 @@ defmodule Waveform.Synth.Def.Ugens.Dynamics do
     Normalizer: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
-    },
+    }
   }
 
   def definitions do

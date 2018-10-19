@@ -127,7 +127,7 @@ defmodule Waveform.Synth.Def.Ugens.Granular do
     SinGrainIBF: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
-    },
+    }
   }
 
   def definitions do

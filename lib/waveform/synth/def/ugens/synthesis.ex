@@ -47,7 +47,7 @@ defmodule Waveform.Synth.Def.Ugens.Synthesis do
     Maxamp: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
       arguments: []
-    },
+    }
   }
 
   def definitions do

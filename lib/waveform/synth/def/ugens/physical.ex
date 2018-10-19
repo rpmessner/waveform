@@ -29,7 +29,7 @@ defmodule Waveform.Synth.Def.Ugens.Physical do
       arguments: []
     },
     MdaPiano: %{
-      defaults: %{rate: 2, special: 0, outputs: [2,2]},
+      defaults: %{rate: 2, special: 0, outputs: [2, 2]},
       arguments: []
     },
     NTube: %{
@@ -59,7 +59,7 @@ defmodule Waveform.Synth.Def.Ugens.Physical do
     TwoTube: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
-    },
+    }
   }
 
   def definitions do

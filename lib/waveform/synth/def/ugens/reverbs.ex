@@ -5,7 +5,7 @@ defmodule Waveform.Synth.Def.Ugens.Reverbs do
       arguments: []
     },
     FreeVerb2: %{
-      defaults: %{rate: 2, special: 0, outputs: [2,2]},
+      defaults: %{rate: 2, special: 0, outputs: [2, 2]},
       arguments: []
     },
     GVerb: %{
@@ -19,7 +19,7 @@ defmodule Waveform.Synth.Def.Ugens.Reverbs do
     JPverbRaw: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
-    },
+    }
   }
 
   def definitions do

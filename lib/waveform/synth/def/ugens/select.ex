@@ -2,27 +2,27 @@ defmodule Waveform.Synth.Def.Ugens.Select do
   @ugens %{
     LinSelectX: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [],
+      arguments: []
     },
     LinXFade2: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [],
+      arguments: []
     },
     Select: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [],
+      arguments: []
     },
     SelectX: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [],
+      arguments: []
     },
     SelectXFocus: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [],
+      arguments: []
     },
     XFade2: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [],
+      arguments: []
     }
   }
 

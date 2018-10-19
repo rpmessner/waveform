@@ -2,208 +2,208 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
   @ugens %{
     Allpass1: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Allpass2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BAllPass: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BBandPass: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BBandStop: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BEQSuite: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BHiPass4: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BHiPass: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BHiShelf: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BLowPass4: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BLowPass: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BLowShelf: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BMoog: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     BPeakEQ: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     CrossoverDistortion: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     DFM1: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Decimator: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     DiodeRingMod: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Disintegrator: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Filter: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Friction: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Gammatone: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Goertzel: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     HairCell: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     IIRFilter: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     InsideOut: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     LTI: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Lag2UD: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Lag3UD: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     LagUD: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     MeanTriggered: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Meddis: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     MedianTriggered: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     MoogFF: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     MoogLadder: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     MoogVCF: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     NL2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     NL: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     NLFiltC: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     NLFiltL: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     NLFiltN: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     RLPFD: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     RMEQ: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     RMEQSuite: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     RMShelf2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     RMShelf: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     RegaliaMitraEQ: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SVF: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SineShaper: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     SmoothDecimator: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
+      arguments: []
     },
     Streson: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [],
-    },
+      arguments: []
+    }
   }
 
   def definitions do

@@ -95,8 +95,7 @@ defmodule Waveform.Synth.Def.Ugens.Delays do
     TDelay: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
       arguments: []
-    },
-
+    }
   }
 
   def definitions do

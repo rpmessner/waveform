@@ -12,13 +12,16 @@
           outputs: [2],
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, constant_index: 0,
+              src: -1,
+              constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, constant_index: 1,
+              src: -1,
+              constant_index: 1
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, constant_index: 2,
+              src: -1,
+              constant_index: 2
             }
           ]
         },
@@ -28,13 +31,16 @@
           outputs: [2, 2],
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: 0, constant_index: 0,
+              src: 0,
+              constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, constant_index: 3,
+              src: -1,
+              constant_index: 3
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, constant_index: 4,
+              src: -1,
+              constant_index: 4
             }
           ]
         },
@@ -44,16 +50,19 @@
           outputs: [],
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, constant_index: 5,
+              src: -1,
+              constant_index: 5
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: 1, constant_index: 0,
+              src: 1,
+              constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: 1, constant_index: 1,
+              src: 1,
+              constant_index: 1
             }
           ]
-        },
+        }
       ]
     }
   ]
