@@ -89,7 +89,12 @@ defmodule Waveform.Synth.Def do
     param_values = param_values |> Enum.map(&(&1 + 0.0))
     control_outputs = Enum.map(param_values, fn _ -> 1 end)
 
-    control = %Ugen{name: "Control", rate: 1, special: 0, outputs: control_outputs}
+    control =
+      if Enum.count(params) > 0 do
+       [%Ugen{name: "Control", rate: 1, special: 0, outputs: control_outputs}]
+      else
+        []
+      end
 
     parameters =
       Keyword.keys(params)
@@ -108,7 +113,7 @@ defmodule Waveform.Synth.Def do
           param_values: param_values,
           parameters: parameters,
           assigns: %{},
-          ugens: [control]
+          ugens: control
         },
         lines
       )

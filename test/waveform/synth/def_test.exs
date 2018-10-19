@@ -182,27 +182,27 @@ defmodule Waveform.Synth.DefTest do
    )
   end
 
-  # test "multi-output synth works" do
-  #   assert_synthdef(
-  #     @multichannel_def,
-  #     defsynth MultiChannel do
-  #       saw = %Saw{freq: 440, mul: 1, add: 0}
-  #       [left, right] = %Pan2{in: saw, pos: 0, level: 1}
-  #       %Out{out_bus: 0, channels: [left, right]}
-  #     end
-  #   )
-  # end
-  #
-  # test "multi-output synth can be destructured" do
-  #   assert_synthdef(
-  #     @multichannel_def,
-  #     defsynth MultiChannel do
-  #       saw = %Saw{freq: 440, mul: 1, add: 0}
-  #       [left, right] = %Pan2{in: saw, pos: 0, level: 1}
-  #       %Out{out_bus: 0, channels: [left, right]}
-  #     end
-  #   )
-  # end
+  test "multi-output synth works" do
+    assert_synthdef(
+      @multichannel_def,
+      defsynth MultiChannel, [] do
+        saw = %Saw{freq: 440, mul: 1, add: 0}
+        outputs = %Pan2{in: saw, pos: 0, level: 1}
+        %Out{bus: 0, channels: outputs}
+      end
+    )
+  end
+
+  test "multi-output synth can be destructured" do
+    assert_synthdef(
+      @multichannel_def,
+      defsynth MultiChannel, [] do
+        saw = %Saw{freq: 440, mul: 1, add: 0}
+        [left, right] = %Pan2{in: saw, pos: 0, level: 1}
+        %Out{bus: 0, channels: [left, right]}
+      end
+    )
+  end
 
   test "compiles ar/kr syntax into %Def" do
     assert_synthdef(

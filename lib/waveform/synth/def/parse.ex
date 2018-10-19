@@ -14,11 +14,13 @@ defmodule Waveform.Synth.Def.Parse do
 
   def parse(%Synth{} = synth, definition), do: parse({synth, nil}, definition)
 
-  def parse({%Synth{} = synth, i}, []), do: {synth, i}
 
-  # parse lines
-  def parse({%Synth{} = synth, i}, [line | rest]) do
-    parse({synth, i}, line) |> parse(rest)
+  # parse list
+  def parse({%Synth{} = synth, _i}, items) when is_list(items) do
+    Enum.reduce(items, {synth, []}, fn item, {s, inputs} ->
+      {s, next_input} = parse({s, inputs}, item)
+      {s, List.flatten(inputs ++ [next_input])}
+    end)
   end
 
   # parse assignment
@@ -31,6 +33,30 @@ defmodule Waveform.Synth.Def.Parse do
     assigns = Map.put(assigns, output_name, input)
 
     {%{synth | assigns: assigns}, input}
+  end
+
+  # parse destructuring assignment
+  def parse(
+        {%Synth{} = synth, i},
+        {:=, _, [outputs, expression]}
+      ) when is_list(outputs) do
+
+    {%Synth{assigns: assigns}=synth, inputs} = parse({synth, i}, expression)
+
+    if !is_list(inputs) || Enum.count(inputs) < Enum.count(outputs) do
+      raise %MatchError{
+        term: Macro.to_string(expression)
+      }
+    end
+
+    assigns =
+      outputs
+      |> Enum.with_index()
+      |> Enum.reduce(assigns, fn {{name, _, nil}, i}, acc ->
+        Map.put(acc, name, Enum.at(inputs, i))
+      end)
+
+    {%{synth | assigns: assigns}, inputs}
   end
 
   # parse ugen/submodule
@@ -358,7 +384,7 @@ defmodule Waveform.Synth.Def.Parse do
 
     unless ugen_def, do: raise("Unknown or unimplemented ugen #{name}")
 
-    %{defaults: %{outputs: outputs}=ugen_base} = ugen_def
+    %{defaults: ugen_base} = ugen_def
 
     ugen_name = %{name: to_string(name)}
 
@@ -369,13 +395,7 @@ defmodule Waveform.Synth.Def.Parse do
         [ugen_base, base, ugen_name]
       end
 
-    num_outputs = Enum.count(outputs)
-
-    %{rate: rate} = ugen = Enum.reduce(options, %{}, &Map.merge(&1, &2))
-
-    # outputs = Enum.take(Stream.repeatedly(fn -> rate end), num_outputs)
-
-    # ugen = Map.merge(ugen, %{outputs: outputs})
+    ugen = Enum.reduce(options, %{}, &Map.merge(&1, &2))
 
     {struct(Ugen, ugen), ugen_def}
   end

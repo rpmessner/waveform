@@ -69,5 +69,5 @@ defsynth Beep,
 
   channels = %Pan2{in: amp_fudge * env * snd, pos: pan, level: amp}
 
-  out <- %Out{out_bus: out_bus, channels: channels}
+  %Out{out_bus: out_bus, channels: channels}
 end

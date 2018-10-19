@@ -4,11 +4,12 @@
       name: "multi-channel",
       param_names: [],
       param_values: [],
-      constants: [440, 1, 0, 0, 1, 0],
+      constants: [440.0, 1.0, 0.0, 0.0, 1.0, 0.0],
       ugens: [
         %Waveform.Synth.Def.Ugen{
           name: "Saw",
           rate: 2,
+          special: 0,
           outputs: [2],
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
@@ -28,6 +29,7 @@
         %Waveform.Synth.Def.Ugen{
           name: "Pan2",
           rate: 2,
+          special: 0,
           outputs: [2, 2],
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
@@ -48,6 +50,7 @@
           name: "Out",
           rate: 2,
           outputs: [],
+          special: 0,
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
