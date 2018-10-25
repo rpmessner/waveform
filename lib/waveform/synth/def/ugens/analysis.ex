@@ -179,76 +179,76 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
       arguments: [in: 0, init_freq: 440, min_freq: 60, max_freq: 4000, exec_freq: 100, max_bins_per_octave: 16, median: 1, amp_threshold: 0.01, peak_threshold: 0.5, down_sample: 1, clar: 0]
     },
     Qitch: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [in: 0, databufnum: nil, amp_threshold: 0.01, algoflag: 1, ampbufnum: nil, minfreq: 0, maxfreq: 2500]
     },
     RMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [in: nil, lpFreq: 10]
     },
     RunningSum: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [in: nil, numsamp: 40]
     },
     SLOnset: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [in: nil, memorysize1: 20, before: 5, after: 5, threshold: 10, hysteresis: 10]
     },
     SMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [in: nil, maxpeaks: 80, currentpeaks: 80, tolerance: 4, noisefloor: 0.2, freqmult: 1, freqadd: 0, formantpreserve: 0, useifft: 0, ampmult: 1, graphicsbufnum: nil]
     },
     SOMRd: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [bufnum: nil, inputdata: nil, netsize: 10, numdims: 2, gate: 1]
     },
     SOMTrain: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [bufnum: nil, inputdata: nil, netsize: 10, numdims: 2, traindur: 5000, nhood: 0.5, gate: 1, initweight: 1]
     },
     SendPeakRMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [sig: nil, reply_rate: 20, peak_lag: 3, cmd_name: '/reply', reply_id: -1]
     },
     SensoryDissonance: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [fft: nil, maxpeaks: 100, peakthreshold: 0.1, norm: nil, clamp: 1]
     },
     Slope: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [in: nil]
     },
     SpectralEntropy: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [fft: nil, fftsize: 2048, numbands: 1]
     },
     TPV: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [chain: nil, windowsize: 1024, hopsize: 512, maxpeaks: 80, currentpeaks: nil, freqmult: 1, tolerance: 4, noisefloor: 0.2]
     },
     Tartini: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [in: 0, threshold: 0.93, n: 2048, k: 0, overlap: 1024, small_cutoff: 0.5]
     },
     TrigAvg: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [in: 0, trig: 0]
     },
     WAmp: %{
-      defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      defaults: %{rate: 1, special: 0, outputs: [1]},
+      arguments: [in: 0, win_size: 0.1]
     },
     WalshHadamard: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [in: nil, which: 0]
     },
     WaveletDaub: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [in: nil, n: 64, which: 0]
     },
     ZeroCrossing: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [in: 0]
     }
   }
 

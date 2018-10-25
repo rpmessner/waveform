@@ -2,15 +2,18 @@ defmodule Waveform.Synth.Def.Ugens.Envelopes do
   @ugens %{
     Decay: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [in: 0, decay_time: 1]
     },
     Decay2: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [in: 0, attack_time: 0.01, decay_time: 1]
     },
     DemandEnvGen: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [level: nil, dur: nil, shape: 1,
+                  curve: 0, gate: 1, reset: 1,
+                  level_scale: 1, level_bias: 0,
+                  time_scale: 1, done: 0]
     },
     EnvGen: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},

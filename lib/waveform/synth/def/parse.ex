@@ -432,6 +432,14 @@ defmodule Waveform.Synth.Def.Parse do
 
     ugen = Enum.reduce(options, %{}, &Map.merge(&1, &2))
 
+    rate = ugen[:rate]
+    l = Enum.count(ugen_base[:outputs])
+
+    outputs = Enum.take(Stream.repeatedly(fn -> rate end), l)
+
+    ugen = %{ugen | outputs: outputs}
+
     {struct(Ugen, ugen), ugen_def}
   end
 end
+

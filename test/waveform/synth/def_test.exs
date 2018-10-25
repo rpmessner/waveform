@@ -17,6 +17,7 @@ defmodule Waveform.Synth.DefTest do
 
   @envelope "#{@fixtures}/synths/parsed/envelope.ex"
   @multichannel "#{@fixtures}/synths/parsed/multichannel.ex"
+  @mouse_panner "#{@fixtures}/synths/parsed/mouse_panner.ex"
   @saw "#{@fixtures}/synths/parsed/saw.ex"
   @sinosc "#{@fixtures}/synths/parsed/sinosc.ex"
 
@@ -47,6 +48,13 @@ defmodule Waveform.Synth.DefTest do
     |> Code.eval_string()
 
   @multichannel_def multichannel
+
+  {mouse_panner, _} =
+    @mouse_panner
+    |> File.read!()
+    |> Code.eval_string()
+
+  @mouse_panner_def mouse_panner
 
   test "compiles a synth def into %Def" do
     assert_synthdef(
@@ -240,6 +248,15 @@ defmodule Waveform.Synth.DefTest do
       defsynth SinOscDef, note: 69, out_bus: 0 do
         bar = %AwesomeSubmodule{note: note}
         %Out{bus: out_bus, channels: bar}
+      end
+    )
+  end
+
+  test "compiles a synth that mixes ar & kr" do
+    assert_synthdef(
+      @mouse_panner_def,
+      defsynth MousePanner, [] do
+        %Out{channels: %Pan2.ar{in: %WhiteNoise.ar{freq: 0.1}, pos: %MouseX.kr{minval: -1, maxval: 1}, level: 1}}
       end
     )
   end

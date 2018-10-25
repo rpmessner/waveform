@@ -2,7 +2,7 @@ defmodule Waveform.Synth.Def.Ugens.Buffer do
   @ugens %{
     BufRd: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [num_channels: nil, bufnum: 0, phase: 0, loop: 1, interpolation: 2]
     },
     BufWr: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -10,11 +10,11 @@ defmodule Waveform.Synth.Def.Ugens.Buffer do
     },
     Dbufrd: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [bufnum: 0, phase: 0, loop: 1]
     },
     Dbufwr: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: []
+      arguments: [in: 0, bufnum: 0, phase: 0, loop: 1]
     },
     DelTapRd: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
