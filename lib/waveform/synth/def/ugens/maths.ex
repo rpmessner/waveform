@@ -42,7 +42,7 @@ defmodule Waveform.Synth.Def.Ugens.Maths do
     },
     MulAdd: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [in: nil, *: 1, +: 0]
     },
     RunningMax: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},

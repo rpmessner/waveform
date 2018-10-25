@@ -25,19 +25,20 @@ defmodule Waveform.Synth.Def.Ugens.Envelopes do
     },
     IEnvGen: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [envelope: nil, index: nil]
     },
     Line: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [start: 0, end: 1, dur: 1, done: 0]
     },
     Linen: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [gate: 1, attack_time: 0.01, sus_level: 1,
+                  release_time: 1, done: 0]
     },
     XLine: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [start: 1, end: 2, dur: 1, done: 0]
     }
   }
 

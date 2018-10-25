@@ -101,7 +101,7 @@ defmodule Waveform.Synth.Manager do
 
   def handle_call({:create, name, bytes}, _from, %State{user_defined: ud} = state) do
     OSC.send_synthdef(bytes)
-    ud = Map.put(ud, :"#{Recase.to_snake(to_string(name))}", name)
+    ud = Map.put(ud, :"#{Recase.to_snake(to_string(name))}", to_charlist(name))
     state = %{state | user_defined: ud}
     {:reply, nil, state}
   end

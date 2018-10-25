@@ -40,7 +40,7 @@ defsynth ModTri,
   mod_invert_wave: 0,
   out_bus: 0 do
   #
-  decay_level = %Select.kr(){
+  decay_level = %Select.kr{
     which: decay_level == -1,
     from: [decay_level, sustain_level]
   }
@@ -103,23 +103,23 @@ defsynth ModTri,
 
   mod_double_phase_offset = mod_phase_offset * 2
 
-  ctl_wave = %Select.kr(){
+  ctl_wave = %Select.kr{
     which: mod_wave,
     from: [
-      %LFSaw.kr(){
+      %LFSaw.kr{
         freq: mod_rate,
         iphase: mod_double_phase_offset + 1,
         mul: -1
       },
-      %LFPulse.kr(){
+      %LFPulse.kr{
         freq: mod_rate,
         iphase: mod_phase_offset,
         width: mod_pulse_width,
         mul: 2,
         add: -1
       },
-      %LFTri.kr(){freq: mod_rate, iphase: mod_double_phase_offset + 1},
-      %SinOsc.kr(){freq: mod_rate, mul: (mod_phase_offset + 0.25) * (PI * 2)}
+      %LFTri.kr{freq: mod_rate, iphase: mod_double_phase_offset + 1},
+      %SinOsc.kr{freq: mod_rate, mul: (mod_phase_offset + 0.25) * (PI * 2)}
     ]
   }
 

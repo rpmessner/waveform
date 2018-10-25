@@ -14,7 +14,6 @@ defmodule Waveform.Synth.Def.Parse do
 
   def parse(%Synth{} = synth, definition), do: parse({synth, nil}, definition)
 
-
   # parse list
   def parse({%Synth{} = synth, _i}, items) when is_list(items) do
     Enum.reduce(items, {synth, []}, fn item, {s, inputs} ->
@@ -39,9 +38,9 @@ defmodule Waveform.Synth.Def.Parse do
   def parse(
         {%Synth{} = synth, i},
         {:=, _, [outputs, expression]}
-      ) when is_list(outputs) do
-
-    {%Synth{assigns: assigns}=synth, inputs} = parse({synth, i}, expression)
+      )
+      when is_list(outputs) do
+    {%Synth{assigns: assigns} = synth, inputs} = parse({synth, i}, expression)
 
     if !is_list(inputs) || Enum.count(inputs) < Enum.count(outputs) do
       raise %MatchError{
@@ -52,8 +51,14 @@ defmodule Waveform.Synth.Def.Parse do
     assigns =
       outputs
       |> Enum.with_index()
-      |> Enum.reduce(assigns, fn {{name, _, nil}, i}, acc ->
-        Map.put(acc, name, Enum.at(inputs, i))
+      |> Enum.reduce(assigns, fn {assign, i}, acc ->
+        case assign do
+          {name, _, nil} ->
+            Map.put(acc, name, Enum.at(inputs, i))
+
+          _ ->
+            raise "only assignments allowed on left-side of expression"
+        end
       end)
 
     {%{synth | assigns: assigns}, inputs}
@@ -68,40 +73,8 @@ defmodule Waveform.Synth.Def.Parse do
            {:%{}, _, options}
          ]} = ugen
       ) do
-
-    {synth, _i} =
-      case parse_submodule({synth, i}, ugen_name, options) do
-        nil ->
-
-          {ugen, %{arguments: arguments}} = parse_ugen(ugen_name)
-
-          options =
-            Keyword.merge(arguments, options)
-            |> Enum.sort_by(fn {key, _value} ->
-              Keyword.keys(arguments) |> Enum.find_index(&(&1 == key))
-            end)
-
-          {
-            ugen,
-            {%Synth{ugens: ugens} = synth, i},
-            _
-          } = parse_ugen_options({ugen, {synth, i}, options})
-
-          {%{synth | ugens: ugens ++ [ugen]}, i}
-
-        {synth, i} ->
-          {synth, i}
-      end
-
-    src = Enum.count(synth.ugens) - 1
-
-    inputs = List.last(synth.ugens).outputs
-             |> Enum.with_index()
-             |> Enum.map(fn {_output, i} ->
-               %Input{src: src, constant_index: i}
-             end)
-
-    { synth, inputs }
+    parse_submodule({synth, i}, ugen_name, options) ||
+    parse_ugen({synth, i}, ugen_name, options)
   end
 
   # parse util fn
@@ -150,76 +123,68 @@ defmodule Waveform.Synth.Def.Parse do
   end
 
   # pipe operator left-hand map right-hand ugen
-  def parse({%Synth{}=s, i},
-            {:|>, _, [
-              {:%{}, _, inputs},
-              {:%, ln2,
-                [
-                  {:__aliases__, ln3, [ugen]},
-                  {:%{}, ln4, options}
-                ]
-              }]}
-  ) do
+  def parse(
+        {%Synth{} = s, i},
+        {:|>, _,
+         [
+           {:%{}, _, inputs},
+           {:%, ln2,
+            [
+              {:__aliases__, ln3, [ugen]},
+              {:%{}, ln4, options}
+            ]}
+         ]}
+      ) do
     options = Keyword.merge(options, inputs)
-    parse({s, i},
-          {:%, ln2, [
-            {:__aliases__, ln3, [ugen]},
-            {:%{}, ln4, options}]})
+    parse({s, i}, {:%, ln2, [{:__aliases__, ln3, [ugen]}, {:%{}, ln4, options}]})
   end
 
   # pipe operator left-hand tuple right-hand ugen
-  def parse({%Synth{}=s, i},
-            {:|>, _, [
-              {name, value},
-              {:%, ln2,
-                [
-                  {:__aliases__, ln3, [ugen]},
-                  {:%{}, ln4, options}
-                ]
-              }]}
-  ) do
+  def parse(
+        {%Synth{} = s, i},
+        {:|>, _,
+         [
+           {name, value},
+           {:%, ln2,
+            [
+              {:__aliases__, ln3, [ugen]},
+              {:%{}, ln4, options}
+            ]}
+         ]}
+      ) do
     options = Keyword.put(options, name, value)
-    parse({s, i},
-          {:%, ln2, [
-            {:__aliases__, ln3, [ugen]},
-            {:%{}, ln4, options}]})
+    parse({s, i}, {:%, ln2, [{:__aliases__, ln3, [ugen]}, {:%{}, ln4, options}]})
   end
 
   # pipe operator right-hand ugen
-  def parse({%Synth{}=s, i},
-            {:|>, _, [
-              arg,
-              {:%, ln2,
-                [
-                  {:__aliases__, ln3, [ugen]},
-                  {:%{},  ln4, options}
-                ]
-              }]}
-  ) do
-
+  def parse(
+        {%Synth{} = s, i},
+        {:|>, _,
+         [
+           arg,
+           {:%, ln2,
+            [
+              {:__aliases__, ln3, [ugen]},
+              {:%{}, ln4, options}
+            ]}
+         ]}
+      ) do
     {name, _} =
       case Ugens.lookup(ugen) do
-        %{arguments: [args|_]} -> args
+        %{arguments: [args | _]} -> args
         _ -> {:first, nil}
       end
 
-    parse({s, i},
-          {:%, ln2, [
-            {:__aliases__, ln3, [ugen]},
-            {:%{}, ln4, [{name, arg}] ++ options}]})
+    parse({s, i}, {:%, ln2, [{:__aliases__, ln3, [ugen]}, {:%{}, ln4, [{name, arg}] ++ options}]})
   end
 
   # pipe operator right-hand unary
-  def parse({%Synth{}=s, i},
-            {:|>, ln, [arg, {operator, _, nil}]}
-  ) do
+  def parse({%Synth{} = s, i}, {:|>, ln, [arg, {operator, _, nil}]}) do
     parse({s, i}, {operator, ln, [arg]})
   end
 
   # pipe operator right-hand binary
-  def parse({%Synth{}=s, i},
-            {:|>, _, [arg1, {operator, ln, [arg2]}]}
-  ) do
+  def parse({%Synth{} = s, i}, {:|>, _, [arg1, {operator, ln, [arg2]}]}) do
     parse({s, i}, {operator, ln, [arg1, arg2]})
   end
 
@@ -251,6 +216,8 @@ defmodule Waveform.Synth.Def.Parse do
       name: "BinaryOpUGen"
     }
 
+    %Synth{ugens: ugens} = synth
+
     {
       %{synth | ugens: ugens ++ [operator]},
       [%Input{src: Enum.count(ugens), constant_index: 0}]
@@ -281,6 +248,8 @@ defmodule Waveform.Synth.Def.Parse do
       name: "UnaryOpUGen"
     }
 
+    %Synth{ugens: ugens} = synth
+
     {
       %{synth | ugens: ugens ++ [operator]},
       [%Input{src: Enum.count(ugens), constant_index: 0}]
@@ -289,10 +258,9 @@ defmodule Waveform.Synth.Def.Parse do
 
   # parse variable
   def parse(
-         {%Synth{assigns: assigns, parameters: params} = synth, _i},
-         {name, _, nil}
-       ) do
-
+        {%Synth{assigns: assigns, parameters: params} = synth, _i},
+        {name, _, nil}
+      ) do
     saved_assign = Map.get(assigns, name)
     saved_param = Map.get(params, name)
 
@@ -308,11 +276,22 @@ defmodule Waveform.Synth.Def.Parse do
 
   # parse constant
   def parse({%Synth{constants: constants} = synth, _i}, arg)
-       when is_float(arg) or is_integer(arg) do
-    {
-      %{synth | constants: constants ++ [arg + 0.0]},
-      [%Input{src: -1, constant_index: Enum.count(constants)}]
-    }
+      when is_float(arg) or is_integer(arg) do
+
+    arg = arg + 0.0
+
+    case Enum.find_index(constants, &(&1 == arg)) do
+      nil ->
+        {
+          %{synth | constants: constants ++ [arg]},
+          [%Input{src: -1, constant_index: Enum.count(constants)}]
+        }
+      index ->
+        {
+          synth,
+          [%Input{src: -1, constant_index: index}]
+        }
+    end
   end
 
   def parse({%Synth{}, _i}, value) do
@@ -334,7 +313,9 @@ defmodule Waveform.Synth.Def.Parse do
         submodule = Submodule.lookup(name)
 
         if submodule do
-          parse({synth, i}, submodule.forms)
+          {synth, i} = parse({synth, i}, submodule.forms)
+          count = Enum.count(List.last(synth.ugens).outputs)
+          {synth, Enum.take(List.flatten(i), -count)}
         end
 
       _ ->
@@ -342,7 +323,64 @@ defmodule Waveform.Synth.Def.Parse do
     end
   end
 
-  defp parse_ugen(ugen_name) do
+  defp parse_ugen({synth, i}, ugen_name, options) do
+    add = Keyword.get options, :add
+    mul = Keyword.get options, :mul
+
+    options = Keyword.drop options, [:mul, :add]
+
+    {ugen, %{arguments: arguments}} = parse_ugen_name(ugen_name)
+
+    options =
+      Keyword.merge(arguments, options)
+      |> Enum.sort_by(fn {key, _value} ->
+        Keyword.keys(arguments) |> Enum.find_index(&(&1 == key))
+      end)
+
+    {
+      %Ugen{} = ugen,
+      {%Synth{} = synth, i},
+      _
+    } = parse_ugen_options({ugen, {synth, i}, options})
+
+    synth =
+      if mul || add do
+        { synth, mul_in } = parse({synth, i}, mul || 1.0)
+        { synth, add_in } = parse({synth, i}, add || 0.0)
+
+        muladd = %Ugen{
+          name: "MulAdd",
+          special: 0,
+          rate: ugen.rate,
+          outputs: [ugen.rate],
+          inputs: List.flatten([
+            %Input{
+              src: Enum.count(synth.ugens),
+              constant_index: 0
+            },
+            mul_in,
+            add_in
+          ])
+        }
+
+        %{synth | ugens: synth.ugens ++ [ugen, muladd]}
+      else
+        %{synth | ugens: synth.ugens ++ [ugen]}
+      end
+
+    src = Enum.count(synth.ugens) - 1
+
+    inputs =
+      List.last(synth.ugens).outputs
+      |> Enum.with_index()
+      |> Enum.map(fn {_output, i} ->
+        %Input{src: src, constant_index: i}
+      end)
+
+    { synth, inputs }
+  end
+
+  defp parse_ugen_name(ugen_name) do
     case ugen_name do
       {:__aliases__, _, [name]} ->
         build_ugen(name, @kr)
@@ -358,16 +396,13 @@ defmodule Waveform.Synth.Def.Parse do
     end
   end
 
-  defp parse_ugen_options(
-    {%Ugen{} = ugen, {%Synth{} = synth, i}, []}
-  ), do: {ugen, {synth, i}, []}
+  defp parse_ugen_options({%Ugen{} = ugen, {%Synth{} = synth, i}, []}), do: {ugen, {synth, i}, []}
 
   defp parse_ugen_options({
          %Ugen{inputs: inputs} = ugen,
          {synth, i},
          [{_, expression} | rest_options]
        }) do
-
     {%Synth{} = synth, input} = parse({synth, i}, expression)
 
     parse_ugen_options({

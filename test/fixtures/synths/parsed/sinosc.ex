@@ -48,21 +48,30 @@
             %Waveform.Synth.Def.Ugen.Input{src: 1, constant_index: 0},
             # phase
             %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 0},
-            # mul
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 1},
-            # add
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 2}
           ],
           rate: 2,
           special: 0,
           outputs: [2]
         },
         %Waveform.Synth.Def.Ugen{
+          name: "MulAdd",
+          rate: 2,
+          special: 0,
+          outputs: [2],
+          inputs: [
+            %Waveform.Synth.Def.Ugen.Input{src: 2, constant_index: 0},
+            # mul
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 1},
+            # add
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 2}
+          ]
+        },
+        %Waveform.Synth.Def.Ugen{
           inputs: [
             # out_bus
             %Waveform.Synth.Def.Ugen.Input{constant_index: 1, src: 0},
             # sin_osc out0
-            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 2}
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 3}
           ],
           name: "Out",
           # hfo

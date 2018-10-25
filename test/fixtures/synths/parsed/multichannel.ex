@@ -4,7 +4,7 @@
       name: "multi-channel",
       param_names: [],
       param_values: [],
-      constants: [440.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+      constants: [440.0, 1.0, 0.0],
       ugens: [
         %Waveform.Synth.Def.Ugen{
           name: "Saw",
@@ -16,6 +16,18 @@
               src: -1,
               constant_index: 0
             },
+          ]
+        },
+        %Waveform.Synth.Def.Ugen{
+          name: "MulAdd",
+          rate: 2,
+          special: 0,
+          outputs: [2],
+          inputs: [
+            %Waveform.Synth.Def.Ugen.Input{
+              src: 0,
+              constant_index: 0
+            },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 1
@@ -23,7 +35,7 @@
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 2
-            }
+            },
           ]
         },
         %Waveform.Synth.Def.Ugen{
@@ -33,16 +45,16 @@
           outputs: [2, 2],
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: 0,
+              src: 1,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 3
+              constant_index: 2
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 4
+              constant_index: 1
             }
           ]
         },
@@ -54,14 +66,14 @@
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 5
+              constant_index: 2
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: 1,
+              src: 2,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: 1,
+              src: 2,
               constant_index: 1
             }
           ]

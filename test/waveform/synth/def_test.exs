@@ -20,25 +20,32 @@ defmodule Waveform.Synth.DefTest do
   @saw "#{@fixtures}/synths/parsed/saw.ex"
   @sinosc "#{@fixtures}/synths/parsed/sinosc.ex"
 
-  {sinosc, _} = @sinosc
+  {sinosc, _} =
+    @sinosc
     |> File.read!()
     |> Code.eval_string()
+
   @sinosc_def sinosc
 
-  {saw, _} = @saw
+  {saw, _} =
+    @saw
     |> File.read!()
     |> Code.eval_string()
+
   @saw_def saw
 
-  {envelope_def, _} = @envelope
+  {envelope_def, _} =
+    @envelope
     |> File.read!()
     |> Code.eval_string()
+
   @envelope_def envelope_def
 
   {multichannel, _} =
     @multichannel
     |> File.read!()
     |> Code.eval_string()
+
   @multichannel_def multichannel
 
   test "compiles a synth def into %Def" do
@@ -144,6 +151,7 @@ defmodule Waveform.Synth.DefTest do
         sin_osc =
           {:add, 2.0}
           |> %SinOsc{freq: midicps(note), mul: 1.0, phase: 0.0}
+
         %Out{bus: out_bus, channels: sin_osc}
       end
     )
@@ -159,27 +167,30 @@ defmodule Waveform.Synth.DefTest do
         sin_osc =
           %{add: 2.0}
           |> %SinOsc{freq: midicps(note), mul: 1.0, phase: 0.0}
+
         %Out{bus: out_bus, channels: sin_osc}
       end
     )
   end
 
   test "ugen meta in /synth/def/ugens default arguments work" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       #
-       # mul not provided
-       sin_osc = %SinOsc{
-         freq: midicps(note), add: 2.0, phase: 0.0
-       }
+    assert_synthdef(
+      @sinosc_def,
+      defsynth SinOscDef,
+        # midi A4
+        note: 69,
+        out_bus: 0 do
+        #
+        # mul not provided
+        sin_osc = %SinOsc{
+          freq: midicps(note),
+          add: 2.0,
+          phase: 0.0
+        }
 
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
+        %Out{bus: out_bus, channels: sin_osc}
+      end
+    )
   end
 
   test "multi-output synth works" do

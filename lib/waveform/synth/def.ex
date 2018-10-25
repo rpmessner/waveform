@@ -55,10 +55,28 @@ defmodule Waveform.Synth.Def do
     end
   end
 
-  defmacro defsynth({_, _, [name]}, params, do: {:__block__, _, ugen_forms}) do
+  defmacro defsynth(
+             {:__aliases__, _, [name]},
+             params,
+             do: {:__block__, _, expressions}
+           ) do
+    build_synthdef(name, params, expressions)
+  end
+
+  # {LPF.ar(WhiteNoise.ar(0.1),1000)}.scope
+
+  defmacro defsynth(
+             {:__aliases__, _, [name]},
+             params,
+             do: expressions
+           ) do
+    build_synthdef(name, params, expressions)
+  end
+
+  defp build_synthdef(name, params, expressions) do
     name = parse_synthdef_name(name)
 
-    %Def{} = synthdef = parse_synthdef(name, params, ugen_forms, %Def{})
+    %Def{} = synthdef = parse_synthdef(name, params, expressions, %Def{})
 
     compiled = Compile.compile(synthdef)
     Manager.create_synth(name, compiled)
@@ -91,7 +109,7 @@ defmodule Waveform.Synth.Def do
 
     control =
       if Enum.count(params) > 0 do
-       [%Ugen{name: "Control", rate: 1, special: 0, outputs: control_outputs}]
+        [%Ugen{name: "Control", rate: 1, special: 0, outputs: control_outputs}]
       else
         []
       end
@@ -104,7 +122,7 @@ defmodule Waveform.Synth.Def do
       end)
       |> Enum.into(%{})
 
-    {synth, _} =
+    {synth, i} =
       Parse.parse(
         %Synth{
           name: name,

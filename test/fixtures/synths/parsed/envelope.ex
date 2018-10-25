@@ -2,36 +2,11 @@
   synthdefs: [
     %Waveform.Synth.Def.Synth{
       constants: [
-        # phase
         0.0,
-        # mul
         1.0,
-        # add
-        0.0,
-
-        # envelope
-        # min
-        0.0,
         4.0,
         -99.0,
-        -99.0,
-        1.0,
-        0.0,
-        0.0,
-        # min
-        0.0,
-        0.0,
-
-        # gate
-        1.0,
-        # level_scale,
-        1.0,
-        # level_bias,
-        0.0,
-        # time_scale
-        1.0,
-        # done_action
-        2.0
+        2.0#16,4
       ],
       name: "envelope-def",
       param_names: [
@@ -104,7 +79,7 @@
         },
 
         # 2
-        # saw <- %SinOsc{}
+        # saw <- %SinOsc{phase: 0}
         %Waveform.Synth.Def.Ugen{
           name: "SinOsc",
           inputs: [
@@ -112,10 +87,6 @@
             %Waveform.Synth.Def.Ugen.Input{src: 1, constant_index: 0},
             # phase
             %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 0},
-            # mul
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 1},
-            # add
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 2}
           ],
           rate: 2,
           special: 0,
@@ -123,6 +94,22 @@
         },
 
         # 3
+        # SinOsc{mul: 1, add: 0}
+        %Waveform.Synth.Def.Ugen{
+          name: "MulAdd",
+          inputs: [
+            %Waveform.Synth.Def.Ugen.Input{src: 2, constant_index: 0},
+            # mul
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 1},
+            # add
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 0}
+          ],
+          rate: 2,
+          special: 0,
+          outputs: [2]
+        },
+
+        # 4
         # env_gen = %EnvGen.kr{}
         %Waveform.Synth.Def.Ugen{
           name: "EnvGen",
@@ -132,45 +119,45 @@
             # 1.0 gate
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 12
+              constant_index: 1
             },
             # 1.0 levelScale
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 13
+              constant_index: 1
             },
             # levelBias 0.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 14
+              constant_index: 0
             },
             # timeScale 1.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 15
+              constant_index: 1
             },
             # done: :free - 2.0
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 16
+              constant_index: 4
             },
 
             # min
+            %Waveform.Synth.Def.Ugen.Input{
+              src: -1,
+              constant_index: 0
+            },
+            %Waveform.Synth.Def.Ugen.Input{
+              src: -1,
+              constant_index: 2
+            },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 3
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 4
-            },
-            %Waveform.Synth.Def.Ugen.Input{
-              src: -1,
-              constant_index: 5
-            },
-            %Waveform.Synth.Def.Ugen.Input{
-              src: -1,
-              constant_index: 6
+              constant_index: 3
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
@@ -186,7 +173,7 @@
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 7
+              constant_index: 1
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
@@ -202,7 +189,7 @@
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 8
+              constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
@@ -218,11 +205,11 @@
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 9
+              constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 10
+              constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: 0,
@@ -234,7 +221,7 @@
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 11
+              constant_index: 0
             }
           ],
           outputs: [
@@ -242,7 +229,7 @@
           ]
         },
 
-        # 4
+        # 5
         # sin_osc * env
         %Waveform.Synth.Def.Ugen{
           name: "BinaryOpUGen",
@@ -250,12 +237,12 @@
           special: 2,
           outputs: [2],
           inputs: [
-            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 2},
-            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 3}
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 3},
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 4}
           ]
         },
 
-        # 5
+        # 6
         # out <- %Out{}
         %Waveform.Synth.Def.Ugen{
           name: "Out",
@@ -266,7 +253,7 @@
             # out_bus
             %Waveform.Synth.Def.Ugen.Input{constant_index: 9, src: 0},
             # sin_osc out0
-            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 4}
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 5}
           ]
           # hfo
         }

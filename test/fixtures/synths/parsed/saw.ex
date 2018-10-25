@@ -2,18 +2,9 @@
   synthdefs: [
     %Waveform.Synth.Def.Synth{
       constants: [
-        # freq * 2
         2.0,
-        # foo > 0.5
         0.5,
-
-        # saw mul
         1.0,
-        # saw add
-        2.0
-        # 3.0,
-        # 4.0,
-        # 5.0
       ],
       name: "saw-def",
       param_names: ["note", "out_bus", "foo", "bar"],
@@ -103,10 +94,6 @@
           inputs: [
             # freq
             %Waveform.Synth.Def.Ugen.Input{src: 1, constant_index: 0},
-            # mul
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 2},
-            # add
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 3}
           ],
           rate: 2,
           special: 0,
@@ -114,6 +101,22 @@
         },
 
         # 6
+        # saw mul & add params
+        %Waveform.Synth.Def.Ugen{
+          name: "MulAdd",
+          rate: 2,
+          special: 0,
+          outputs: [2],
+          inputs: [
+            %Waveform.Synth.Def.Ugen.Input{src: 5, constant_index: 0},
+            # mul
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 2},
+            # add
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 0}
+          ]
+        },
+
+        # 7
         # out <- %Out{}
         %Waveform.Synth.Def.Ugen{
           name: "Out",
@@ -124,7 +127,7 @@
             # out_bus
             %Waveform.Synth.Def.Ugen.Input{constant_index: 1, src: 0},
             # sin_osc out0
-            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 5}
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 6}
           ]
           # hfo
         }
