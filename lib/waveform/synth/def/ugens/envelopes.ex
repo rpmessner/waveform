@@ -23,7 +23,7 @@ defmodule Waveform.Synth.Def.Ugens.Envelopes do
         level_bias: 0,
         time_scale: 1,
         done_action: 0,
-        envelope: :last
+        envelope: :array
       ]
     },
     IEnvGen: %{

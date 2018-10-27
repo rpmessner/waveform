@@ -74,11 +74,11 @@ defmodule Waveform.Synth.Def.Ugens.Demand do
     },
     Dseq: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [repeats: 1, list: :last]
+      arguments: [repeats: 1, list: :array]
     },
     Dser: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [repeats: 1, list: :last]
+      arguments: [repeats: 1, list: :array]
     },
     Dseries: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
@@ -98,7 +98,7 @@ defmodule Waveform.Synth.Def.Ugens.Demand do
     },
     Dswitch1: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [index: nil, list: :last]
+      arguments: [index: nil, list: :array]
     },
     Dtag: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},

@@ -122,7 +122,7 @@ defmodule Waveform.Synth.Def do
       end)
       |> Enum.into(%{})
 
-    {synth, i} =
+    {synth, _} =
       Parse.parse(
         %Synth{
           name: name,

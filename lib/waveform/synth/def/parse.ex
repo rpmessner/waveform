@@ -42,6 +42,7 @@ defmodule Waveform.Synth.Def.Parse do
       when is_list(outputs) do
     {%Synth{assigns: assigns} = synth, inputs} = parse({synth, i}, expression)
 
+    # IO.inspect({inputs, outputs, expression})
     if !is_list(inputs) || Enum.count(inputs) < Enum.count(outputs) do
       raise %MatchError{
         term: Macro.to_string(expression)
@@ -64,14 +65,14 @@ defmodule Waveform.Synth.Def.Parse do
     {%{synth | assigns: assigns}, inputs}
   end
 
-  # parse ugen/submodule
+  # parse struct ugen/submodule
   def parse(
         {%Synth{} = synth, i},
         {:%, _,
          [
            ugen_name,
            {:%{}, _, options}
-         ]} = ugen
+         ]}
       ) do
     parse_submodule({synth, i}, ugen_name, options) ||
     parse_ugen({synth, i}, ugen_name, options)
@@ -83,6 +84,16 @@ defmodule Waveform.Synth.Def.Parse do
         {{:., _, [{:__aliases__, _, [:Util]}, function]}, _, [options]}
       ) do
     apply(Util, function, [{synth, i}, options])
+  end
+
+  # parse module ugen/submodule
+  def parse(
+        {%Synth{} = synth, i},
+        {{:., _, [{:__aliases__, _, _}, _]} = ugen_name, _, [options]}
+      ) do
+    ugen_name = {ugen_name, nil, []}
+    parse_submodule({synth, i}, ugen_name, options) ||
+    parse_ugen({synth, i}, ugen_name, options)
   end
 
   # parse if/else
@@ -190,7 +201,7 @@ defmodule Waveform.Synth.Def.Parse do
 
   # parse binary op
   def parse(
-        {%Synth{ugens: ugens} = synth, i},
+        {%Synth{} = synth, i},
         {operator, _, [arg1, arg2]} = expression
       ) do
     special = Map.get(@binary_op_specials, operator)
@@ -226,7 +237,7 @@ defmodule Waveform.Synth.Def.Parse do
 
   # parse unary op
   def parse(
-        {%Synth{ugens: ugens} = synth, i},
+        {%Synth{} = synth, i},
         {operator, _, [arg]} = expression
       ) do
     special = Map.get(@unary_op_specials, operator)
@@ -295,7 +306,7 @@ defmodule Waveform.Synth.Def.Parse do
   end
 
   def parse({%Synth{}, _i}, value) do
-    IO.puts(value)
+    IO.inspect(value)
     raise "Cannot parse expression #{Macro.to_string(value)}"
   end
 
@@ -324,60 +335,84 @@ defmodule Waveform.Synth.Def.Parse do
   end
 
   defp parse_ugen({synth, i}, ugen_name, options) do
-    add = Keyword.get options, :add
-    mul = Keyword.get options, :mul
-
-    options = Keyword.drop options, [:mul, :add]
-
     {ugen, %{arguments: arguments}} = parse_ugen_name(ugen_name)
 
-    options =
-      Keyword.merge(arguments, options)
-      |> Enum.sort_by(fn {key, _value} ->
-        Keyword.keys(arguments) |> Enum.find_index(&(&1 == key))
+    allow_array_args =
+      arguments
+      |> Enum.filter(fn {_key, value} ->
+        value == :array
       end)
+      |> Enum.map(fn {key, _value} -> key end)
 
-    {
-      %Ugen{} = ugen,
-      {%Synth{} = synth, i},
-      _
-    } = parse_ugen_options({ugen, {synth, i}, options})
-
-    synth =
-      if mul || add do
-        { synth, mul_in } = parse({synth, i}, mul || 1.0)
-        { synth, add_in } = parse({synth, i}, add || 0.0)
-
-        muladd = %Ugen{
-          name: "MulAdd",
-          special: 0,
-          rate: ugen.rate,
-          outputs: [ugen.rate],
-          inputs: List.flatten([
-            %Input{
-              src: Enum.count(synth.ugens),
-              constant_index: 0
-            },
-            mul_in,
-            add_in
-          ])
-        }
-
-        %{synth | ugens: synth.ugens ++ [ugen, muladd]}
-      else
-        %{synth | ugens: synth.ugens ++ [ugen]}
+    array_args = Enum.filter(
+      options, fn {key, value} ->
+        !Enum.member?(allow_array_args, key) && is_list(value)
       end
+    )
 
-    src = Enum.count(synth.ugens) - 1
+    case array_args do
+      [{key, array_args}] ->
+        array_args
+        |> Enum.reduce({synth, i}, fn arg, {synth, i} ->
+          options = Keyword.put(options, key, arg)
+          {synth, i2 } = parse_ugen({synth, i}, ugen_name, options)
+          {synth, List.flatten([i, i2])}
+        end)
 
-    inputs =
-      List.last(synth.ugens).outputs
-      |> Enum.with_index()
-      |> Enum.map(fn {_output, i} ->
-        %Input{src: src, constant_index: i}
-      end)
+      [] ->
+        add = Keyword.get options, :add
+        mul = Keyword.get options, :mul
 
-    { synth, inputs }
+        options = Keyword.drop options, [:mul, :add]
+
+        options =
+          Keyword.merge(arguments, options)
+          |> Enum.sort_by(fn {key, _value} ->
+            Keyword.keys(arguments) |> Enum.find_index(&(&1 == key))
+          end)
+
+        {
+          %Ugen{} = ugen,
+          {%Synth{} = synth, i},
+          _
+        } = parse_ugen_options({ugen, {synth, i}, options})
+
+        synth =
+          if mul || add do
+            { synth, mul_in } = parse({synth, i}, mul || 1.0)
+            { synth, add_in } = parse({synth, i}, add || 0.0)
+
+            muladd = %Ugen{
+              name: "MulAdd",
+              special: 0,
+              rate: ugen.rate,
+              outputs: [ugen.rate],
+              inputs: List.flatten([
+                %Input{
+                  src: Enum.count(synth.ugens),
+                  constant_index: 0
+                },
+                mul_in,
+                add_in
+              ])
+            }
+
+            %{synth | ugens: synth.ugens ++ [ugen, muladd]}
+          else
+            %{synth | ugens: synth.ugens ++ [ugen]}
+          end
+
+        src = Enum.count(synth.ugens) - 1
+
+        inputs =
+          List.last(synth.ugens).outputs
+          |> Enum.with_index()
+          |> Enum.map(fn {_output, i} ->
+            %Input{src: src, constant_index: i}
+          end)
+
+        { synth, inputs }
+    end
   end
 
   defp parse_ugen_name(ugen_name) do

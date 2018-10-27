@@ -34,7 +34,7 @@ defmodule Waveform.Synth.Def.Ugens.Triggers do
     },
     SendReply: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [trig: 0, reply_id: -1, cmd_name: :last, values: :last]
+      arguments: [trig: 0, reply_id: -1, cmd_name: nil, values: :array]
     },
     SendTrig: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},

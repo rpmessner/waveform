@@ -10,7 +10,7 @@ defmodule Waveform.Synth.Def.Ugens.InOut do
     },
     DiskOut: %{
       defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bufnum: nil, channels: :last]
+      arguments: [bufnum: nil, channels: :array]
     },
     In: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -50,7 +50,7 @@ defmodule Waveform.Synth.Def.Ugens.InOut do
     },
     Out: %{
       defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bus: 0, channels: :last]
+      arguments: [bus: 0, channels: :array]
     },
     ReplaceOut: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -74,7 +74,7 @@ defmodule Waveform.Synth.Def.Ugens.InOut do
     },
     XOut: %{
       defaults: %{rate: 2, special: 0, outputs: []},
-      arguments: [bus: nil, xfade: nil, channels: :last]
+      arguments: [bus: nil, xfade: nil, channels: :array]
     }
   }
 

@@ -15,25 +15,19 @@ defmodule Waveform.Synth.DefTest do
             |> Path.join("../../fixtures/")
             |> to_charlist
 
+  @array_inputs "#{@fixtures}/synths/parsed/array_inputs.ex"
   @envelope "#{@fixtures}/synths/parsed/envelope.ex"
-  @multichannel "#{@fixtures}/synths/parsed/multichannel.ex"
   @mouse_panner "#{@fixtures}/synths/parsed/mouse_panner.ex"
+  @multichannel "#{@fixtures}/synths/parsed/multichannel.ex"
   @saw "#{@fixtures}/synths/parsed/saw.ex"
   @sinosc "#{@fixtures}/synths/parsed/sinosc.ex"
 
-  {sinosc, _} =
-    @sinosc
+  {array_inputs, _} =
+    @array_inputs
     |> File.read!()
     |> Code.eval_string()
 
-  @sinosc_def sinosc
-
-  {saw, _} =
-    @saw
-    |> File.read!()
-    |> Code.eval_string()
-
-  @saw_def saw
+  @array_inputs_def array_inputs
 
   {envelope_def, _} =
     @envelope
@@ -42,13 +36,6 @@ defmodule Waveform.Synth.DefTest do
 
   @envelope_def envelope_def
 
-  {multichannel, _} =
-    @multichannel
-    |> File.read!()
-    |> Code.eval_string()
-
-  @multichannel_def multichannel
-
   {mouse_panner, _} =
     @mouse_panner
     |> File.read!()
@@ -56,7 +43,28 @@ defmodule Waveform.Synth.DefTest do
 
   @mouse_panner_def mouse_panner
 
-  test "compiles a synth def into %Def" do
+  {multichannel, _} =
+    @multichannel
+    |> File.read!()
+    |> Code.eval_string()
+
+  @multichannel_def multichannel
+
+  {saw, _} =
+    @saw
+    |> File.read!()
+    |> Code.eval_string()
+
+  @saw_def saw
+
+  {sinosc, _} =
+    @sinosc
+    |> File.read!()
+    |> Code.eval_string()
+
+  @sinosc_def sinosc
+
+  test "compiles a synth def into %Def with struct syntax" do
     assert_synthdef(
       @sinosc_def,
       defsynth SinOscDef,
@@ -72,6 +80,26 @@ defmodule Waveform.Synth.DefTest do
         }
 
         %Out{bus: out_bus, channels: sin_osc}
+      end
+    )
+  end
+
+  test "compiles a synth def into %Def with module syntax" do
+    assert_synthdef(
+      @sinosc_def,
+      defsynth SinOscDef,
+        # midi A4
+        note: 69,
+        out_bus: 0 do
+        #
+        sin_osc = SinOsc.ar(
+          freq: midicps(note),
+          phase: 0.0,
+          mul: 1.0,
+          add: 2.0
+        )
+
+        Out.ar(bus: out_bus, channels: sin_osc)
       end
     )
   end
@@ -212,17 +240,6 @@ defmodule Waveform.Synth.DefTest do
     )
   end
 
-  test "multi-output synth can be destructured" do
-    assert_synthdef(
-      @multichannel_def,
-      defsynth MultiChannel, [] do
-        saw = %Saw{freq: 440, mul: 1, add: 0}
-        [left, right] = %Pan2{in: saw, pos: 0, level: 1}
-        %Out{bus: 0, channels: [left, right]}
-      end
-    )
-  end
-
   test "compiles ar/kr syntax into %Def" do
     assert_synthdef(
       @sinosc_def,
@@ -334,6 +351,37 @@ defmodule Waveform.Synth.DefTest do
         }
 
         %Out{bus: out_bus, channels: sin_osc * envelope}
+      end
+    )
+  end
+
+  test "can handle array outputs" do
+    assert_synthdef(
+      @array_inputs_def,
+      defsynth ArrayInputs, [] do
+        sin = %SinOsc.ar{freq: [440, 600], phase: 0, mul: 1, add: 0}
+        %Out{channels: sin}
+      end
+    )
+  end
+
+  test "can handle array inputs and outputs" do
+    assert_synthdef(
+      @array_inputs_def,
+      defsynth ArrayInputs, [] do
+        [sinl, sinr] = %SinOsc.ar{freq: [440, 600], phase: 0, mul: 1, add: 0}
+        %Out{channels: [sinl, sinr]}
+      end
+    )
+  end
+
+  test "multi-output synth can be destructured" do
+    assert_synthdef(
+      @multichannel_def,
+      defsynth MultiChannel, [] do
+        saw = %Saw{freq: 440, mul: 1, add: 0}
+        [left, right] = %Pan2{in: saw, pos: 0, level: 1}
+        %Out{bus: 0, channels: [left, right]}
       end
     )
   end

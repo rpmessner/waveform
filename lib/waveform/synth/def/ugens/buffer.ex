@@ -6,7 +6,7 @@ defmodule Waveform.Synth.Def.Ugens.Buffer do
     },
     BufWr: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [bufnum: 0, phase: 0, loop: 1, inputs: :last]
+      arguments: [bufnum: 0, phase: 0, loop: 1, inputs: :array]
     },
     Dbufrd: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -103,16 +103,16 @@ defmodule Waveform.Synth.Def.Ugens.Buffer do
         loop: 1,
         trigger: 1,
         done: 0,
-        inputs: :last
+        inputs: :array
       ]
     },
     ScopeOut: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [inputs: :last]
+      arguments: [inputs: :array]
     },
     ScopeOut2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [scope_num: 0, max_frames: 4096, scope_frames: nil, inputs: :last]
+      arguments: [scope_num: 0, max_frames: 4096, scope_frames: nil, inputs: :array]
     },
     Shaper: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
