@@ -19,6 +19,7 @@ defmodule Waveform.Synth.DefTest do
   @envelope "#{@fixtures}/synths/parsed/envelope.ex"
   @mouse_panner "#{@fixtures}/synths/parsed/mouse_panner.ex"
   @multichannel "#{@fixtures}/synths/parsed/multichannel.ex"
+  @multiple_array_inputs "#{@fixtures}/synths/parsed/multiple_array_inputs.ex"
   @saw "#{@fixtures}/synths/parsed/saw.ex"
   @sinosc "#{@fixtures}/synths/parsed/sinosc.ex"
 
@@ -49,6 +50,13 @@ defmodule Waveform.Synth.DefTest do
     |> Code.eval_string()
 
   @multichannel_def multichannel
+
+  {multiple_array_inputs, _} =
+    @multiple_array_inputs
+    |> File.read!()
+    |> Code.eval_string()
+
+  @multiple_array_inputs_def multiple_array_inputs
 
   {saw, _} =
     @saw
@@ -273,7 +281,10 @@ defmodule Waveform.Synth.DefTest do
     assert_synthdef(
       @mouse_panner_def,
       defsynth MousePanner, [] do
-        %Out{channels: %Pan2.ar{in: %WhiteNoise.ar{freq: 0.1}, pos: %MouseX.kr{minval: -1, maxval: 1}, level: 1}}
+        %Out{channels: %Pan2.ar{
+          in: %WhiteNoise.ar{freq: 0.1},
+          pos: %MouseX.kr{minval: -1, maxval: 1}, level: 1}
+        }
       end
     )
   end
@@ -330,7 +341,7 @@ defmodule Waveform.Synth.DefTest do
         }
 
         envelope =
-          Util.envelope(
+          Env.envelope(
             attack: attack,
             decay: decay,
             sustain: sustain,
@@ -370,6 +381,21 @@ defmodule Waveform.Synth.DefTest do
       @array_inputs_def,
       defsynth ArrayInputs, [] do
         [sinl, sinr] = %SinOsc.ar{freq: [440, 600], phase: 0, mul: 1, add: 0}
+        %Out{channels: [sinl, sinr]}
+      end
+    )
+  end
+
+  test "can handle multiple array inputs and outputs" do
+    assert_synthdef(
+      @multiple_array_inputs_def,
+      defsynth MultipleArrayInputs, [] do
+        [sinl, sinr] = %SinOsc.ar{
+          freq: [600, 440],
+          phase: [1, 0],
+          mul: [4,5],
+          add: [3,2]
+        }
         %Out{channels: [sinl, sinr]}
       end
     )

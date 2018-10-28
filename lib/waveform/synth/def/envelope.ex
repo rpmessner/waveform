@@ -1,4 +1,4 @@
-defmodule Waveform.Synth.Def.Util do
+defmodule Waveform.Synth.Def.Envelope do
   alias Waveform.Synth.Def.Parse, as: Parse
 
   @envelope_defaults %{

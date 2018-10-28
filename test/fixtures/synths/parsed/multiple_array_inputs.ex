@@ -5,10 +5,10 @@
       constants: [
         600.0,
         1.0,
-        440.0,
-        0.0,
         4.0,
         3.0,
+        440.0,
+        0.0,
         5.0,
         2.0
       ],
@@ -48,11 +48,11 @@
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 4
+              constant_index: 2
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 5
+              constant_index: 3
             }
           ],
           outputs: [
@@ -66,11 +66,11 @@
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 2
+              constant_index: 4
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 3
+              constant_index: 5
             }
           ],
           outputs: [
@@ -106,7 +106,7 @@
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 3
+              constant_index: 5
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: 1,
