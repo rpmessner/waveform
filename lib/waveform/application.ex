@@ -2,7 +2,10 @@ defmodule Waveform.Application do
   use Application
 
   def start(_type, _args) do
+    main_viewports_config = Application.get_env(:waveform, :viewport)
+
     children = [
+      {Scenic, viewports: [main_viewports_config]},
       {Waveform.AudioBus, nil},
       {Waveform.Beat, nil},
       {Waveform.Lang, nil},

@@ -5,7 +5,7 @@ defmodule Waveform.MixProject do
     [
       app: :waveform,
       version: "0.1.0",
-      elixir: "~> 1.6",
+      elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -26,6 +26,8 @@ defmodule Waveform.MixProject do
       {:porcelain, "~> 2.0"},
       {:recase, "~> 0.2"},
       {:mock, "~> 0.3.0", only: :test},
+      {:scenic, "~> 0.9.0"},
+      {:scenic_driver_glfw, "~> 0.9"},
       {:portmidi, "~> 5.1.1"}
     ]
   end
