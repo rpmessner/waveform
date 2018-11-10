@@ -23,3 +23,11 @@ erl_crash.dump
 waveform-*.tar
 
 /user_synthdefs/
+/assets/node_modules
+/priv/static/
+/config/*.secret.exs
+/screenshots
+.env
+/tmp
+/priv/static/js/app.js
+/priv/static/js/app.js.map

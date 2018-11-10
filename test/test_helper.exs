@@ -1,4 +1,5 @@
 ExUnit.start()
+Ecto.Adapters.SQL.Sandbox.mode(Waveform.Repo, :manual)
 
 defmodule Waveform.Assertions do
   import ExUnit.Assertions
