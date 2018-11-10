@@ -3,6 +3,7 @@ defmodule Waveform.OSC do
 
   alias Waveform.AudioBus, as: AudioBus
   alias Waveform.OSC.Group, as: Group
+  alias Waveform.OSC.Node, as: Node
   alias Waveform.ServerInfo, as: ServerInfo
 
   alias __MODULE__
@@ -22,11 +23,11 @@ defmodule Waveform.OSC do
   @g_deepFree '/g_deepFree'
   @g_freeAll '/g_freeAll'
   @notify '/notify'
-  # @d_load '/d_load'
+  @d_load '/d_load'
   @d_recv '/d_recv'
   @d_loadDir '/d_loadDir'
   @n_go '/n_go'
-  # @n_end '/n_end'
+  @n_end '/n_end'
   @server_info '/sonic-pi/server-info'
 
   @server_info_synth 'sonic-pi-server-info'
@@ -163,11 +164,11 @@ defmodule Waveform.OSC do
             Group.setup()
             OSC.request_server_info()
 
-          # {:cmd, [@n_go, node_id | _]} ->
-          #   Node.activate_node(node_id)
+          {:cmd, [@n_go, node_id | _]} ->
+            Node.activate_node(node_id)
 
-          # {:cmd, [@n_end, node_id | _]} ->
-          #   Node.deactivate_node(node_id)
+          {:cmd, [@n_end, node_id | _]} ->
+            Node.deactivate_node(node_id)
 
           _ ->
             nil
