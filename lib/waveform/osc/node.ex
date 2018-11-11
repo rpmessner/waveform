@@ -49,29 +49,35 @@ defmodule Waveform.OSC.Node do
   def handle_cast({:deactivate_node, node_id}, state) do
     active_node = Enum.find state.active_nodes, &(&1.id == node_id)
 
-    if active_node do
-      active_nodes = Enum.filter state.active_nodes, &(&1.id != node_id)
-      dead_nodes = [%{active_node | active: false} | state.dead_nodes]
-      new_state = %{state | active_nodes: active_nodes, dead_nodes: dead_nodes}
-      # IO.inspect({"removing_node:", state, active_node, new_state})
-      {:noreply, new_state}
-    else
-      {:noreply, state}
-    end
+    state =
+      if active_node do
+        active_nodes = Enum.filter state.active_nodes, &(&1.id != node_id)
+        dead_nodes = [%{active_node | active: false} | state.dead_nodes]
+        new_state = %{state | active_nodes: active_nodes, dead_nodes: dead_nodes}
+        # IO.inspect({"removing_node:", state, active_node, new_state})
+        new_state
+      end || state
+
+    WaveformWeb.NodeChannel.active_nodes(state.active_nodes)
+
+    {:noreply, state}
   end
 
   def handle_cast({:activate_node, node_id}, state) do
     inactive_node = Enum.find state.inactive_nodes, &(&1.id == node_id)
 
-    if inactive_node do
-      inactive_nodes = Enum.filter state.inactive_nodes, &(&1.id != node_id)
-      active_nodes = [%{inactive_node | active: true} | state.active_nodes]
-      new_state = %{state | active_nodes: active_nodes, inactive_nodes: inactive_nodes}
-      # IO.inspect({"removing node:", state, inactive_node, new_state})
-      {:noreply, new_state}
-    else
-      {:noreply, state}
-    end
+    state =
+      if inactive_node do
+        inactive_nodes = Enum.filter state.inactive_nodes, &(&1.id != node_id)
+        active_nodes = [%{inactive_node | active: true} | state.active_nodes]
+        new_state = %{state | active_nodes: active_nodes, inactive_nodes: inactive_nodes}
+        # IO.inspect({"removing node:", state, inactive_node, new_state})
+        new_state
+      end || state
+
+    WaveformWeb.NodeChannel.active_nodes(state.active_nodes)
+
+    {:noreply, state}
   end
 
   def handle_call({:next_node, next}, _from, state) do

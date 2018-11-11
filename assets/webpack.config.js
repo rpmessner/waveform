@@ -12,6 +12,7 @@ module.exports = (env, options) => ({
       new OptimizeCSSAssetsPlugin({})
     ]
   },
+  devtool: 'inline-source-map',
   entry: {
       './js/app.js': ['./js/app.js'].concat(glob.sync('./vendor/**/*.js'))
   },
