@@ -80,9 +80,9 @@ defmodule Waveform.Synth.Def.Parse do
   # parse envelope fn
   def parse(
         {%Synth{} = synth, i},
-        {{:., _, [{:__aliases__, _, [:Env]}, function]}, _, [options]}
-      ) do
-    apply(Env, function, [{synth, i}, options])
+        {{:., _, [{:__aliases__, _, [env]}, function]}, _, args}
+      ) when env in [:Env, :Envelope] do
+    parse({synth, i}, apply(Env, function, args))
   end
 
   # parse module ugen/submodule
@@ -232,6 +232,11 @@ defmodule Waveform.Synth.Def.Parse do
       %{synth | ugens: ugens ++ [operator]},
       [%Input{src: Enum.count(ugens), constant_index: 0}]
     }
+  end
+
+  # parse negative constant
+  def parse({synth, i}, {:-, _, [val]}) when is_number(val) do
+    parse({synth, i}, -val)
   end
 
   # parse unary op

@@ -1,7 +1,5 @@
 defmodule Waveform.Synth.DefTest do
   use ExUnit.Case
-  use ExUnit.Case
-
   require Waveform.Assertions
   import Waveform.Assertions
 
@@ -16,7 +14,9 @@ defmodule Waveform.Synth.DefTest do
             |> to_charlist
 
   @array_inputs "#{@fixtures}/synths/parsed/array_inputs.ex"
-  @envelope "#{@fixtures}/synths/parsed/envelope.ex"
+  @envelope1 "#{@fixtures}/synths/parsed/envelope1.ex"
+  @envelope2 "#{@fixtures}/synths/parsed/envelope2.ex"
+  @envelope3 "#{@fixtures}/synths/parsed/envelope3.ex"
   @mouse_panner "#{@fixtures}/synths/parsed/mouse_panner.ex"
   @multichannel "#{@fixtures}/synths/parsed/multichannel.ex"
   @multiple_array_inputs "#{@fixtures}/synths/parsed/multiple_array_inputs.ex"
@@ -30,47 +30,61 @@ defmodule Waveform.Synth.DefTest do
 
   @array_inputs_def array_inputs
 
-  {envelope_def, _} =
-    @envelope
+  {envelope1_def, _} =
+    @envelope1
     |> File.read!()
     |> Code.eval_string()
 
-  @envelope_def envelope_def
+  @envelope1_def envelope1_def
 
-  {mouse_panner, _} =
-    @mouse_panner
+  {envelope2_def, _} =
+    @envelope2
     |> File.read!()
     |> Code.eval_string()
 
-  @mouse_panner_def mouse_panner
+  @envelope2_def envelope2_def
 
-  {multichannel, _} =
-    @multichannel
+  {envelope3_def, _} =
+    @envelope3
     |> File.read!()
     |> Code.eval_string()
 
-  @multichannel_def multichannel
+  @envelope3_def envelope3_def
 
-  {multiple_array_inputs, _} =
-    @multiple_array_inputs
-    |> File.read!()
-    |> Code.eval_string()
+   {mouse_panner, _} =
+     @mouse_panner
+     |> File.read!()
+     |> Code.eval_string()
 
-  @multiple_array_inputs_def multiple_array_inputs
+   @mouse_panner_def mouse_panner
 
-  {saw, _} =
-    @saw
-    |> File.read!()
-    |> Code.eval_string()
+   {multichannel, _} =
+     @multichannel
+     |> File.read!()
+     |> Code.eval_string()
 
-  @saw_def saw
+   @multichannel_def multichannel
 
-  {sinosc, _} =
-    @sinosc
-    |> File.read!()
-    |> Code.eval_string()
+   {multiple_array_inputs, _} =
+     @multiple_array_inputs
+     |> File.read!()
+     |> Code.eval_string()
 
-  @sinosc_def sinosc
+   @multiple_array_inputs_def multiple_array_inputs
+
+   {saw, _} =
+     @saw
+     |> File.read!()
+     |> Code.eval_string()
+
+   @saw_def saw
+
+   {sinosc, _} =
+     @sinosc
+     |> File.read!()
+     |> Code.eval_string()
+
+   @sinosc_def sinosc
 
   test "compiles a synth def into %Def with struct syntax" do
     assert_synthdef(
@@ -315,53 +329,68 @@ defmodule Waveform.Synth.DefTest do
     )
   end
 
-  test "compiles synth with an envelope into %Def" do
+  test "compiles synth with an adsr envelope into %Def" do
     assert_synthdef(
-      @envelope_def,
-      defsynth EnvelopeDef,
-        # midi A4
-        note: 69,
-        attack: 0,
-        decay: 0,
-        sustain: 0,
-        release: 1,
-        attack_level: 1,
-        decay_level: -1,
-        sustain_level: 1,
-        env_curve: 1,
-        out_bus: 0 do
-        #
-        freq = midicps(note)
-
-        sin_osc = %SinOsc.ar{
-          freq: freq,
-          phase: 0.0,
-          mul: 1.0,
-          add: 0.0
-        }
-
-        envelope =
-          Env.envelope(
-            attack: attack,
-            decay: decay,
-            sustain: sustain,
-            release: release,
-            attack_level: attack_level,
-            decay_level: decay_level,
-            sustain_level: sustain_level,
-            env_curve: env_curve
+      @envelope1_def,
+      defsynth Env1, [] do
+        sin_osc = SinOsc.ar(freq: 550, phase: 7)
+        env_gen = EnvGen.kr(
+          gate: 24,
+          level_scale: 25,
+          level_bias: 26,
+          time_scale: 27,
+          done_action: 8,
+          envelope: Env.adsr(
+            attack_time: 0.01,
+            decay_time: 0.02,
+            sustain_level: 0.03,
+            release_time: 0.04
           )
+        )
+        Out.ar(
+          bus: 999,
+          channels: sin_osc * env_gen
+        )
+      end
+    )
+  end
 
-        envelope = %EnvGen.kr{
-          envelope: envelope,
-          gate: 1,
-          level_scale: 1,
-          level_bias: 0,
-          time_scale: 1,
-          done_action: 2
-        }
+   test "compiles synth with generic envelope into %Def" do
+     assert_synthdef(
+       @envelope2_def,
+       defsynth Env2, [] do
+         sin_osc = SinOsc.ar(freq: 550, phase: 7)
 
-        %Out{bus: out_bus, channels: sin_osc * envelope}
+         env_gen = EnvGen.kr(
+           gate: 24,#1
+           level_scale: 25,#1
+           level_bias: 26,#0
+           time_scale: 27,#1
+           done_action: 8,
+           envelope: Env.new(
+             [11, 12, 13, 14], [21, 22, 23], [-1, -2, -3], 40, 41
+           )
+         )
+
+         Out.ar(bus: 999, channels: sin_osc * env_gen)
+       end
+     )
+   end
+
+  test "compiles synth with generic envelope with defaults into %Def" do
+    assert_synthdef(
+      @envelope3_def,
+      defsynth Env3, [] do
+        sin_osc = SinOsc.ar(freq: 550, phase: 7)
+
+        env_gen = EnvGen.kr(
+          done_action: 8,
+          envelope: Env.new(
+            [11, 12, 13, 14], [21, 22, 23], :welch
+          )
+        )
+
+        Out.ar(bus: 999, channels: sin_osc * env_gen)
       end
     )
   end

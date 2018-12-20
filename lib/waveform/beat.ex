@@ -58,10 +58,6 @@ defmodule Waveform.Beat do
     end
   end
 
-  def clear do
-    GenServer.call(@me, {:clear})
-  end
-
   def tick do
     GenServer.call(@me, {:tick})
   end
@@ -71,7 +67,7 @@ defmodule Waveform.Beat do
   end
 
   def reset do
-    GenServer.cast(@me, {:reset})
+    GenServer.call(@me, {:clear})
   end
 
   def start do
@@ -127,12 +123,14 @@ defmodule Waveform.Beat do
   end
 
   def handle_cast({:on_beat, name, beats, over, func, group, synth}, state) do
+    callbacks = Enum.filter(state.callbacks, fn %Tick{name: name} -> name != name end)
+
     {:noreply,
      %{
        state
        | callbacks: [
            %Tick{group: group, name: name, over: over, beats: beats, func: func, synth: synth}
-           | state.callbacks
+           | callbacks
          ]
      }}
   end
