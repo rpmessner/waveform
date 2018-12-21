@@ -18,7 +18,7 @@ defmodule Waveform.BeatTest do
 
     %Subject.State{
       callbacks: callbacks
-    } = state = Subject.state()
+    } = Subject.state()
 
     # IO.inspect(state)
 

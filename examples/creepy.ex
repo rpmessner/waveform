@@ -26,22 +26,28 @@ end
 #         sig (distort (* env (sin-osc [freq mod1])))
 #         sig (* amp sig mod2 mod3)]
 #     sig))
-
-defsynth SpacePad, note: 69, attack: 0.4, decay: 0.5, sustain: 0.8, release: 1, gate: 1, out_bus: 0 do
+# /private/tmp/tmux-501/default
+defsynth SpacePad, [
+  note: 69, amp: 0.5, attack: 0.4, decay: 0.5,
+  sustain: 0.8, release: 1, gate: 1, out_bus: 0
+] do
   #
   envelope = Envelope.adsr(
-    attack: attack, decay: decay, sustain: sustain, release: release
+    attack_time: attack, decay_time: decay,
+    sustain_level: sustain, release_time: release
   )
 
   env = EnvGen.kr(envelope: envelope, gate: gate, done_action: 2)
 
-  # mod1 = LinLin.kr(rate: SinOsc.kr(rate: 6), special: -1, outputs: [1, freq * 0.99, freq * 1.01])
-  # mod2 = LinLin.kr(rate: LFNoise2.kr(rate: 1), special: -1, outputs: [1, 0.2, 1])
-  # mod2 = LinLin.kr(rate: SinOsc.kr(rate: 1), special: -1, outputs: [1, 0.2, 1])
+  mod1 = LinLin.kr(rate: SinOsc.kr(rate: 6), special: -1, outputs: [1, freq * 0.99, freq * 1.01])
+  mod2 = LinLin.kr(rate: LFNoise2.kr(rate: 1), special: -1, outputs: [1, 0.2, 1])
+  mod2 = LinLin.kr(rate: SinOsc.kr(rate: 1), special: -1, outputs: [1, 0.5, 1])
 
   freq = midicps(note)
 
-  sig = SinOsc.ar(freq: freq)# * env
+  sig = distort(SinOsc.ar(freq: [freq, mod1]) * env)
+
+  sig = amp * sig * mod2 * mod3
 
   Out.ar(channels: sig, out: out_bus)
 end

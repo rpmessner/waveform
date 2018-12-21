@@ -1,5 +1,4 @@
 defmodule Waveform.Synth.Def.Envelope do
-  alias Waveform.Synth.Def.Parse
 
   defmodule Done do
     def none, do: 0
@@ -56,14 +55,24 @@ defmodule Waveform.Synth.Def.Envelope do
     sustain_level = Keyword.get(options, :sustain_level, @sustain_level)
     release_time = Keyword.get(options, :release_time, @release_time)
 
-    Enum.map([0, peak_level, peak_level * sustain_level, 0], &(&1 + bias))
-    |> new([attack_time, decay_time, release_time], [-4, -4, -4], 2, @loop)
+    [bias,
+     {:+, [], [peak_level, bias]},
+     {:+, [], [{:*, [], [peak_level, sustain_level]}, bias]},
+     bias]
+    |> new([attack_time, decay_time, release_time], [curve, curve, curve], 2, @loop)
   end
+
+  def new([i1 | inputs], times, curves) when is_list(curves),
+    do: new([i1|inputs], times, curves, @release, @loop)
+
+  def new([i1 | inputs], times, curve),
+    do: new([i1|inputs], times, curve, @release, @loop)
 
   def new([i1 | inputs], times, curves, release) when is_list(curves),
     do: new([i1|inputs], times, curves, release, @loop)
-  def new([i1 | inputs], times, curves) when is_list(curves),
-    do: new([i1|inputs], times, curves, @release, @loop)
+
+  def new([i1 | inputs], times, curve, release),
+    do: new([i1|inputs], times, curve, release, @loop)
 
   def new([i1 | inputs], times, curves, release, loop) when is_list(curves) do
     [i1, 3, release, loop] ++
@@ -71,12 +80,6 @@ defmodule Waveform.Synth.Def.Envelope do
       [Enum.at(inputs, n), Enum.at(times, n), 5, Enum.at(curves, n)]
     end)
   end
-
-  def new([i1 | inputs], times, curve),
-    do: new([i1|inputs], times, curve, @release, @loop)
-
-  def new([i1 | inputs], times, curve, release),
-    do: new([i1|inputs], times, curve, release, @loop)
 
   def new([i1 | inputs], times, curve, release, loop) do
     curve = if is_atom(curve) do

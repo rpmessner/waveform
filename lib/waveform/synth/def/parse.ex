@@ -200,43 +200,71 @@ defmodule Waveform.Synth.Def.Parse do
 
   # parse binary op
   def parse(
-        {%Synth{} = synth, i},
+        {%Synth{parameters: params, assigns: assigns, constants: constants} = synth, i},
         {operator, _, [arg1, arg2]} = expression
       ) do
-    special = Map.get(@binary_op_specials, operator)
 
-    if special == nil do
-      raise "unknown operator #{Macro.to_string(operator)} " <>
-              "when parsing #{Macro.to_string(expression)}"
+    try do
+      if operator in [:*, :-, :/, :+] do
+        string_expression = Macro.to_string(expression)
+
+        assigns = assigns |> Enum.reduce([], fn
+          {key, %Input{src: -1, constant_index: idx}}, coll ->
+            Keyword.put(coll, key, Enum.at(constants, idx))
+          {key, _}, coll -> Keyword.put(coll, key, nil)
+        end)
+
+        parameters = params |> Enum.reduce([], fn
+          {key, _}, coll -> Keyword.put(coll, key, nil)
+        end)
+
+        assigns = Keyword.merge(assigns, parameters)
+
+        {val, _} = Code.eval_string(string_expression, assigns)
+
+        parse({synth, i}, val)
+      else
+        raise CompileError
+      end
+    rescue _e in [ArithmeticError, CompileError] ->
+      # IO.inspect({e})
+      special = Map.get(@binary_op_specials, operator)
+
+      if special == nil do
+        raise "unknown operator #{Macro.to_string(operator)} " <>
+                "when parsing #{Macro.to_string(expression)}"
+      end
+
+      {synth, input1} = parse({synth, i}, arg1)
+      {synth, input2} = parse({synth, i}, arg2)
+
+      rate1 = lookup_rate(synth, input1)
+      rate2 = lookup_rate(synth, input2)
+
+      rate = max(rate1, rate2)
+
+      operator = %Ugen{
+        rate: rate,
+        special: special,
+        inputs: List.flatten([input1, input2]),
+        outputs: [rate],
+        name: "BinaryOpUGen"
+      }
+
+      %Synth{ugens: ugens} = synth
+
+      {
+        %{synth | ugens: ugens ++ [operator]},
+        [%Input{src: Enum.count(ugens), constant_index: 0}]
+      }
     end
-
-    {synth, input1} = parse({synth, i}, arg1)
-    {synth, input2} = parse({synth, i}, arg2)
-
-    rate1 = lookup_rate(synth, input1)
-    rate2 = lookup_rate(synth, input2)
-
-    rate = max(rate1, rate2)
-
-    operator = %Ugen{
-      rate: rate,
-      special: special,
-      inputs: List.flatten([input1, input2]),
-      outputs: [rate],
-      name: "BinaryOpUGen"
-    }
-
-    %Synth{ugens: ugens} = synth
-
-    {
-      %{synth | ugens: ugens ++ [operator]},
-      [%Input{src: Enum.count(ugens), constant_index: 0}]
-    }
   end
 
-  # parse negative constant
-  def parse({synth, i}, {:-, _, [val]}) when is_number(val) do
-    parse({synth, i}, -val)
+  # parse unary constant
+  def parse({synth, i}, {op, _, [val]} = expr)
+  when op in [:-] and is_number(val) do
+    {result, _ } = Code.eval_quoted(expr)
+    parse({synth, i}, result)
   end
 
   # parse unary op
@@ -291,7 +319,7 @@ defmodule Waveform.Synth.Def.Parse do
 
   # parse constant
   def parse({%Synth{constants: constants} = synth, _i}, arg)
-      when is_float(arg) or is_integer(arg) do
+  when is_number(arg) do
     arg = arg + 0.0
 
     case Enum.find_index(constants, &(&1 == arg)) do

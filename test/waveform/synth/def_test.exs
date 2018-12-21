@@ -355,27 +355,27 @@ defmodule Waveform.Synth.DefTest do
     )
   end
 
-   test "compiles synth with generic envelope into %Def" do
-     assert_synthdef(
-       @envelope2_def,
-       defsynth Env2, [] do
-         sin_osc = SinOsc.ar(freq: 550, phase: 7)
+  test "compiles synth with generic envelope into %Def" do
+    assert_synthdef(
+      @envelope2_def,
+      defsynth Env2, [] do
+        sin_osc = SinOsc.ar(freq: 550, phase: 7)
 
-         env_gen = EnvGen.kr(
-           gate: 24,#1
-           level_scale: 25,#1
-           level_bias: 26,#0
-           time_scale: 27,#1
-           done_action: 8,
-           envelope: Env.new(
-             [11, 12, 13, 14], [21, 22, 23], [-1, -2, -3], 40, 41
-           )
-         )
+        env_gen = EnvGen.kr(
+          gate: 24,#1
+          level_scale: 25,#1
+          level_bias: 26,#0
+          time_scale: 27,#1
+          done_action: 8,
+          envelope: Env.new(
+            [11, 12, 13, 14], [21, 22, 23], [-1, -2, -3], 40, 41
+          )
+        )
 
-         Out.ar(bus: 999, channels: sin_osc * env_gen)
-       end
-     )
-   end
+        Out.ar(bus: 999, channels: sin_osc * env_gen)
+      end
+    )
+  end
 
   test "compiles synth with generic envelope with defaults into %Def" do
     assert_synthdef(
