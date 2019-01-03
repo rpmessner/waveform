@@ -18,7 +18,7 @@ defmodule Waveform.Synth.Def.Ugens.Random do
     },
     Rand: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [lo: 0.0, hi: 1.0]
     },
     TChoose: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},

@@ -102,7 +102,7 @@ defmodule Waveform.Synth.Def.Ugens.Deterministic do
     },
     SinOsc: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [freq: 440, phase: 1]
+      arguments: [freq: 440, phase: 0]
     },
     SinOscFB: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},

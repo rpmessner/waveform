@@ -30,7 +30,7 @@ defmodule Waveform.Synth.Def.Ugens.Maths do
     },
     LinLin: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: []
+      arguments: [in: 0.0, srclo: 0.0, srchi: 1.0, dstlo: 1.0, dsthi: 2.0]
     },
     ModDif: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},

@@ -14,6 +14,7 @@ defmodule Waveform.Synth.DefTest do
             |> to_charlist
 
   @array_inputs "#{@fixtures}/synths/parsed/array_inputs.ex"
+  @array_inputs_binary_op "#{@fixtures}/synths/parsed/array_inputs_binary_op.ex"
   @envelope1 "#{@fixtures}/synths/parsed/envelope1.ex"
   @envelope2 "#{@fixtures}/synths/parsed/envelope2.ex"
   @envelope3 "#{@fixtures}/synths/parsed/envelope3.ex"
@@ -22,6 +23,14 @@ defmodule Waveform.Synth.DefTest do
   @multiple_array_inputs "#{@fixtures}/synths/parsed/multiple_array_inputs.ex"
   @saw "#{@fixtures}/synths/parsed/saw.ex"
   @sinosc "#{@fixtures}/synths/parsed/sinosc.ex"
+  @apad_mh "#{@fixtures}/synths/parsed/apad_mh.ex"
+
+  {apad_mh, _} =
+    @apad_mh
+    |> File.read!()
+    |> Code.eval_string()
+
+  @apad_mh_def apad_mh
 
   {array_inputs, _} =
     @array_inputs
@@ -29,6 +38,13 @@ defmodule Waveform.Synth.DefTest do
     |> Code.eval_string()
 
   @array_inputs_def array_inputs
+
+  {array_inputs_binary_op, _} =
+    @array_inputs_binary_op
+    |> File.read!()
+    |> Code.eval_string()
+
+  @array_inputs_binary_op_def array_inputs_binary_op
 
   {envelope1_def, _} =
     @envelope1
@@ -51,40 +67,40 @@ defmodule Waveform.Synth.DefTest do
 
   @envelope3_def envelope3_def
 
-   {mouse_panner, _} =
-     @mouse_panner
-     |> File.read!()
-     |> Code.eval_string()
+  {mouse_panner, _} =
+    @mouse_panner
+    |> File.read!()
+    |> Code.eval_string()
 
-   @mouse_panner_def mouse_panner
+  @mouse_panner_def mouse_panner
 
-   {multichannel, _} =
-     @multichannel
-     |> File.read!()
-     |> Code.eval_string()
+  {multichannel, _} =
+    @multichannel
+    |> File.read!()
+    |> Code.eval_string()
 
-   @multichannel_def multichannel
+  @multichannel_def multichannel
 
-   {multiple_array_inputs, _} =
-     @multiple_array_inputs
-     |> File.read!()
-     |> Code.eval_string()
+  {multiple_array_inputs, _} =
+    @multiple_array_inputs
+    |> File.read!()
+    |> Code.eval_string()
 
-   @multiple_array_inputs_def multiple_array_inputs
+  @multiple_array_inputs_def multiple_array_inputs
 
-   {saw, _} =
-     @saw
-     |> File.read!()
-     |> Code.eval_string()
+  {saw, _} =
+    @saw
+    |> File.read!()
+    |> Code.eval_string()
 
-   @saw_def saw
+  @saw_def saw
 
-   {sinosc, _} =
-     @sinosc
-     |> File.read!()
-     |> Code.eval_string()
+  {sinosc, _} =
+    @sinosc
+    |> File.read!()
+    |> Code.eval_string()
 
-   @sinosc_def sinosc
+  @sinosc_def sinosc
 
   test "compiles a synth def into %Def with struct syntax" do
     assert_synthdef(
@@ -116,8 +132,7 @@ defmodule Waveform.Synth.DefTest do
         #
         sin_osc = SinOsc.ar(
           freq: midicps(note),
-          phase: 0.0,
-          mul: 1.0,
+          phase: 0.0, mul: 1.0,
           add: 2.0
         )
 
@@ -426,6 +441,51 @@ defmodule Waveform.Synth.DefTest do
           add: [3,2]
         }
         %Out{channels: [sinl, sinr]}
+      end
+    )
+  end
+
+  test "ugen with range" do
+    assert_synthdef(
+      @apad_mh_def,
+      defsynth ApadMh, [] do
+        mod1 = Saw.kr(freq: 6).range(999..777)
+        [sigl, sigr] = SinOsc.ar(freq: [440, mod1], phase: 0)
+        Out.ar(bus: 0, channels: [distort(sigl), distort(sigr)])
+      end
+    )
+
+    assert_synthdef(
+      @apad_mh_def,
+      defsynth ApadMh, [] do
+        mod1 = Saw.kr(freq: 6).range(999..777)
+        [sigl, sigr] = distort(SinOsc.ar(freq: [440, mod1], phase: 0))
+        Out.ar(bus: 0, channels: [sigl, sigr])
+      end
+    )
+
+    assert_synthdef(
+      @apad_mh_def,
+      defsynth ApadMh, [] do
+        mod1 = Saw.kr(freq: 6).range(999, 777)
+        [sigl, sigr] = distort(SinOsc.ar(freq: [440, mod1], phase: 0))
+        Out.ar(bus: 0, channels: [sigl, sigr])
+      end
+    )
+  end
+
+  test "array input ugen with binary op" do
+    assert_synthdef(
+      @array_inputs_binary_op_def,
+      defsynth ArrayInputsBinaryOp, [] do
+        Out.ar(bus: 0, channels: mul(SinOsc.ar(freq: [440, 880, 2640], phase: 0), 2))
+      end
+    )
+
+    assert_synthdef(
+      @array_inputs_binary_op_def,
+      defsynth ArrayInputsBinaryOp, [] do
+        Out.ar(bus: 0, channels: SinOsc.ar(freq: [440, 880, 2640]) * 2)
       end
     )
   end

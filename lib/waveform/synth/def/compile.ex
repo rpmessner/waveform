@@ -71,7 +71,7 @@ defmodule Waveform.Synth.Def.Compile do
     end)
   end
 
-  defp outputs(%Ugen{outputs: outputs}) do
+  defp outputs(%Ugen{name: name, outputs: outputs}) do
     Enum.reduce(outputs, "", fn k, acc ->
       acc <> <<k::size(8)>>
     end)
