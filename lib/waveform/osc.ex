@@ -1,9 +1,10 @@
 defmodule Waveform.OSC do
   use GenServer
 
-  alias Waveform.AudioBus, as: AudioBus
-  alias Waveform.OSC.Group, as: Group
-  alias Waveform.ServerInfo, as: ServerInfo
+  alias Waveform.AudioBus
+  alias Waveform.OSC.Group
+  alias Waveform.OSC.Node
+  alias Waveform.ServerInfo
 
   alias __MODULE__
   @me __MODULE__
@@ -26,7 +27,7 @@ defmodule Waveform.OSC do
   @d_recv '/d_recv'
   @d_loadDir '/d_loadDir'
   @n_go '/n_go'
-  # @n_end '/n_end'
+  @n_end '/n_end'
   @server_info '/sonic-pi/server-info'
 
   @server_info_synth 'sonic-pi-server-info'
@@ -147,7 +148,7 @@ defmodule Waveform.OSC do
       {:ok, {_ip, _port, the_message}} ->
         message = :osc.decode(the_message)
 
-        IO.inspect({"osc receieve:", message})
+        # IO.inspect({"osc receieve:", message})
 
         case message do
           {:cmd, [@server_info, _id, _ | response]} ->
@@ -163,11 +164,11 @@ defmodule Waveform.OSC do
             Group.setup()
             OSC.request_server_info()
 
-          # {:cmd, [@n_go, node_id | _]} ->
-          #   Node.activate_node(node_id)
+          {:cmd, [@n_go, node_id | _]} ->
+            Node.activate_node(node_id)
 
-          # {:cmd, [@n_end, node_id | _]} ->
-          #   Node.deactivate_node(node_id)
+          {:cmd, [@n_end, node_id | _]} ->
+            Node.deactivate_node(node_id)
 
           _ ->
             nil
@@ -181,7 +182,7 @@ defmodule Waveform.OSC do
   end
 
   defp osc(state, command) do
-    IO.inspect({"osc send:", command})
+    # IO.inspect({"osc send:", command})
     :ok = :gen_udp.send(state.socket, state.host, state.host_port, :osc.encode(command))
   end
 end

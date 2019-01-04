@@ -7,6 +7,7 @@ defmodule Waveform.Synth.Def.Parse do
   alias Waveform.Synth.Def.Envelope, as: Env
 
   @unary_op_specials Ugens.Algebraic.unary_ops()
+  @unary_op_keys Ugens.Algebraic.unary_ops() |> Map.keys()
   @binary_op_specials Ugens.Algebraic.binary_ops()
 
   @kr %{rate: 1}
@@ -186,7 +187,12 @@ defmodule Waveform.Synth.Def.Parse do
         _ -> {:first, nil}
       end
 
-    parse({s, i}, {:%, ln2, [{:__aliases__, ln3, [ugen]}, {:%{}, ln4, [{name, arg}] ++ options}]})
+    parse(
+      {s, i},
+      {:%, ln2, [
+        {:__aliases__, ln3, [ugen]}, {:%{}, ln4, [{name, arg}] ++ options}
+      ]}
+    )
   end
 
   # pipe operator right-hand unary
@@ -203,7 +209,25 @@ defmodule Waveform.Synth.Def.Parse do
   def parse(
     {%Synth{} = s, i},
     {{:., m1, [expr, :range]}, m2, [{:.., _, [lo, hi]}]}
-  ), do: parse({s, i}, {{:., m1, [expr, :range]}, m2, [lo, hi]})
+  ) do
+    parse({s, i}, {{:., m1, [expr, :range]}, m2, [lo, hi]})
+  end
+
+  # unary operator dot notation
+  def parse(
+    {%Synth{} = s, i},
+    {{:., m1, [{arg, m2, nil}, operator]}, _, []}
+  ) when operator in @unary_op_keys do
+    parse({s, i}, {operator, m1, [{arg, m2, nil}]})
+  end
+
+  # range operator spread notation
+  def parse(
+    {%Synth{} = s, i},
+    {operator, _, [arg1, arg2]}
+  ) when operator in [:rrand] and is_number(arg1) and is_number(arg2) do
+    parse({s, i}, ((arg2 - arg1) * uniform_rand()) + arg1)
+  end
 
   # range operator
   def parse(
@@ -542,7 +566,6 @@ defmodule Waveform.Synth.Def.Parse do
     options = Keyword.drop(options, [:mul, :add])
 
     option_keys = Keyword.keys(arguments)
-    default_keys = Keyword.keys(options)
 
     validate_ugen_options(ugen, Keyword.keys(arguments), Keyword.keys(options))
 
@@ -614,5 +637,9 @@ defmodule Waveform.Synth.Def.Parse do
       }\" for ugen \"#{name}\", allowed arguments are: \"#{
         Enum.join(allowed, "\",\"")}\""
     end
+  end
+
+  def uniform_rand() do
+    :rand.uniform()
   end
 end

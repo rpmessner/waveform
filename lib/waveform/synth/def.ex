@@ -1,8 +1,8 @@
 defmodule Waveform.Synth.Def do
-  alias Waveform.Synth.Def.Compile, as: Compile
-  alias Waveform.Synth.Def.Parse, as: Parse
-  alias Waveform.Synth.Def.Submodule, as: Submodule
-  alias Waveform.Synth.Manager, as: Manager
+  alias Waveform.Synth.Def.Compile
+  alias Waveform.Synth.Def.Parse
+  alias Waveform.Synth.Def.Submodule
+  alias Waveform.Synth.Manager
 
   alias __MODULE__
 
@@ -45,7 +45,7 @@ defmodule Waveform.Synth.Def do
     )
   end
 
-  alias Ugen.Input, as: Input
+  alias Ugen.Input
 
   defmacro defsubmodule({_, _, [name]}, params, do: {:__block__, _, submodule_forms}) do
     submodule = Submodule.define(name, params, submodule_forms)
@@ -73,7 +73,7 @@ defmodule Waveform.Synth.Def do
     build_synthdef(name, params, expressions)
   end
 
-  defp build_synthdef(name, params, expressions) do
+  def build_synthdef(name, params, expressions) do
     name = parse_synthdef_name(name)
 
     %Def{} = synthdef = parse_synthdef(name, params, expressions, %Def{})

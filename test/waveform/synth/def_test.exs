@@ -1,5 +1,6 @@
 defmodule Waveform.Synth.DefTest do
   use ExUnit.Case
+
   require Waveform.Assertions
   import Waveform.Assertions
 
@@ -142,6 +143,20 @@ defmodule Waveform.Synth.DefTest do
   end
 
   test "ugen args are in correct order when compiled into %Def" do
+    assert_synthdef(
+      @sinosc_def,
+      defsynth SinOscDef,
+        # midi A4
+        note: 69,
+        out_bus: 0 do
+        #
+        sin_osc = %SinOsc{freq: midicps(note), mul: 1.0, add: 2.0, phase: 0.0}
+        %Out{bus: out_bus, channels: sin_osc}
+      end
+    )
+  end
+
+  test "unary op dot syntax" do
     assert_synthdef(
       @sinosc_def,
       defsynth SinOscDef,
@@ -499,5 +514,31 @@ defmodule Waveform.Synth.DefTest do
         %Out{bus: 0, channels: [left, right]}
       end
     )
+  end
+
+  test "random numbers" do
+    {
+      %Subject{
+        synthdefs: [%Subject.Synth{constants: [c1, c2]}]
+      }, _
+    } = defsynth Rrandom, [] do
+      SinOsc.ar(freq: rrand(0, 1))
+    end
+
+    assert c1 > 0
+    assert c1 < 1
+    assert c2 == 0
+
+    {
+      %Subject{
+        synthdefs: [%Subject.Synth{constants: [c1, c2]}]
+      }, _
+    } = defsynth Rrandom, [] do
+      SinOsc.ar(freq: rrand(10, 20))
+    end
+
+    assert c2 == 0
+    assert c1 > 10
+    assert c1 < 20
   end
 end

@@ -9,6 +9,7 @@ defmodule Waveform.Application do
       {Waveform.Midi, nil},
       {Waveform.OSC, nil},
       {Waveform.OSC.Node.ID, 3},
+      {Waveform.OSC.Node, nil},
       {Waveform.OSC.Group, nil},
       {Waveform.ServerInfo, nil},
       {Waveform.Synth.Manager, nil},
