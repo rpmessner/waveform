@@ -90,8 +90,7 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
     },
     DFM1: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, freq: 1000, res: 0.1, inputgain: 1,
-                  type: 0, noiselevel: 0.0003]
+      arguments: [in: nil, freq: 1000, res: 0.1, inputgain: 1, type: 0, noiselevel: 0.0003]
     },
     Decimator: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -107,8 +106,7 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
     },
     Friction: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, friction: 0.5, spring: 0.414, damp: 0.313,
-                  mass: 0.1, beltmass: 1]
+      arguments: [in: nil, friction: 0.5, spring: 0.414, damp: 0.313, mass: 0.1, beltmass: 1]
     },
     FOS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -144,8 +142,7 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
     },
     HairCell: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, spontaneousrate: 0, boostrate: 200,
-                  restorerate: 1000, loss: 0.99]
+      arguments: [in: nil, spontaneousrate: 0, boostrate: 200, restorerate: 1000, loss: 0.99]
     },
     HPF: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -241,28 +238,23 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
     },
     NL2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, bufnum: 0, maxsizea: 10, maxsizeb: 10,
-                  guard1: 1000, guard2: 100]
+      arguments: [in: nil, bufnum: 0, maxsizea: 10, maxsizeb: 10, guard1: 1000, guard2: 100]
     },
     NL: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, bufnuma: 0, bufnumb: 1, guard1: 1000,
-                  guard2: 100]
+      arguments: [in: nil, bufnuma: 0, bufnumb: 1, guard1: 1000, guard2: 100]
     },
     NLFiltC: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, a: nil, b: nil, d: nil, c: nil,
-                  l: nil]
+      arguments: [in: nil, a: nil, b: nil, d: nil, c: nil, l: nil]
     },
     NLFiltL: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, a: nil, b: nil, d: nil, c: nil,
-                  l: nil]
+      arguments: [in: nil, a: nil, b: nil, d: nil, c: nil, l: nil]
     },
     NLFiltN: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, a: nil, b: nil, d: nil, c: nil,
-                  l: nil]
+      arguments: [in: nil, a: nil, b: nil, d: nil, c: nil, l: nil]
     },
     OnePole: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -314,9 +306,16 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
     },
     SVF: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [signal: nil, cutoff: 2200, res: 0.1,
-                  lowpass: 1, bandpass: 0, highpass: 0,
-                  notch: 0, peak: 0]
+      arguments: [
+        signal: nil,
+        cutoff: 2200,
+        res: 0.1,
+        lowpass: 1,
+        bandpass: 0,
+        highpass: 0,
+        notch: 0,
+        peak: 0
+      ]
     },
     SineShaper: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -344,8 +343,7 @@ defmodule Waveform.Synth.Def.Ugens.Filters do
     },
     VarLag: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: 0, time: 0.1, curvature: 0, warp: 5,
-                  start: nil]
+      arguments: [in: 0, time: 0.1, curvature: 0, warp: 5, start: nil]
     }
   }
 

@@ -3,18 +3,19 @@
     %Waveform.Synth.Def.Synth{
       name: "apad-mh",
       constants: [
-        6.0,#0
-        -111.0,#1
-        888.0,#2
-        440.0,#3
-        0.0#4
+        # 0
+        6.0,
+        # 1
+        -111.0,
+        # 2
+        888.0,
+        # 3
+        440.0,
+        # 4
+        0.0
       ],
-      param_values: [
-
-      ],
-      param_names: [
-
-      ],
+      param_values: [],
+      param_names: [],
       ugens: [
         %Waveform.Synth.Def.Ugen{
           name: "Saw",
@@ -41,11 +42,13 @@
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 1#-111 (hi - lo) * 0.5
+              # -111 (hi - lo) * 0.5
+              constant_index: 1
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 2 #888 lo + ((hi - lo) * 0.5)
+              # 888 lo + ((hi - lo) * 0.5)
+              constant_index: 2
             }
           ],
           outputs: [
@@ -134,14 +137,10 @@
               constant_index: 0
             }
           ],
-          outputs: [
-
-          ]
+          outputs: []
         }
       ],
-      variants: [
-
-      ]
+      variants: []
     }
   ]
 }

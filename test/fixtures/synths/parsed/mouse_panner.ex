@@ -30,30 +30,29 @@
           special: 0
         },
         %Waveform.Synth.Def.Ugen{
-           arguments: [],
-           inputs: [
-             %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 0},
-             %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 1},
-             %Waveform.Synth.Def.Ugen.Input{constant_index: 3, src: -1}
-           ],
-           name: "Pan2",
-           outputs: [2, 2],
-           rate: 2,
-           special: 0
-         },
-         %Waveform.Synth.Def.Ugen{
-           arguments: [],
-           inputs: [
-             %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: -1},
-             %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 2},
-             %Waveform.Synth.Def.Ugen.Input{constant_index: 1, src: 2}
-           ],
-           name: "Out",
-           outputs: [],
-           rate: 2,
-           special: 0
-         }
-
+          arguments: [],
+          inputs: [
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 0},
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 1},
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 3, src: -1}
+          ],
+          name: "Pan2",
+          outputs: [2, 2],
+          rate: 2,
+          special: 0
+        },
+        %Waveform.Synth.Def.Ugen{
+          arguments: [],
+          inputs: [
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: -1},
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 0, src: 2},
+            %Waveform.Synth.Def.Ugen.Input{constant_index: 1, src: 2}
+          ],
+          name: "Out",
+          outputs: [],
+          rate: 2,
+          special: 0
+        }
       ]
     }
   ]

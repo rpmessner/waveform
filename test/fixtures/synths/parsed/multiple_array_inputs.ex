@@ -12,12 +12,8 @@
         5.0,
         2.0
       ],
-      param_values: [
-
-      ],
-      param_names: [
-
-      ],
+      param_values: [],
+      param_names: [],
       ugens: [
         %Waveform.Synth.Def.Ugen{
           name: "SinOsc",
@@ -117,14 +113,10 @@
               constant_index: 0
             }
           ],
-          outputs: [
-
-          ]
+          outputs: []
         }
       ],
-      variants: [
-
-      ]
+      variants: []
     }
   ]
 }

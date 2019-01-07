@@ -10,10 +10,18 @@ defmodule Waveform.Synth.Def.Ugens.Envelopes do
     },
     DemandEnvGen: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [level: nil, dur: nil, shape: 1,
-                  curve: 0, gate: 1, reset: 1,
-                  level_scale: 1, level_bias: 0,
-                  time_scale: 1, done: 0]
+      arguments: [
+        level: nil,
+        dur: nil,
+        shape: 1,
+        curve: 0,
+        gate: 1,
+        reset: 1,
+        level_scale: 1,
+        level_bias: 0,
+        time_scale: 1,
+        done: 0
+      ]
     },
     EnvGen: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
@@ -36,8 +44,7 @@ defmodule Waveform.Synth.Def.Ugens.Envelopes do
     },
     Linen: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [gate: 1, attack_time: 0.01, sus_level: 1,
-                  release_time: 1, done: 0]
+      arguments: [gate: 1, attack_time: 0.01, sus_level: 1, release_time: 1, done: 0]
     },
     XLine: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},

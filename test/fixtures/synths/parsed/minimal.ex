@@ -4,7 +4,7 @@
       name: "minimal-synth",
       constants: [
         0.0,
-        1.0,
+        1.0
       ],
       param_values: [
         69.0,
@@ -45,7 +45,7 @@
               src: 1,
               constant_index: 0
             },
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 0},
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 0}
           ],
           outputs: [
             2
@@ -57,10 +57,7 @@
           special: 0,
           outputs: [2],
           inputs: [
-            %Waveform.Synth.Def.Ugen.Input{
-              src: 2,
-              constant_index: 0
-            }
+            %Waveform.Synth.Def.Ugen.Input{src: 2, constant_index: 0},
             %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 1},
             %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 0}
           ]

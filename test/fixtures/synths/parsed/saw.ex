@@ -4,7 +4,7 @@
       constants: [
         2.0,
         0.5,
-        1.0,
+        1.0
       ],
       name: "saw-def",
       param_names: ["note", "out_bus", "foo", "bar"],
@@ -93,7 +93,7 @@
           name: "Saw",
           inputs: [
             # freq
-            %Waveform.Synth.Def.Ugen.Input{src: 1, constant_index: 0},
+            %Waveform.Synth.Def.Ugen.Input{src: 1, constant_index: 0}
           ],
           rate: 2,
           special: 0,

@@ -27,70 +27,40 @@ play :g4
 
 play :e4
 
-defsynth SpacePad, [ note: 69,
+# SynthDef(\space-pad, {
+# arg freq=880, amp=0.5, attack=0.4, decay=0.5,
+# sustain=0.8, release=1.0, gate=1.0, out=0;
+defsynth SpacePad, [
+  note: 69,
   amp: 0.5,
   attack: 0.4,
   decay: 0.5,
   sustain: 0.8,
-  release: 1,
-  gate: 1,
-  out_bus: 0
+  release: 1.0,
+  gate: 1.0,
+  out: 0
 ] do
-
   freq = midicps(note)
 
-  # (let [env  (env-gen (adsr attack decay sustain release) gate :action FREE)
+  # envelope = Env.adsr(attack,decay,sustain,release)
   envelope = Envelope.adsr(
     attack_time: attack, decay_time: decay,
     sustain_level: sustain, release_time: release
   )
-  env = EnvGen.kr(envelope: envelope, gate: gate, done_action: 2)
 
-  #  mod1 (lin-lin:kr (sin-osc:kr 6) -1 1 (* freq 0.99) (* freq 1.01))
-  # mod1 = LinLin.kr(
-  #   in: SinOsc.kr(freq: 6),
-  #   srclo: -1,
-  #   srchi: 1,
-  #   dstlo: freq * 0.99,
-  #   dsthi: freq * 1.01
-  # )
-  #  mod2 (lin-lin:kr (lf-noise2:kr 1) -1 1 0.2 1)
-  # mod2 = LinLin.kr(
-  #   in: LFNoise2.kr(freq: 1),
-  #   srclo: -1,
-  #   srchi: 1,
-  #   dstlo: 0.2,
-  #   dsthi: 1
-  # )
-  #  mod3 (lin-lin:kr (sin-osc:kr (ranged-rand 4 6)) -1 1 0.5 1)
-  mod3 = LinLin.kr(
-    in: SinOsc.kr(freq: Rand.kr(lo: 4, hi: 6)),
-    srclo: -1,
-    srchi: 1,
-    dstlo: 0.5,
-    dsthi: 1
-  )
+  # env = EnvGen.kr(envelope,gate,levelScale: amp, doneAction:2);
+  env = EnvGen.kr(envelope: envelope, level_scale: amp, gate: gate, done_action: 2)
 
-  # sig (distort (* env (sin-osc [freq mod1])))
+  # mod1 = SinOsc.kr(6).range(freq*0.99,freq*1.01);
+  mod1 = SinOsc.kr(freq: 6).range(freq * 0.99, freq * 1.01)
+  # mod2 = LFNoise2.kr(1).range(0.2,1);
+  mod2 = LFNoise2.kr(freq: 1).range(0.2, 1)
 
-  sig = distort(SinOsc.ar(freq: freq) * env)  * amp
-  # sig1 = distort(SinOsc.ar(freq: mod1) * env)
-
-  # sig (* amp sig mod2 mod3)]
-
-  # sig = amp * sig
-  # sig = sig * mod2# * mod3
-  # sig1 = amp * sig * mod2 * mod3
-
-  Out.ar(bus: out_bus, channels: sig)
+  mod3 = SinOsc.kr(freq: rrand(4.0, 6.0)).range(0.5, 1);
+  # sig = SinOsc.ar([freq,mod1],0,env).distort;
+  sig = SinOsc.ar(freq: [freq, mod1], phase: 0, mul: env).distort()
+  # sig = sig * mod2 * mod3;
+  sig = sig * mod2 * mod3;
+  # Out.ar(out, sig);
+  Out.ar(bus: out, channels: sig)
 end
-
-# (definst simple-flute [freq 880
-#                        amp 0.5
-#                        attack 0.4
-#                        decay 0.5
-#                        sustain 0.8
-#                        release 1
-#                        gate 1
-#                        out 0]
-#     sig))

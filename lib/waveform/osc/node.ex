@@ -8,9 +8,12 @@ defmodule Waveform.OSC.Node do
 
   defmodule State do
     defstruct(
-      inactive_nodes: [], #havn't recieved confirmation
-      active_nodes: [], #alive in supercollider
-      dead_nodes: [] #dead in supercollider
+      # havn't recieved confirmation
+      inactive_nodes: [],
+      # alive in supercollider
+      active_nodes: [],
+      # dead in supercollider
+      dead_nodes: []
     )
   end
 
@@ -47,10 +50,10 @@ defmodule Waveform.OSC.Node do
   end
 
   def handle_cast({:deactivate_node, node_id}, state) do
-    active_node = Enum.find state.active_nodes, &(&1.id == node_id)
+    active_node = Enum.find(state.active_nodes, &(&1.id == node_id))
 
     if active_node do
-      active_nodes = Enum.filter state.active_nodes, &(&1.id != node_id)
+      active_nodes = Enum.filter(state.active_nodes, &(&1.id != node_id))
       dead_nodes = [%{active_node | active: false} | state.dead_nodes]
       new_state = %{state | active_nodes: active_nodes, dead_nodes: dead_nodes}
       {:noreply, new_state}
@@ -60,10 +63,10 @@ defmodule Waveform.OSC.Node do
   end
 
   def handle_cast({:activate_node, node_id}, state) do
-    inactive_node = Enum.find state.inactive_nodes, &(&1.id == node_id)
+    inactive_node = Enum.find(state.inactive_nodes, &(&1.id == node_id))
 
     if inactive_node do
-      inactive_nodes = Enum.filter state.inactive_nodes, &(&1.id != node_id)
+      inactive_nodes = Enum.filter(state.inactive_nodes, &(&1.id != node_id))
       active_nodes = [%{inactive_node | active: true} | state.active_nodes]
       new_state = %{state | active_nodes: active_nodes, inactive_nodes: inactive_nodes}
       {:noreply, new_state}

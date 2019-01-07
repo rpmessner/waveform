@@ -18,8 +18,7 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     AnalyseEvents2: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, bufnum: 0, threshold: 0.34,
-                  triggerid: 101, circular: 0, pitch: 0]
+      arguments: [in: nil, bufnum: 0, threshold: 0.34, triggerid: 101, circular: 0, pitch: 0]
     },
     ArrayMax: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -31,9 +30,16 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     AttackSlope: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, windowsize: 1024, peakpicksize: 20, leak: 0.999,
-                  energythreshold: 0.01, sumthreshold: 20, mingap: 30,
-                  numslopesaveraged: 10]
+      arguments: [
+        in: nil,
+        windowsize: 1024,
+        peakpicksize: 20,
+        leak: 0.999,
+        energythreshold: 0.01,
+        sumthreshold: 20,
+        mingap: 30,
+        numslopesaveraged: 10
+      ]
     },
     AutoTrack: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -57,14 +63,29 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     Chromagram: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [fft: nil, fftsize: 2048, n: 12, tuningbase: 32.703195662575,
-                  octaves: 8, integrationflag: 0, coeff: 0.9, octaveratio: 2,
-                  perframenormalize: 0]
+      arguments: [
+        fft: nil,
+        fftsize: 2048,
+        n: 12,
+        tuningbase: 32.703195662575,
+        octaves: 8,
+        integrationflag: 0,
+        coeff: 0.9,
+        octaveratio: 2,
+        perframenormalize: 0
+      ]
     },
     Coyote: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: 0, track_Fall: 0.2, slow_lag: 0.2, fast_lag: 0.01,
-                  fast_mul: 0.5, thresh: 0.05, min_dur: 0.1]
+      arguments: [
+        in: 0,
+        track_Fall: 0.2,
+        slow_lag: 0.2,
+        fast_lag: 0.01,
+        fast_mul: 0.5,
+        thresh: 0.05,
+        min_dur: 0.1
+      ]
     },
     Crest: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -76,9 +97,19 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     DrumTrack: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, lock: 0, dynleak: 0, tempowt: 0,
-                  phasewt: 0, basswt: 0, patternwt: 1, prior: nil,
-                  kicksensitivity: 1, snaresensitivity: 1, debugmode: 0]
+      arguments: [
+        in: nil,
+        lock: 0,
+        dynleak: 0,
+        tempowt: 0,
+        phasewt: 0,
+        basswt: 0,
+        patternwt: 1,
+        prior: nil,
+        kicksensitivity: 1,
+        snaresensitivity: 1,
+        debugmode: 0
+      ]
     },
     EnvDetect: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -102,8 +133,7 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     HairCell: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, spontaneousrate: 0, boostrate: 200,
-                  restorerate: 1000, loss: 0.99]
+      arguments: [in: nil, spontaneousrate: 0, boostrate: 200, restorerate: 1000, loss: 0.99]
     },
     KMeansRT: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -123,8 +153,7 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     LPCAnalyzer: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: 0, source: 0.01, n: 256, p: 10, testE: 0,
-                  delta: 0.999, windowtype: 0]
+      arguments: [in: 0, source: 0.01, n: 256, p: 10, testE: 0, delta: 0.999, windowtype: 0]
     },
     LPCError: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -160,11 +189,19 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     Onsets: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      #odftype:
-      #nPOWER=0, MAGSUM=1, COMPLEX=2, RCOMPLEX=3, PHASE=4, WPHASE=5, MKL=6
-      arguments: [chain: nil, threshold: 0.5, odftype: 3,
-                  relaxtime: 1, floor: 0.1, mingap: 10, medianspan: 11,
-                  whtype: 1, rawodf: 0]
+      # odftype:
+      # nPOWER=0, MAGSUM=1, COMPLEX=2, RCOMPLEX=3, PHASE=4, WPHASE=5, MKL=6
+      arguments: [
+        chain: nil,
+        threshold: 0.5,
+        odftype: 3,
+        relaxtime: 1,
+        floor: 0.1,
+        mingap: 10,
+        medianspan: 11,
+        whtype: 1,
+        rawodf: 0
+      ]
     },
     Peak: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -176,11 +213,31 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     Pitch: %{
       defaults: %{rate: 1, special: 0, outputs: [1, 1]},
-      arguments: [in: 0, init_freq: 440, min_freq: 60, max_freq: 4000, exec_freq: 100, max_bins_per_octave: 16, median: 1, amp_threshold: 0.01, peak_threshold: 0.5, down_sample: 1, clar: 0]
+      arguments: [
+        in: 0,
+        init_freq: 440,
+        min_freq: 60,
+        max_freq: 4000,
+        exec_freq: 100,
+        max_bins_per_octave: 16,
+        median: 1,
+        amp_threshold: 0.01,
+        peak_threshold: 0.5,
+        down_sample: 1,
+        clar: 0
+      ]
     },
     Qitch: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [in: 0, databufnum: nil, amp_threshold: 0.01, algoflag: 1, ampbufnum: nil, minfreq: 0, maxfreq: 2500]
+      arguments: [
+        in: 0,
+        databufnum: nil,
+        amp_threshold: 0.01,
+        algoflag: 1,
+        ampbufnum: nil,
+        minfreq: 0,
+        maxfreq: 2500
+      ]
     },
     RMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -196,7 +253,19 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     SMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [in: nil, maxpeaks: 80, currentpeaks: 80, tolerance: 4, noisefloor: 0.2, freqmult: 1, freqadd: 0, formantpreserve: 0, useifft: 0, ampmult: 1, graphicsbufnum: nil]
+      arguments: [
+        in: nil,
+        maxpeaks: 80,
+        currentpeaks: 80,
+        tolerance: 4,
+        noisefloor: 0.2,
+        freqmult: 1,
+        freqadd: 0,
+        formantpreserve: 0,
+        useifft: 0,
+        ampmult: 1,
+        graphicsbufnum: nil
+      ]
     },
     SOMRd: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
@@ -204,7 +273,16 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     SOMTrain: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},
-      arguments: [bufnum: nil, inputdata: nil, netsize: 10, numdims: 2, traindur: 5000, nhood: 0.5, gate: 1, initweight: 1]
+      arguments: [
+        bufnum: nil,
+        inputdata: nil,
+        netsize: 10,
+        numdims: 2,
+        traindur: 5000,
+        nhood: 0.5,
+        gate: 1,
+        initweight: 1
+      ]
     },
     SendPeakRMS: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
@@ -224,7 +302,16 @@ defmodule Waveform.Synth.Def.Ugens.Analysis do
     },
     TPV: %{
       defaults: %{rate: 2, special: 0, outputs: [2]},
-      arguments: [chain: nil, windowsize: 1024, hopsize: 512, maxpeaks: 80, currentpeaks: nil, freqmult: 1, tolerance: 4, noisefloor: 0.2]
+      arguments: [
+        chain: nil,
+        windowsize: 1024,
+        hopsize: 512,
+        maxpeaks: 80,
+        currentpeaks: nil,
+        freqmult: 1,
+        tolerance: 4,
+        noisefloor: 0.2
+      ]
     },
     Tartini: %{
       defaults: %{rate: 1, special: 0, outputs: [1]},

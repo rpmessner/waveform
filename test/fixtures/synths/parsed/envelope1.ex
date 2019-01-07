@@ -3,32 +3,47 @@
     %Waveform.Synth.Def.Synth{
       name: "env1",
       constants: [
-        550.0, #0
-        7.0,#1
-        24.0,#2
-        25.0,#3
-        26.0,#4
-        27.0,#5
-        8.0,#6
-        0.0,#7
-        3.0,#8
-        2.0,#9
-        -99.0,#10
-        1.0,#11
-        0.01,#12
-        5.0,#13
-        -4.0,#14
-        0.03,#15
-        0.02,#16
-        0.04,#17
-        999.0#18
+        # 0
+        550.0,
+        # 1
+        7.0,
+        # 2
+        24.0,
+        # 3
+        25.0,
+        # 4
+        26.0,
+        # 5
+        27.0,
+        # 6
+        8.0,
+        # 7
+        0.0,
+        # 8
+        3.0,
+        # 9
+        2.0,
+        # 10
+        -99.0,
+        # 11
+        1.0,
+        # 12
+        0.01,
+        # 13
+        5.0,
+        # 14
+        -4.0,
+        # 15
+        0.03,
+        # 16
+        0.02,
+        # 17
+        0.04,
+        # 18
+        999.0
       ],
-      param_values: [
-
-      ],
-      param_names: [
-
-      ],
+      param_values: [],
+      param_names: [],
       ugens: [
         %Waveform.Synth.Def.Ugen{
           name: "SinOsc",
@@ -55,87 +70,108 @@
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 2 #24
+              # 24
+              constant_index: 2
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 3 #25
+              # 25
+              constant_index: 3
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 4 #26
+              # 26
+              constant_index: 4
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 5 #27
+              # 27
+              constant_index: 5
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 6 #8
+              # 8
+              constant_index: 6
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 7 #0
+              # 0
+              constant_index: 7
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 8 #3
+              # 3
+              constant_index: 8
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 9 # 2
+              # 2
+              constant_index: 9
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 10 # -99
+              # -99
+              constant_index: 10
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 11 #1
+              # 1
+              constant_index: 11
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 12 #0.01
+              # 0.01
+              constant_index: 12
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 13#5
+              # 5
+              constant_index: 13
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 14#-4
+              # -4
+              constant_index: 14
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 15#0.03
+              # 0.03
+              constant_index: 15
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 16#0.02
+              # 0.02
+              constant_index: 16
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 13#5
+              # 5
+              constant_index: 13
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 14#-4
+              # -4
+              constant_index: 14
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 7#0
+              # 0
+              constant_index: 7
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 17#0.04
+              # 0.04
+              constant_index: 17
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 13#5
+              # 5
+              constant_index: 13
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 14#-4
+              # -4
+              constant_index: 14
             }
           ],
           outputs: [
@@ -174,14 +210,10 @@
               constant_index: 0
             }
           ],
-          outputs: [
-
-          ]
+          outputs: []
         }
       ],
-      variants: [
-
-      ]
+      variants: []
     }
   ]
 }

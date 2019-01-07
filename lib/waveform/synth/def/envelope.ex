@@ -1,5 +1,4 @@
 defmodule Waveform.Synth.Def.Envelope do
-
   defmodule Done do
     def none, do: 0
     def pause_self, do: 1
@@ -33,7 +32,7 @@ defmodule Waveform.Synth.Def.Envelope do
     squared: 6,
     cub: 7,
     cubed: 7,
-    hold: 8,
+    hold: 8
   }
 
   @release -99
@@ -55,42 +54,45 @@ defmodule Waveform.Synth.Def.Envelope do
     sustain_level = Keyword.get(options, :sustain_level, @sustain_level)
     release_time = Keyword.get(options, :release_time, @release_time)
 
-    [bias,
-     {:+, [], [peak_level, bias]},
-     {:+, [], [{:*, [], [peak_level, sustain_level]}, bias]},
-     bias]
+    [
+      bias,
+      {:+, [], [peak_level, bias]},
+      {:+, [], [{:*, [], [peak_level, sustain_level]}, bias]},
+      bias
+    ]
     |> new([attack_time, decay_time, release_time], [curve, curve, curve], 2, @loop)
   end
 
   def new([i1 | inputs], times, curves) when is_list(curves),
-    do: new([i1|inputs], times, curves, @release, @loop)
+    do: new([i1 | inputs], times, curves, @release, @loop)
 
   def new([i1 | inputs], times, curve),
-    do: new([i1|inputs], times, curve, @release, @loop)
+    do: new([i1 | inputs], times, curve, @release, @loop)
 
   def new([i1 | inputs], times, curves, release) when is_list(curves),
-    do: new([i1|inputs], times, curves, release, @loop)
+    do: new([i1 | inputs], times, curves, release, @loop)
 
   def new([i1 | inputs], times, curve, release),
-    do: new([i1|inputs], times, curve, release, @loop)
+    do: new([i1 | inputs], times, curve, release, @loop)
 
   def new([i1 | inputs], times, curves, release, loop) when is_list(curves) do
     [i1, 3, release, loop] ++
-    Enum.map((0..Enum.count(inputs) - 1), fn n ->
-      [Enum.at(inputs, n), Enum.at(times, n), 5, Enum.at(curves, n)]
-    end)
+      Enum.map(0..(Enum.count(inputs) - 1), fn n ->
+        [Enum.at(inputs, n), Enum.at(times, n), 5, Enum.at(curves, n)]
+      end)
   end
 
   def new([i1 | inputs], times, curve, release, loop) do
-    curve = if is_atom(curve) do
-      Map.get(@curves, curve, 5)
-    else
-      curve
-    end
+    curve =
+      if is_atom(curve) do
+        Map.get(@curves, curve, 5)
+      else
+        curve
+      end
 
     [i1, 3, release, loop] ++
-    Enum.map((0..Enum.count(inputs) - 1), fn n ->
-      [Enum.at(inputs, n), Enum.at(times, n), curve, 0]
-    end)
+      Enum.map(0..(Enum.count(inputs) - 1), fn n ->
+        [Enum.at(inputs, n), Enum.at(times, n), curve, 0]
+      end)
   end
 end

@@ -15,7 +15,7 @@
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 0
-            },
+            }
           ]
         },
         %Waveform.Synth.Def.Ugen{
@@ -35,7 +35,7 @@
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
               constant_index: 2
-            },
+            }
           ]
         },
         %Waveform.Synth.Def.Ugen{

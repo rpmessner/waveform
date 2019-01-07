@@ -16,12 +16,14 @@ defmodule Waveform.Synth.DefTest do
 
   @array_inputs "#{@fixtures}/synths/parsed/array_inputs.ex"
   @array_inputs_binary_op "#{@fixtures}/synths/parsed/array_inputs_binary_op.ex"
+  @array_env "#{@fixtures}/synths/parsed/array_env.ex"
   @envelope1 "#{@fixtures}/synths/parsed/envelope1.ex"
   @envelope2 "#{@fixtures}/synths/parsed/envelope2.ex"
   @envelope3 "#{@fixtures}/synths/parsed/envelope3.ex"
   @mouse_panner "#{@fixtures}/synths/parsed/mouse_panner.ex"
   @multichannel "#{@fixtures}/synths/parsed/multichannel.ex"
   @multiple_array_inputs "#{@fixtures}/synths/parsed/multiple_array_inputs.ex"
+  @range "#{@fixtures}/synths/parsed/range.ex"
   @saw "#{@fixtures}/synths/parsed/saw.ex"
   @sinosc "#{@fixtures}/synths/parsed/sinosc.ex"
   @apad_mh "#{@fixtures}/synths/parsed/apad_mh.ex"
@@ -46,6 +48,13 @@ defmodule Waveform.Synth.DefTest do
     |> Code.eval_string()
 
   @array_inputs_binary_op_def array_inputs_binary_op
+
+  {array_env, _} =
+    @array_env
+    |> File.read!()
+    |> Code.eval_string()
+
+  @array_env_def array_env
 
   {envelope1_def, _} =
     @envelope1
@@ -88,6 +97,13 @@ defmodule Waveform.Synth.DefTest do
     |> Code.eval_string()
 
   @multiple_array_inputs_def multiple_array_inputs
+
+  {range, _} =
+    @range
+    |> File.read!()
+    |> Code.eval_string()
+
+  @range_def range
 
   {saw, _} =
     @saw
@@ -268,7 +284,6 @@ defmodule Waveform.Synth.DefTest do
         # midi A4
         note: 69,
         out_bus: 0 do
-        #
         # mul not provided
         sin_osc = %SinOsc{
           freq: midicps(note),
@@ -425,6 +440,29 @@ defmodule Waveform.Synth.DefTest do
     )
   end
 
+  test "can multiply by an env with a split Ugen" do
+    assert_synthdef(
+      @array_env_def,
+      defsynth ArrayEnv, [] do
+        env =
+          EnvGen.kr(
+            gate: 0.8,
+            level_scale: 1,
+            done_action: 2,
+            envelope:
+              Env.adsr(
+                attack_time: 0.4,
+                decay_time: 0.5,
+                sustain_level: 0.6,
+                release_time: 0.7
+              )
+          )
+
+        Out.ar(bus: 0, channels: SinOsc.ar(freq: [440, 880]) * env)
+      end
+    )
+  end
+
   test "can handle array outputs" do
     assert_synthdef(
       @array_inputs_def,
@@ -540,5 +578,19 @@ defmodule Waveform.Synth.DefTest do
     assert c2 == 0
     assert c1 > 10
     assert c1 < 20
+  end
+
+  test "range with arg" do
+    # SynthDef(\range, { arg freq = 440;
+    # Out.ar(0, SinOsc.ar(freq).range(freq * 0.99, freq * 1.01)); })
+    assert_synthdef(
+      @range_def,
+      defsynth Range, [freq: 440] do
+        Out.ar(
+          bus: 0,
+          channels: SinOsc.ar(freq: freq).range(freq * 0.99, freq * 1.01)
+        )
+      end
+    )
   end
 end

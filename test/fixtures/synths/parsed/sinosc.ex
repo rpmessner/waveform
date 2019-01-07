@@ -47,7 +47,7 @@
             # freq
             %Waveform.Synth.Def.Ugen.Input{src: 1, constant_index: 0},
             # phase
-            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 0},
+            %Waveform.Synth.Def.Ugen.Input{src: -1, constant_index: 0}
           ],
           rate: 2,
           special: 0,

@@ -34,11 +34,29 @@ defmodule Waveform.Synth.Def.Ugens.Panners do
     },
     SplayAz: %{
       defaults: %{rate: 2, special: 0, outputs: [2, 2]},
-      arguments: [num_chans: 4, in_array: nil, spread: 1, level: 1, width: 2, center: 0, orientation: 0.5, level_comp: true]
+      arguments: [
+        num_chans: 4,
+        in_array: nil,
+        spread: 1,
+        level: 1,
+        width: 2,
+        center: 0,
+        orientation: 0.5,
+        level_comp: true
+      ]
     },
     SplayZ: %{
       defaults: %{rate: 2, special: 0, outputs: [2, 2]},
-      arguments: [num_chans: 4, in_array: nil, spread: 1, level: 1, width: 2, center: 0, orientation: 0.5, level_comp: true]
+      arguments: [
+        num_chans: 4,
+        in_array: nil,
+        spread: 1,
+        level: 1,
+        width: 2,
+        center: 0,
+        orientation: 0.5,
+        level_comp: true
+      ]
     },
     VBAP: %{
       defaults: %{rate: 2, special: 0, outputs: [2, 2]},
