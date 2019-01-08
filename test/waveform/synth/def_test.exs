@@ -147,11 +147,13 @@ defmodule Waveform.Synth.DefTest do
         note: 69,
         out_bus: 0 do
         #
-        sin_osc = SinOsc.ar(
-          freq: midicps(note),
-          phase: 0.0, mul: 1.0,
-          add: 2.0
-        )
+        sin_osc =
+          SinOsc.ar(
+            freq: midicps(note),
+            phase: 0.0,
+            mul: 1.0,
+            add: 2.0
+          )
 
         Out.ar(bus: out_bus, channels: sin_osc)
       end
@@ -315,7 +317,7 @@ defmodule Waveform.Synth.DefTest do
         note: 69,
         out_bus: 0 do
         #
-        sin_osc = %SinOsc.ar{freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0}
+        sin_osc = SinOsc.ar(freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0)
         %Out{bus: out_bus, channels: sin_osc}
       end
     )
@@ -336,13 +338,61 @@ defmodule Waveform.Synth.DefTest do
     )
   end
 
+  test "submodule error if doesn't exist" do
+    assert_compile_time_raise(RuntimeError, "Unknown ugen or submodule UndefinedSubmodule", fn ->
+      alias Waveform.Synth.Def, as: Subject
+      require Subject
+      import Subject
+
+      defsynth UnknownSubmoduleDef, [] do
+        bar = %UndefinedSubmodule{}
+        %Out{channels: bar}
+      end
+    end)
+  end
+
+  test "submodule variable assignment is hygenic" do
+    defsubmodule AwesomeSubmodule, note: 69 do
+      foo = note
+      %SinOsc{freq: foo, phase: 0.0, mul: 1.0, add: 2.0}
+    end
+
+    assert_synthdef(
+      @sinosc_def,
+      defsynth SinOscDef, note: 69, out_bus: 0 do
+        foo = out_bus
+        freq = midicps(note)
+        bar = %AwesomeSubmodule{note: freq}
+        %Out{bus: foo, channels: bar}
+      end
+    )
+  end
+
+  test "submodule variable scoping behaves correctly" do
+    defsubmodule AwesomeSubmodule, foo: nil do
+      %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
+    end
+
+    assert_compile_time_raise(RuntimeError, "unknown variable \"freq\"", fn ->
+      alias Waveform.Synth.Def, as: Subject
+      require Subject
+      import Subject
+
+      defsynth SinOscDef, note: 69, out_bus: 0 do
+        freq = midicps(note)
+        bar = %AwesomeSubmodule{}
+        %Out{bus: out_bus, channels: bar}
+      end
+    end)
+  end
+
   test "submodules raise error when used incorrectly" do
     defsubmodule AwesomeSubmodule, note: 69, bar: nil do
       freq = midicps(note)
       %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
     end
 
-    assert_compile_time_raise RuntimeError, "unknown submodule argument \"foo\"", fn ->
+    assert_compile_time_raise(RuntimeError, "unknown submodule argument \"foo\"", fn ->
       alias Waveform.Synth.Def, as: Subject
       require Subject
       import Subject
@@ -351,9 +401,9 @@ defmodule Waveform.Synth.DefTest do
         bar = %AwesomeSubmodule{foo: 0, note: note}
         Out.ar(bus: out_bus, channels: bar)
       end
-    end
+    end)
 
-    assert_compile_time_raise RuntimeError, "required argument missing \"note\"", fn ->
+    assert_compile_time_raise(RuntimeError, "required argument missing \"note\"", fn ->
       alias Waveform.Synth.Def, as: Subject
       require Subject
       import Subject
@@ -362,16 +412,19 @@ defmodule Waveform.Synth.DefTest do
         bar = %AwesomeSubmodule{bar: 0}
         %Out{bus: out_bus, channels: bar}
       end
-    end
+    end)
   end
 
   test "compiles a synth that mixes ar & kr" do
     assert_synthdef(
       @mouse_panner_def,
       defsynth MousePanner, [] do
-        %Out{channels: %Pan2.ar{
-          in: %WhiteNoise.ar{freq: 0.1},
-          pos: %MouseX.kr{minval: -1, maxval: 1}, level: 1}
+        %Out{
+          channels: Pan2.ar(
+            in: WhiteNoise.ar(freq: 0.1),
+            pos: MouseX.kr(minval: -1, maxval: 1),
+            level: 1
+          )
         }
       end
     )
@@ -408,19 +461,23 @@ defmodule Waveform.Synth.DefTest do
       @envelope1_def,
       defsynth Env1, [] do
         sin_osc = SinOsc.ar(freq: 550, phase: 7)
-        env_gen = EnvGen.kr(
-          gate: 24,
-          level_scale: 25,
-          level_bias: 26,
-          time_scale: 27,
-          done_action: 8,
-          envelope: Env.adsr(
-            attack_time: 0.01,
-            decay_time: 0.02,
-            sustain_level: 0.03,
-            release_time: 0.04
+
+        env_gen =
+          EnvGen.kr(
+            gate: 24,
+            level_scale: 25,
+            level_bias: 26,
+            time_scale: 27,
+            done_action: 8,
+            envelope:
+              Env.adsr(
+                attack_time: 0.01,
+                decay_time: 0.02,
+                sustain_level: 0.03,
+                release_time: 0.04
+              )
           )
-        )
+
         Out.ar(
           bus: 999,
           channels: sin_osc * env_gen
@@ -435,16 +492,26 @@ defmodule Waveform.Synth.DefTest do
       defsynth Env2, [] do
         sin_osc = SinOsc.ar(freq: 550, phase: 7)
 
-        env_gen = EnvGen.kr(
-          gate: 24,#1
-          level_scale: 25,#1
-          level_bias: 26,#0
-          time_scale: 27,#1
-          done_action: 8,
-          envelope: Env.new(
-            [11, 12, 13, 14], [21, 22, 23], [-1, -2, -3], 40, 41
+        env_gen =
+          EnvGen.kr(
+            # 1
+            gate: 24,
+            # 1
+            level_scale: 25,
+            # 0
+            level_bias: 26,
+            # 1
+            time_scale: 27,
+            done_action: 8,
+            envelope:
+              Env.new(
+                [11, 12, 13, 14],
+                [21, 22, 23],
+                [-1, -2, -3],
+                40,
+                41
+              )
           )
-        )
 
         Out.ar(bus: 999, channels: sin_osc * env_gen)
       end
@@ -457,12 +524,16 @@ defmodule Waveform.Synth.DefTest do
       defsynth Env3, [] do
         sin_osc = SinOsc.ar(freq: 550, phase: 7)
 
-        env_gen = EnvGen.kr(
-          done_action: 8,
-          envelope: Env.new(
-            [11, 12, 13, 14], [21, 22, 23], :welch
+        env_gen =
+          EnvGen.kr(
+            done_action: 8,
+            envelope:
+              Env.new(
+                [11, 12, 13, 14],
+                [21, 22, 23],
+                :welch
+              )
           )
-        )
 
         Out.ar(bus: 999, channels: sin_osc * env_gen)
       end
@@ -496,7 +567,7 @@ defmodule Waveform.Synth.DefTest do
     assert_synthdef(
       @array_inputs_def,
       defsynth ArrayInputs, [] do
-        sin = %SinOsc.ar{freq: [440, 600], phase: 0, mul: 1, add: 0}
+        sin = SinOsc.ar(freq: [440, 600], phase: 0, mul: 1, add: 0)
         %Out{channels: sin}
       end
     )
@@ -506,7 +577,7 @@ defmodule Waveform.Synth.DefTest do
     assert_synthdef(
       @array_inputs_def,
       defsynth ArrayInputs, [] do
-        [sinl, sinr] = %SinOsc.ar{freq: [440, 600], phase: 0, mul: 1, add: 0}
+        [sinl, sinr] = SinOsc.ar(freq: [440, 600], phase: 0, mul: 1, add: 0)
         %Out{channels: [sinl, sinr]}
       end
     )
@@ -516,12 +587,13 @@ defmodule Waveform.Synth.DefTest do
     assert_synthdef(
       @multiple_array_inputs_def,
       defsynth MultipleArrayInputs, [] do
-        [sinl, sinr] = %SinOsc.ar{
+        [sinl, sinr] = SinOsc.ar(
           freq: [600, 440],
           phase: [1, 0],
-          mul: [4,5],
-          add: [3,2]
-        }
+          mul: [4, 5],
+          add: [3, 2]
+        )
+
         %Out{channels: [sinl, sinr]}
       end
     )
@@ -587,10 +659,12 @@ defmodule Waveform.Synth.DefTest do
     {
       %Subject{
         synthdefs: [%Subject.Synth{constants: [c1, c2]}]
-      }, _
-    } = defsynth Rrandom, [] do
-      SinOsc.ar(freq: rrand(0, 1))
-    end
+      },
+      _
+    } =
+      defsynth Rrandom, [] do
+        SinOsc.ar(freq: rrand(0, 1))
+      end
 
     assert c1 > 0
     assert c1 < 1
@@ -599,10 +673,12 @@ defmodule Waveform.Synth.DefTest do
     {
       %Subject{
         synthdefs: [%Subject.Synth{constants: [c1, c2]}]
-      }, _
-    } = defsynth Rrandom, [] do
-      SinOsc.ar(freq: rrand(10, 20))
-    end
+      },
+      _
+    } =
+      defsynth Rrandom, [] do
+        SinOsc.ar(freq: rrand(10, 20))
+      end
 
     assert c2 == 0
     assert c1 > 10
@@ -614,7 +690,7 @@ defmodule Waveform.Synth.DefTest do
     # Out.ar(0, SinOsc.ar(freq).range(freq * 0.99, freq * 1.01)); })
     assert_synthdef(
       @range_def,
-      defsynth Range, [freq: 440] do
+      defsynth Range, freq: 440 do
         Out.ar(
           bus: 0,
           channels: SinOsc.ar(freq: freq).range(freq * 0.99, freq * 1.01)

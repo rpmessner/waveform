@@ -47,8 +47,20 @@ defmodule Waveform.Synth.Def do
 
   alias Ugen.Input
 
-  defmacro defsubmodule({_, _, [name]}, params, do: {:__block__, _, submodule_forms}) do
+  defmacro defsubmodule(
+             {:__aliases__, _, [name]},
+             params,
+             do: {:__block__, _, submodule_forms}
+           ) do
     submodule = Submodule.define(name, params, submodule_forms)
+
+    quote do
+      unquote(Macro.escape(submodule))
+    end
+  end
+
+  defmacro defsubmodule({:__aliases__, _, [name]}, params, do: submodule_forms) do
+    submodule = Submodule.define(name, params, [submodule_forms])
 
     quote do
       unquote(Macro.escape(submodule))
@@ -62,8 +74,6 @@ defmodule Waveform.Synth.Def do
            ) do
     build_synthdef(name, params, expressions)
   end
-
-  # {LPF.ar(WhiteNoise.ar(0.1),1000)}.scope
 
   defmacro defsynth(
              {:__aliases__, _, [name]},

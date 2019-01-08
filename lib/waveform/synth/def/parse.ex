@@ -406,14 +406,14 @@ defmodule Waveform.Synth.Def.Parse do
       cond do
         saved_assign -> saved_assign
         saved_param -> saved_param
-        true -> raise "unknown variable #{name}"
+        true -> raise "unknown variable \"#{name}\""
       end
 
     {synth, input}
   end
 
   # parse ugen input
-  def parse({%Synth{}=s, _i}, %Input{}=i) do
+  def parse({%Synth{} = s, _i}, %Input{} = i) do
     {s, i}
   end
 
@@ -461,16 +461,37 @@ defmodule Waveform.Synth.Def.Parse do
     |> Enum.max()
   end
 
-  defp parse_submodule({synth, i}, name, options) do
+  defp parse_submodule(
+         {%Synth{parameters: params, assigns: assigns} = synth, i},
+         name,
+         options
+       ) do
     case name do
       {:__aliases__, _, [name]} ->
         submodule = Submodule.lookup(name)
 
         if submodule do
           validate_submodule_options(submodule, options)
-          {synth, i} = parse({synth, i}, submodule.forms)
+
+          {{synth, _}, args} =
+            options
+            |> Enum.reduce(
+              {{synth, i}, %{}},
+              fn {key, value}, {{synth, i}, assigns} ->
+                {synth, i} = parse({synth, i}, value)
+                {{synth, i}, Map.put(assigns, key, i)}
+              end
+            )
+
+          {synth, i} =
+            parse(
+              {%{synth | parameters: %{}, assigns: args}, i},
+              submodule.forms
+            )
+
           count = Enum.count(List.last(synth.ugens).outputs)
-          {synth, Enum.take(List.flatten(i), -count)}
+
+          {%{synth | assigns: assigns, parameters: params}, Enum.take(List.flatten(i), -count)}
         end
 
       _ ->
@@ -632,7 +653,7 @@ defmodule Waveform.Synth.Def.Parse do
   defp build_ugen(name, base, priority: priority) do
     ugen_def = Ugens.lookup(name)
 
-    unless ugen_def, do: raise("Unknown or unimplemented ugen #{name}")
+    unless ugen_def, do: raise("Unknown ugen or submodule #{name}")
 
     %{defaults: ugen_base} = ugen_def
 
@@ -670,10 +691,11 @@ defmodule Waveform.Synth.Def.Parse do
       raise "unknown submodule argument \"#{Enum.join(extra, "\",\"")}\""
     end
 
-    param_keys = submodule.params
-                 |> Enum.reject(fn {_key, value} -> is_nil(value) end)
-                 |> Keyword.keys()
-                 |> MapSet.new()
+    param_keys =
+      submodule.params
+      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+      |> Keyword.keys()
+      |> MapSet.new()
 
     missing = MapSet.difference(param_keys, option_keys)
 

@@ -19,9 +19,7 @@
           name: "Control",
           rate: 1,
           special: 0,
-          inputs: [
-
-          ],
+          inputs: [],
           outputs: [
             1
           ]
@@ -32,11 +30,13 @@
           special: 0,
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: 0, # freq
+              # freq
+              src: 0,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, #0
+              # 0
+              src: -1,
               constant_index: 0
             }
           ],
@@ -45,16 +45,19 @@
           ]
         },
         %Waveform.Synth.Def.Ugen{
-          name: "BinaryOpUGen", #freq * 0.99
+          # freq * 0.99
+          name: "BinaryOpUGen",
           rate: 1,
           special: 2,
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: 0, #freq
+              # freq
+              src: 0,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, #0.99
+              # 0.99
+              src: -1,
               constant_index: 1
             }
           ],
@@ -63,16 +66,19 @@
           ]
         },
         %Waveform.Synth.Def.Ugen{
-          name: "BinaryOpUGen", #freq * 1.01
+          # freq * 1.01
+          name: "BinaryOpUGen",
           rate: 1,
           special: 2,
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: 0, #freq
+              # freq
+              src: 0,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, #1.01
+              # 1.01
+              src: -1,
               constant_index: 2
             }
           ],
@@ -81,16 +87,19 @@
           ]
         },
         %Waveform.Synth.Def.Ugen{
-          name: "BinaryOpUGen",#(freq * 1.01) - (freq * 0.99)
+          # (freq * 1.01) - (freq * 0.99)
+          name: "BinaryOpUGen",
           rate: 1,
           special: 1,
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: 3, #freq * 1.01
+              # freq * 1.01
+              src: 3,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: 2, #freq * 0.99
+              # freq * 0.99
+              src: 2,
               constant_index: 0
             }
           ],
@@ -99,16 +108,19 @@
           ]
         },
         %Waveform.Synth.Def.Ugen{
-          name: "BinaryOpUGen",#((freq * 1.01) - (freq * 0.99)) * 0.5
+          # ((freq * 1.01) - (freq * 0.99)) * 0.5
+          name: "BinaryOpUGen",
           rate: 1,
           special: 2,
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: 4, #(freq * 1.01) - (freq * 0.99)
+              # (freq * 1.01) - (freq * 0.99)
+              src: 4,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1, #0.5
+              # 0.5
+              src: -1,
               constant_index: 3
             }
           ],
@@ -117,16 +129,19 @@
           ]
         },
         %Waveform.Synth.Def.Ugen{
-          name: "BinaryOpUGen",#(((freq * 1.01) - (freq * 0.99)) * 0.5) + (freq * 0.99)
+          # (((freq * 1.01) - (freq * 0.99)) * 0.5) + (freq * 0.99)
+          name: "BinaryOpUGen",
           rate: 1,
           special: 0,
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: 5,#((freq * 1.01) - (freq * 0.99)) * 0.5
+              # ((freq * 1.01) - (freq * 0.99)) * 0.5
+              src: 5,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: 2,#freq * 0.99
+              # freq * 0.99
+              src: 2,
               constant_index: 0
             }
           ],
@@ -140,15 +155,18 @@
           special: 0,
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: 1, #SinOsc.ar(freq)
+              # SinOsc.ar(freq)
+              src: 1,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: 5,#((freq * 1.01) - (freq * 0.99)) * 0.5
+              # ((freq * 1.01) - (freq * 0.99)) * 0.5
+              src: 5,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: 6,#(((freq * 1.01) - (freq * 0.99)) * 0.5) + (freq * 0.99)
+              # (((freq * 1.01) - (freq * 0.99)) * 0.5) + (freq * 0.99)
+              src: 6,
               constant_index: 0
             }
           ],
@@ -162,22 +180,20 @@
           special: 0,
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
-              src: -1,#0
+              # 0
+              src: -1,
               constant_index: 0
             },
             %Waveform.Synth.Def.Ugen.Input{
-              src: 7,#MulAdd
+              # MulAdd
+              src: 7,
               constant_index: 0
             }
           ],
-          outputs: [
-
-          ]
+          outputs: []
         }
       ],
-      variants: [
-
-      ]
+      variants: []
     }
   ]
 }

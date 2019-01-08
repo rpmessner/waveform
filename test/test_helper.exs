@@ -18,7 +18,7 @@ defmodule Waveform.Assertions do
     assert expected == compiled, "Compiled output does not match"
   end
 
-  defmodule DidNotRaise, do: defstruct(message: nil)
+  defmodule(DidNotRaise, do: defstruct(message: nil))
 
   defmacro assert_compile_time_raise(expected_exception, expected_message, fun) do
     actual_exception =
@@ -77,4 +77,3 @@ defmodule Waveform.Assertions do
     end
   end
 end
-
