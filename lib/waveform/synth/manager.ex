@@ -1,6 +1,6 @@
 defmodule Waveform.Synth.Manager do
   use GenServer
-  alias Waveform.OSC, as: OSC
+  alias Waveform.OSC
 
   @me __MODULE__
 

@@ -2,10 +2,11 @@ defmodule Waveform.Synth.FxTest do
   use ExUnit.Case
   import Mock
 
-  alias Waveform.OSC, as: OSC
-  alias Waveform.OSC.Group, as: Group
-  alias Waveform.OSC.Node.ID, as: ID
-  alias Waveform.OSC.Node, as: Node
+  alias Waveform.OSC
+  alias Waveform.OSC.Group
+  alias Waveform.OSC.Node.ID
+  alias Waveform.OSC.Node
+
   alias Waveform.Synth.FX, as: Subject
 
   @bus_id 4

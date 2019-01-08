@@ -1,8 +1,8 @@
 defmodule Waveform.Beat do
   use GenServer
 
-  alias Waveform.OSC.Group, as: Group
-  alias Waveform.Synth.Manager, as: Manager
+  alias Waveform.OSC.Group
+  alias Waveform.Synth.Manager
 
   alias __MODULE__
   @me __MODULE__

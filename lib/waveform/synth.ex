@@ -1,14 +1,14 @@
 defmodule Waveform.Synth do
-  alias Waveform.Beat, as: Beat
+  alias Waveform.Beat
 
-  alias Waveform.Music.Note, as: Note
-  alias Waveform.Music.Chord, as: Chord
+  alias Waveform.Music.Note
+  alias Waveform.Music.Chord
 
-  alias Waveform.OSC, as: OSC
-  alias Waveform.OSC.Group, as: Group
-  alias Waveform.OSC.Node, as: Node
+  alias Waveform.OSC
+  alias Waveform.OSC.Group
+  alias Waveform.OSC.Node
 
-  alias Waveform.Synth.Manager, as: Manager
+  alias Waveform.Synth.Manager
 
   import Waveform.Util
 

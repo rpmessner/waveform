@@ -1,5 +1,5 @@
 defmodule Waveform.OSC.Node do
-  alias Waveform.OSC.Node.ID, as: ID
+  alias Waveform.OSC.Node.ID
 
   @me __MODULE__
   alias __MODULE__

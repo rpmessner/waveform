@@ -1,6 +1,6 @@
 defmodule Waveform.Music.Chord do
-  alias Waveform.Music.Note, as: Note
-  alias Waveform.Music.Util, as: Util
+  alias Waveform.Music.Note
+  alias Waveform.Music.Util
   alias __MODULE__
 
   defstruct(

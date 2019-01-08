@@ -1,8 +1,8 @@
 defmodule Waveform.Synth.Def.Compile do
-  alias Waveform.Synth.Def, as: Def
-  alias Waveform.Synth.Def.Synth, as: Synth
-  alias Waveform.Synth.Def.Ugen, as: Ugen
-  alias Waveform.Synth.Def.Ugen.Input, as: Input
+  alias Waveform.Synth.Def
+  alias Waveform.Synth.Def.Synth
+  alias Waveform.Synth.Def.Ugen
+  alias Waveform.Synth.Def.Ugen.Input
 
   def compile(%Def{} = data, version \\ 1) do
     prefix() <> version(version) <> num_defs(data, version) <> definitions(data, version)

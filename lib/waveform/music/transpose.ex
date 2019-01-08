@@ -1,5 +1,5 @@
 defmodule Waveform.Music.Transpose do
-  alias Waveform.Music.Util, as: Util
+  alias Waveform.Music.Util
 
   @notes ~w(c db d eb e f gb g ab a bb b)
 

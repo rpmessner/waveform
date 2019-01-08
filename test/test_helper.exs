@@ -1,4 +1,5 @@
 ExUnit.start()
+ExUnit.configure(colors: [enabled: true])
 
 defmodule Waveform.Assertions do
   import ExUnit.Assertions
@@ -16,4 +17,64 @@ defmodule Waveform.Assertions do
     expected = Waveform.Synth.Def.Compile.compile(synthdef)
     assert expected == compiled, "Compiled output does not match"
   end
+
+  defmodule DidNotRaise, do: defstruct(message: nil)
+
+  defmacro assert_compile_time_raise(expected_exception, expected_message, fun) do
+    actual_exception =
+      try do
+        Code.eval_quoted(fun)
+        %DidNotRaise{}
+      rescue
+        e -> e
+      end
+
+    quote do
+      assert unquote(actual_exception.__struct__) === unquote(expected_exception)
+      assert unquote(actual_exception.message) === unquote(expected_message)
+    end
+  end
+
+  defmacro assert_compile_time_throw(expected_error, fun) do
+    actual_exception =
+      try do
+        Code.eval_quoted(fun)
+        :DID_NOT_THROW
+      catch
+        e -> e
+      end
+
+    quote do
+      assert unquote(expected_error) === unquote(Macro.escape(actual_exception))
+    end
+  end
+
+  defmacro match_compile_time_raise(expected_exception, fun) do
+    actual_exception =
+      try do
+        Code.eval_quoted(fun)
+        %DidNotRaise{}
+      rescue
+        e -> e
+      end
+
+    quote do
+      unquote(expected_exception) = unquote(actual_exception)
+    end
+  end
+
+  defmacro match_compile_time_throw(expected_error, fun) do
+    actual_exception =
+      try do
+        Code.eval_quoted(fun)
+        :DID_NOT_THROW
+      catch
+        e -> e
+      end
+
+    quote do
+      unquote(expected_error) = unquote(Macro.escape(actual_exception))
+    end
+  end
 end
+

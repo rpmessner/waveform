@@ -1,7 +1,7 @@
 defmodule Waveform.Track do
-  alias Waveform.Beat, as: Beat
-  alias Waveform.Synth.FX, as: FX
-  alias Waveform.OSC.Group, as: Group
+  alias Waveform.Beat
+  alias Waveform.Synth.FX
+  alias Waveform.OSC.Group
 
   @default_over 4
   @default_beats 4

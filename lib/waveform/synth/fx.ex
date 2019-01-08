@@ -1,8 +1,8 @@
 defmodule Waveform.Synth.FX do
-  alias Waveform.AudioBus, as: AudioBus
-  alias Waveform.OSC, as: OSC
-  alias Waveform.OSC.Node, as: Node
-  alias Waveform.OSC.Group, as: Group
+  alias Waveform.AudioBus
+  alias Waveform.OSC
+  alias Waveform.OSC.Node
+  alias Waveform.OSC.Group
 
   @enabled_fx %{
     band_eq: 'sonic-pi-fx_band_eq',

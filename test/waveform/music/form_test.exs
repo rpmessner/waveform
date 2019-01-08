@@ -1,7 +1,7 @@
 defmodule Waveform.Music.FormTest do
   use ExUnit.Case
 
-  alias Waveform.Music.Chord, as: Chord
+  alias Waveform.Music.Chord
   alias Waveform.Music.Form, as: Subject
 
   require Subject

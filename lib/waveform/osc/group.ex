@@ -4,8 +4,8 @@ defmodule Waveform.OSC.Group do
   @me __MODULE__
   alias __MODULE__
 
-  alias Waveform.OSC.Node.ID, as: ID
-  alias Waveform.OSC, as: OSC
+  alias Waveform.OSC.Node.ID
+  alias Waveform.OSC
 
   defstruct(
     id: nil,

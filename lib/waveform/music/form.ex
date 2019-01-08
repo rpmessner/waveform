@@ -1,6 +1,6 @@
 defmodule Waveform.Music.Form do
-  alias Waveform.Music.Chord, as: Chord
-  alias Waveform.Music.Transpose, as: Transpose
+  alias Waveform.Music.Chord
+  alias Waveform.Music.Transpose
   alias __MODULE__
 
   import Waveform.Music.Util

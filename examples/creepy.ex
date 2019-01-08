@@ -47,17 +47,15 @@ defsynth SpacePad, [
     attack_time: attack, decay_time: decay,
     sustain_level: sustain, release_time: release
   )
-
   # env = EnvGen.kr(envelope,gate,levelScale: amp, doneAction:2);
   env = EnvGen.kr(envelope: envelope, level_scale: amp, gate: gate, done_action: 2)
-
   # mod1 = SinOsc.kr(6).range(freq*0.99,freq*1.01);
   mod1 = SinOsc.kr(freq: 6).range(freq * 0.99, freq * 1.01)
   # mod2 = LFNoise2.kr(1).range(0.2,1);
   mod2 = LFNoise2.kr(freq: 1).range(0.2, 1)
-
+  # mod3 = SinOsc.kr(rrand(4.0,6.0)).range(0.5, 1);
   mod3 = SinOsc.kr(freq: rrand(4.0, 6.0)).range(0.5, 1);
-  # sig = SinOsc.ar([freq,mod1],0,env).distort;
+  # sig = SinOsc.ar([freq,mod1],0, env).distort;
   sig = SinOsc.ar(freq: [freq, mod1], phase: 0, mul: env).distort()
   # sig = sig * mod2 * mod3;
   sig = sig * mod2 * mod3;

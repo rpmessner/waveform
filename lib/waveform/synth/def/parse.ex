@@ -1,9 +1,9 @@
 defmodule Waveform.Synth.Def.Parse do
-  alias Waveform.Synth.Def.Submodule, as: Submodule
-  alias Waveform.Synth.Def.Synth, as: Synth
-  alias Waveform.Synth.Def.Ugen, as: Ugen
-  alias Waveform.Synth.Def.Ugen.Input, as: Input
-  alias Waveform.Synth.Def.Ugens, as: Ugens
+  alias Waveform.Synth.Def.Submodule
+  alias Waveform.Synth.Def.Synth
+  alias Waveform.Synth.Def.Ugen
+  alias Waveform.Synth.Def.Ugen.Input
+  alias Waveform.Synth.Def.Ugens
   alias Waveform.Synth.Def.Envelope, as: Env
 
   @unary_op_specials Ugens.Algebraic.unary_ops()
@@ -216,10 +216,10 @@ defmodule Waveform.Synth.Def.Parse do
   # unary operator dot notation
   def parse(
         {%Synth{} = s, i},
-        {{:., m1, [{arg, m2, nil}, operator]}, _, []}
+        {{:., m1, [{arg, m2, opts}, operator]}, _, []}
       )
       when operator in @unary_op_keys do
-    parse({s, i}, {operator, m1, [{arg, m2, nil}]})
+    parse({s, i}, {operator, m1, [{arg, m2, opts}]})
   end
 
   # range operator spread notation
@@ -461,12 +461,13 @@ defmodule Waveform.Synth.Def.Parse do
     |> Enum.max()
   end
 
-  defp parse_submodule({synth, i}, name, _options) do
+  defp parse_submodule({synth, i}, name, options) do
     case name do
       {:__aliases__, _, [name]} ->
         submodule = Submodule.lookup(name)
 
         if submodule do
+          validate_submodule_options(submodule, options)
           {synth, i} = parse({synth, i}, submodule.forms)
           count = Enum.count(List.last(synth.ugens).outputs)
           {synth, Enum.take(List.flatten(i), -count)}
@@ -657,6 +658,28 @@ defmodule Waveform.Synth.Def.Parse do
     ugen = %{ugen | outputs: outputs}
 
     {struct(Ugen, ugen), ugen_def}
+  end
+
+  defp validate_submodule_options(%Submodule{} = submodule, options) do
+    option_keys = options |> Keyword.keys() |> MapSet.new()
+    param_keys = submodule.params |> Keyword.keys() |> MapSet.new()
+
+    extra = MapSet.difference(option_keys, param_keys)
+
+    if Enum.any?(extra) do
+      raise "unknown submodule argument \"#{Enum.join(extra, "\",\"")}\""
+    end
+
+    param_keys = submodule.params
+                 |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+                 |> Keyword.keys()
+                 |> MapSet.new()
+
+    missing = MapSet.difference(param_keys, option_keys)
+
+    if Enum.any?(missing) do
+      raise "required argument missing \"#{Enum.join(missing, "\",\"")}\""
+    end
   end
 
   defp validate_ugen_options(%Ugen{name: name}, allowed, arguments) do

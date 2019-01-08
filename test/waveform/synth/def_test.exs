@@ -180,7 +180,7 @@ defmodule Waveform.Synth.DefTest do
         note: 69,
         out_bus: 0 do
         #
-        sin_osc = %SinOsc{freq: midicps(note), mul: 1.0, add: 2.0, phase: 0.0}
+        sin_osc = %SinOsc{freq: note.midicps(), mul: 1.0, add: 2.0, phase: 0.0}
         %Out{bus: out_bus, channels: sin_osc}
       end
     )
@@ -334,6 +334,35 @@ defmodule Waveform.Synth.DefTest do
         %Out{bus: out_bus, channels: bar}
       end
     )
+  end
+
+  test "submodules raise error when used incorrectly" do
+    defsubmodule AwesomeSubmodule, note: 69, bar: nil do
+      freq = midicps(note)
+      %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
+    end
+
+    assert_compile_time_raise RuntimeError, "unknown submodule argument \"foo\"", fn ->
+      alias Waveform.Synth.Def, as: Subject
+      require Subject
+      import Subject
+
+      defsynth SinOscDef, note: 69, out_bus: 0 do
+        bar = %AwesomeSubmodule{foo: 0, note: note}
+        Out.ar(bus: out_bus, channels: bar)
+      end
+    end
+
+    assert_compile_time_raise RuntimeError, "required argument missing \"note\"", fn ->
+      alias Waveform.Synth.Def, as: Subject
+      require Subject
+      import Subject
+
+      defsynth SinOscDef, note: 69, out_bus: 0 do
+        bar = %AwesomeSubmodule{bar: 0}
+        %Out{bus: out_bus, channels: bar}
+      end
+    end
   end
 
   test "compiles a synth that mixes ar & kr" do

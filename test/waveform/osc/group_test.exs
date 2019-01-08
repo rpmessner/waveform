@@ -6,8 +6,8 @@ defmodule Waveform.OSC.GroupTest do
 
   alias Subject, as: Group
 
-  alias Waveform.OSC, as: OSC
-  alias Waveform.OSC.Node.ID, as: ID
+  alias Waveform.OSC
+  alias Waveform.OSC.Node.ID
 
   setup do
     Subject.reset()

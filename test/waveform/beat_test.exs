@@ -1,5 +1,6 @@
 defmodule Waveform.BeatTest do
   use ExUnit.Case
+
   alias Waveform.Beat, as: Subject
 
   setup do

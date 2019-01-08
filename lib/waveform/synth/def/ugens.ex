@@ -1,27 +1,27 @@
 defmodule Waveform.Synth.Def.Ugens do
-  alias Waveform.Synth.Def.Ugens.Algebraic, as: Algebraic
-  alias Waveform.Synth.Def.Ugens.Analysis, as: Analysis
-  alias Waveform.Synth.Def.Ugens.Buffer, as: Buffer
-  alias Waveform.Synth.Def.Ugens.Chaotic, as: Chaotic
-  alias Waveform.Synth.Def.Ugens.Delays, as: Delays
-  alias Waveform.Synth.Def.Ugens.Demand, as: Demand
-  alias Waveform.Synth.Def.Ugens.Deterministic, as: Deterministic
-  alias Waveform.Synth.Def.Ugens.Dynamics, as: Dynamics
-  alias Waveform.Synth.Def.Ugens.Envelopes, as: Envelopes
-  alias Waveform.Synth.Def.Ugens.FFT, as: FFT
-  alias Waveform.Synth.Def.Ugens.Filters, as: Filters
-  alias Waveform.Synth.Def.Ugens.Granular, as: Granular
-  alias Waveform.Synth.Def.Ugens.InOut, as: InOut
-  alias Waveform.Synth.Def.Ugens.Interaction, as: Interaction
-  alias Waveform.Synth.Def.Ugens.Maths, as: Maths
-  alias Waveform.Synth.Def.Ugens.Panners, as: Panners
-  alias Waveform.Synth.Def.Ugens.Physical, as: Physical
-  alias Waveform.Synth.Def.Ugens.Random, as: Random
-  alias Waveform.Synth.Def.Ugens.Reverbs, as: Reverbs
-  alias Waveform.Synth.Def.Ugens.Select, as: Select
-  alias Waveform.Synth.Def.Ugens.Stochastic, as: Stochastic
-  alias Waveform.Synth.Def.Ugens.Synthesis, as: Synthesis
-  alias Waveform.Synth.Def.Ugens.Triggers, as: Triggers
+  alias Waveform.Synth.Def.Ugens.Algebraic
+  alias Waveform.Synth.Def.Ugens.Analysis
+  alias Waveform.Synth.Def.Ugens.Buffer
+  alias Waveform.Synth.Def.Ugens.Chaotic
+  alias Waveform.Synth.Def.Ugens.Delays
+  alias Waveform.Synth.Def.Ugens.Demand
+  alias Waveform.Synth.Def.Ugens.Deterministic
+  alias Waveform.Synth.Def.Ugens.Dynamics
+  alias Waveform.Synth.Def.Ugens.Envelopes
+  alias Waveform.Synth.Def.Ugens.FFT
+  alias Waveform.Synth.Def.Ugens.Filters
+  alias Waveform.Synth.Def.Ugens.Granular
+  alias Waveform.Synth.Def.Ugens.InOut
+  alias Waveform.Synth.Def.Ugens.Interaction
+  alias Waveform.Synth.Def.Ugens.Maths
+  alias Waveform.Synth.Def.Ugens.Panners
+  alias Waveform.Synth.Def.Ugens.Physical
+  alias Waveform.Synth.Def.Ugens.Random
+  alias Waveform.Synth.Def.Ugens.Reverbs
+  alias Waveform.Synth.Def.Ugens.Select
+  alias Waveform.Synth.Def.Ugens.Stochastic
+  alias Waveform.Synth.Def.Ugens.Synthesis
+  alias Waveform.Synth.Def.Ugens.Triggers
 
   @definitions [
                  Algebraic.definitions(),
