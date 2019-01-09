@@ -5,6 +5,7 @@ defmodule Waveform.Synth.Def.Parse do
   alias Waveform.Synth.Def.Ugen.Input
   alias Waveform.Synth.Def.Ugens
   alias Waveform.Synth.Def.Envelope, as: Env
+  alias Waveform.Synth.Def.Envelope.Done
 
   @unary_op_specials Ugens.Algebraic.unary_ops()
   @unary_op_keys Ugens.Algebraic.unary_ops() |> Map.keys()
@@ -276,6 +277,18 @@ defmodule Waveform.Synth.Def.Parse do
     }
   end
 
+  # duplicate
+  def parse(
+        {%Synth{} = s, i},
+        {:|, _, [expr, times]}
+      ) do
+    1..times
+    |> Enum.reduce({s, []}, fn n, {s, inputs} ->
+      {s, input} = parse({s, i}, expr)
+      {s, inputs ++ [input]}
+    end)
+  end
+
   # parse binary op
   def parse(
         {%Synth{parameters: params, assigns: assigns, constants: constants} = synth, i},
@@ -435,6 +448,10 @@ defmodule Waveform.Synth.Def.Parse do
           [%Input{src: -1, constant_index: index}]
         }
     end
+  end
+
+  def parse({s, i}, {{:., _, [{:__aliases__, _, [:Done]}, action]} = expr, _, []}) do
+    parse({s, i}, apply(Done, action, []))
   end
 
   def parse({%Synth{}, _i}, value) do

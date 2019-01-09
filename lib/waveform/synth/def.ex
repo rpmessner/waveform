@@ -28,8 +28,8 @@ defmodule Waveform.Synth.Def do
     defstruct(
       # outputted to .synthdef
       name: nil,
-      rate: nil,
-      special: nil,
+      rate: 2,
+      special: 0,
       inputs: [],
       outputs: [],
 
