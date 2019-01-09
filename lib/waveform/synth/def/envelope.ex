@@ -45,6 +45,20 @@ defmodule Waveform.Synth.Def.Envelope do
   @sustain_level 0.5
   @release_time 1.0
 
+  def asr(options) do
+    curve = Keyword.get(options, :curve, @curve)
+    attack_time = Keyword.get(options, :attack_time, @attack_time)
+    sustain_level = Keyword.get(options, :sustain_level, @sustain_level)
+    release_time = Keyword.get(options, :release_time, @release_time)
+
+    new(
+      [0, sustain_level, 0],
+      [attack_time, release_time],
+      [curve, curve],
+      1
+    )
+  end
+
   def adsr(options) do
     peak_level = Keyword.get(options, :peak_level, @peak_level)
     curve = Keyword.get(options, :curve, @curve)
@@ -66,23 +80,23 @@ defmodule Waveform.Synth.Def.Envelope do
   def new([i1 | inputs], times, curves) when is_list(curves),
     do: new([i1 | inputs], times, curves, @release, @loop)
 
-  def new([i1 | inputs], times, curve),
+  def new([i1 | inputs], times, curve) when is_atom(curve),
     do: new([i1 | inputs], times, curve, @release, @loop)
 
   def new([i1 | inputs], times, curves, release) when is_list(curves),
     do: new([i1 | inputs], times, curves, release, @loop)
 
-  def new([i1 | inputs], times, curve, release),
+  def new([i1 | inputs], times, curve, release) when is_atom(curve),
     do: new([i1 | inputs], times, curve, release, @loop)
 
-  def new([i1 | inputs], times, curves, release, loop) when is_list(curves) do
-    [i1, 3, release, loop] ++
-      Enum.map(0..(Enum.count(inputs) - 1), fn n ->
-        [Enum.at(inputs, n), Enum.at(times, n), 5, Enum.at(curves, n)]
+  def new([i1 | rest], times, curves, release, loop) when is_list(curves) do
+    [i1, Enum.count(rest), release, loop] ++
+      Enum.map(0..(Enum.count(rest) - 1), fn n ->
+        [Enum.at(rest, n), Enum.at(times, n), 5, Enum.at(curves, n)]
       end)
   end
 
-  def new([i1 | inputs], times, curve, release, loop) do
+  def new([i1 | rest], times, curve, release, loop) do
     curve =
       if is_atom(curve) do
         Map.get(@curves, curve, 5)
@@ -90,9 +104,9 @@ defmodule Waveform.Synth.Def.Envelope do
         curve
       end
 
-    [i1, 3, release, loop] ++
-      Enum.map(0..(Enum.count(inputs) - 1), fn n ->
-        [Enum.at(inputs, n), Enum.at(times, n), curve, 0]
+    [i1, Enum.count(rest), release, loop] ++
+      Enum.map(0..(Enum.count(rest) - 1), fn n ->
+        [Enum.at(rest, n), Enum.at(times, n), curve, 0]
       end)
   end
 end

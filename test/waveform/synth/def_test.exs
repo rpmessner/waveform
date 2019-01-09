@@ -119,372 +119,372 @@ defmodule Waveform.Synth.DefTest do
 
   @sinosc_def sinosc
 
-  test "compiles a synth def into %Def with struct syntax" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       #
-       sin_osc = %SinOsc{
-         freq: midicps(note),
-         phase: 0.0,
-         mul: 1.0,
-         add: 2.0
-       }
+ test "compiles a synth def into %Def with struct syntax" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      #
+      sin_osc = %SinOsc{
+        freq: midicps(note),
+        phase: 0.0,
+        mul: 1.0,
+        add: 2.0
+      }
 
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
+      %Out{bus: out_bus, channels: sin_osc}
+    end
+  )
+ end
+
+ test "compiles a synth def into %Def with module syntax" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      #
+      sin_osc =
+        SinOsc.ar(
+          freq: midicps(note),
+          phase: 0.0,
+          mul: 1.0,
+          add: 2.0
+        )
+
+      Out.ar(bus: out_bus, channels: sin_osc)
+    end
+  )
+ end
+
+ test "ugen args are in correct order when compiled into %Def" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      #
+      sin_osc = SinOsc.ar(freq: midicps(note), mul: 1.0, add: 2.0, phase: 0.0)
+      %Out{bus: out_bus, channels: sin_osc}
+    end
+  )
+ end
+
+ test "unary op dot syntax" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      #
+      sin_osc = %SinOsc{freq: note.midicps(), mul: 1.0, add: 2.0, phase: 0.0}
+      %Out{bus: out_bus, channels: sin_osc}
+    end
+  )
+ end
+
+ test "|> syntax works with unary op" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      #
+      freq = note |> midicps
+
+      sin_osc = %SinOsc{freq: freq, mul: 1.0, add: 2.0, phase: 0.0}
+
+      %Out{bus: out_bus, channels: sin_osc}
+    end
+  )
+ end
+
+ test "|> syntax works with binary op" do
+  assert_synthdef(
+    @saw_def,
+    defsynth SawDef,
+      # midi A4
+      note: 69,
+      out_bus: 0,
+      foo: 0,
+      bar: 0 do
+      #
+      freq = midicps(note)
+      freq2 = freq |> mul(2.0)
+
+      sawfreq = if foo > 0.5, do: freq, else: freq2
+
+      saw = %Saw{
+        freq: freq,
+        mul: 1.0,
+        add: 2.0
+      }
+
+      %Out{bus: out_bus, channels: saw}
+    end
+  )
+ end
+
+ test "|> syntax works with ugen" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      sin_osc =
+        midicps(note)
+        |> %SinOsc{mul: 1.0, add: 2.0, phase: 0.0}
+
+      %Out{bus: out_bus, channels: sin_osc}
+    end
+  )
+ end
+
+ test "|> syntax for keyword argument works with tuple" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      sin_osc =
+        {:add, 2.0}
+        |> %SinOsc{freq: midicps(note), mul: 1.0, phase: 0.0}
+
+      %Out{bus: out_bus, channels: sin_osc}
+    end
+  )
+ end
+
+ test "|> syntax for keyword argument works with map" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      sin_osc =
+        %{add: 2.0}
+        |> %SinOsc{freq: midicps(note), mul: 1.0, phase: 0.0}
+
+      %Out{bus: out_bus, channels: sin_osc}
+    end
+  )
+ end
+
+ test "ugen meta in /synth/def/ugens default arguments work" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      # mul not provided
+      sin_osc = %SinOsc{
+        freq: midicps(note),
+        add: 2.0,
+        phase: 0.0
+      }
+
+      %Out{bus: out_bus, channels: sin_osc}
+    end
+  )
+ end
+
+ test "multi-output synth works" do
+  assert_synthdef(
+    @multichannel_def,
+    defsynth MultiChannel, [] do
+      saw = %Saw{freq: 440, mul: 1, add: 0}
+      outputs = %Pan2{in: saw, pos: 0, level: 1}
+      %Out{bus: 0, channels: outputs}
+    end
+  )
+ end
+
+ test "compiles ar/kr syntax into %Def" do
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef,
+      # midi A4
+      note: 69,
+      out_bus: 0 do
+      #
+      sin_osc = SinOsc.ar(freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0)
+      %Out{bus: out_bus, channels: sin_osc}
+    end
+  )
+ end
+
+ test "compiles synth with submodules into %Def" do
+  defsubmodule AwesomeSubmodule, note: 69 do
+    freq = midicps(note)
+    %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
   end
 
-  test "compiles a synth def into %Def with module syntax" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       #
-       sin_osc =
-         SinOsc.ar(
-           freq: midicps(note),
-           phase: 0.0,
-           mul: 1.0,
-           add: 2.0
-         )
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef, note: 69, out_bus: 0 do
+      bar = %AwesomeSubmodule{note: note}
+      %Out{bus: out_bus, channels: bar}
+    end
+  )
+ end
 
-       Out.ar(bus: out_bus, channels: sin_osc)
-     end
-   )
+ test "submodule error if doesn't exist" do
+  assert_compile_time_raise(RuntimeError, "Unknown ugen or submodule UndefinedSubmodule", fn ->
+    alias Waveform.Synth.Def, as: Subject
+    require Subject
+    import Subject
+
+    defsynth UnknownSubmoduleDef, [] do
+      bar = %UndefinedSubmodule{}
+      %Out{channels: bar}
+    end
+  end)
+ end
+
+ test "submodule variable assignment is hygenic" do
+  defsubmodule AwesomeSubmodule, note: 69 do
+    foo = note
+    %SinOsc{freq: foo, phase: 0.0, mul: 1.0, add: 2.0}
   end
 
-  test "ugen args are in correct order when compiled into %Def" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       #
-       sin_osc = SinOsc.ar(freq: midicps(note), mul: 1.0, add: 2.0, phase: 0.0)
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
+  assert_synthdef(
+    @sinosc_def,
+    defsynth SinOscDef, note: 69, out_bus: 0 do
+      foo = out_bus
+      freq = midicps(note)
+      bar = %AwesomeSubmodule{note: freq}
+      %Out{bus: foo, channels: bar}
+    end
+  )
+ end
+
+ test "submodule variable scoping behaves correctly" do
+  defsubmodule AwesomeSubmodule, foo: nil do
+    %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
   end
 
-  test "unary op dot syntax" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       #
-       sin_osc = %SinOsc{freq: note.midicps(), mul: 1.0, add: 2.0, phase: 0.0}
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
+  assert_compile_time_raise(RuntimeError, "unknown variable \"freq\"", fn ->
+    alias Waveform.Synth.Def, as: Subject
+    require Subject
+    import Subject
+
+    defsynth SinOscDef, note: 69, out_bus: 0 do
+      freq = midicps(note)
+      bar = %AwesomeSubmodule{}
+      %Out{bus: out_bus, channels: bar}
+    end
+  end)
+ end
+
+ test "submodules raise error when used incorrectly" do
+  defsubmodule AwesomeSubmodule, note: 69, bar: nil do
+    freq = midicps(note)
+    %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
   end
 
-  test "|> syntax works with unary op" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       #
-       freq = note |> midicps
+  assert_compile_time_raise(RuntimeError, "unknown submodule argument \"foo\"", fn ->
+    alias Waveform.Synth.Def, as: Subject
+    require Subject
+    import Subject
 
-       sin_osc = %SinOsc{freq: freq, mul: 1.0, add: 2.0, phase: 0.0}
+    defsynth SinOscDef, note: 69, out_bus: 0 do
+      bar = %AwesomeSubmodule{foo: 0, note: note}
+      Out.ar(bus: out_bus, channels: bar)
+    end
+  end)
 
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
-  end
+  assert_compile_time_raise(RuntimeError, "required argument missing \"note\"", fn ->
+    alias Waveform.Synth.Def, as: Subject
+    require Subject
+    import Subject
 
-  test "|> syntax works with binary op" do
-   assert_synthdef(
-     @saw_def,
-     defsynth SawDef,
-       # midi A4
-       note: 69,
-       out_bus: 0,
-       foo: 0,
-       bar: 0 do
-       #
-       freq = midicps(note)
-       freq2 = freq |> mul(2.0)
+    defsynth SinOscDef, note: 69, out_bus: 0 do
+      bar = %AwesomeSubmodule{bar: 0}
+      %Out{bus: out_bus, channels: bar}
+    end
+  end)
+ end
 
-       sawfreq = if foo > 0.5, do: freq, else: freq2
+ test "compiles a synth that mixes ar & kr" do
+  assert_synthdef(
+    @mouse_panner_def,
+    defsynth MousePanner, [] do
+      %Out{
+        channels: Pan2.ar(
+          in: WhiteNoise.ar(freq: 0.1),
+          pos: MouseX.kr(minval: -1, maxval: 1),
+          level: 1
+        )
+      }
+    end
+  )
+ end
 
-       saw = %Saw{
-         freq: freq,
-         mul: 1.0,
-         add: 2.0
-       }
+ test "compiles a more complex synth def into %Def" do
+  assert_synthdef(
+    @saw_def,
+    defsynth SawDef,
+      # midi A4
+      note: 69,
+      out_bus: 0,
+      foo: 0,
+      bar: 0 do
+      #
+      freq = midicps(note)
+      freq2 = freq * 2.0
 
-       %Out{bus: out_bus, channels: saw}
-     end
-   )
-  end
+      sawfreq = if foo > 0.5, do: freq, else: freq2
 
-  test "|> syntax works with ugen" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       sin_osc =
-         midicps(note)
-         |> %SinOsc{mul: 1.0, add: 2.0, phase: 0.0}
+      saw = %Saw{
+        freq: freq,
+        mul: 1.0,
+        add: 2.0
+      }
 
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
-  end
+      %Out{bus: out_bus, channels: saw}
+    end
+  )
+ end
 
-  test "|> syntax for keyword argument works with tuple" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       sin_osc =
-         {:add, 2.0}
-         |> %SinOsc{freq: midicps(note), mul: 1.0, phase: 0.0}
+ test "compiles synth with an adsr envelope into %Def" do
+  assert_synthdef(
+    @envelope1_def,
+    defsynth Env1, [] do
+      sin_osc = SinOsc.ar(freq: 550, phase: 7)
 
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
-  end
+      env_gen =
+        EnvGen.kr(
+          gate: 24,
+          level_scale: 25,
+          level_bias: 26,
+          time_scale: 27,
+          done_action: 8,
+          envelope:
+            Env.adsr(
+              attack_time: 0.01,
+              decay_time: 0.02,
+              sustain_level: 0.03,
+              release_time: 0.04
+            )
+        )
 
-  test "|> syntax for keyword argument works with map" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       sin_osc =
-         %{add: 2.0}
-         |> %SinOsc{freq: midicps(note), mul: 1.0, phase: 0.0}
-
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
-  end
-
-  test "ugen meta in /synth/def/ugens default arguments work" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       # mul not provided
-       sin_osc = %SinOsc{
-         freq: midicps(note),
-         add: 2.0,
-         phase: 0.0
-       }
-
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
-  end
-
-  test "multi-output synth works" do
-   assert_synthdef(
-     @multichannel_def,
-     defsynth MultiChannel, [] do
-       saw = %Saw{freq: 440, mul: 1, add: 0}
-       outputs = %Pan2{in: saw, pos: 0, level: 1}
-       %Out{bus: 0, channels: outputs}
-     end
-   )
-  end
-
-  test "compiles ar/kr syntax into %Def" do
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef,
-       # midi A4
-       note: 69,
-       out_bus: 0 do
-       #
-       sin_osc = SinOsc.ar(freq: midicps(note), phase: 0.0, mul: 1.0, add: 2.0)
-       %Out{bus: out_bus, channels: sin_osc}
-     end
-   )
-  end
-
-  test "compiles synth with submodules into %Def" do
-   defsubmodule AwesomeSubmodule, note: 69 do
-     freq = midicps(note)
-     %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
-   end
-
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef, note: 69, out_bus: 0 do
-       bar = %AwesomeSubmodule{note: note}
-       %Out{bus: out_bus, channels: bar}
-     end
-   )
-  end
-
-  test "submodule error if doesn't exist" do
-   assert_compile_time_raise(RuntimeError, "Unknown ugen or submodule UndefinedSubmodule", fn ->
-     alias Waveform.Synth.Def, as: Subject
-     require Subject
-     import Subject
-
-     defsynth UnknownSubmoduleDef, [] do
-       bar = %UndefinedSubmodule{}
-       %Out{channels: bar}
-     end
-   end)
-  end
-
-  test "submodule variable assignment is hygenic" do
-   defsubmodule AwesomeSubmodule, note: 69 do
-     foo = note
-     %SinOsc{freq: foo, phase: 0.0, mul: 1.0, add: 2.0}
-   end
-
-   assert_synthdef(
-     @sinosc_def,
-     defsynth SinOscDef, note: 69, out_bus: 0 do
-       foo = out_bus
-       freq = midicps(note)
-       bar = %AwesomeSubmodule{note: freq}
-       %Out{bus: foo, channels: bar}
-     end
-   )
-  end
-
-  test "submodule variable scoping behaves correctly" do
-   defsubmodule AwesomeSubmodule, foo: nil do
-     %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
-   end
-
-   assert_compile_time_raise(RuntimeError, "unknown variable \"freq\"", fn ->
-     alias Waveform.Synth.Def, as: Subject
-     require Subject
-     import Subject
-
-     defsynth SinOscDef, note: 69, out_bus: 0 do
-       freq = midicps(note)
-       bar = %AwesomeSubmodule{}
-       %Out{bus: out_bus, channels: bar}
-     end
-   end)
-  end
-
-  test "submodules raise error when used incorrectly" do
-   defsubmodule AwesomeSubmodule, note: 69, bar: nil do
-     freq = midicps(note)
-     %SinOsc{freq: freq, phase: 0.0, mul: 1.0, add: 2.0}
-   end
-
-   assert_compile_time_raise(RuntimeError, "unknown submodule argument \"foo\"", fn ->
-     alias Waveform.Synth.Def, as: Subject
-     require Subject
-     import Subject
-
-     defsynth SinOscDef, note: 69, out_bus: 0 do
-       bar = %AwesomeSubmodule{foo: 0, note: note}
-       Out.ar(bus: out_bus, channels: bar)
-     end
-   end)
-
-   assert_compile_time_raise(RuntimeError, "required argument missing \"note\"", fn ->
-     alias Waveform.Synth.Def, as: Subject
-     require Subject
-     import Subject
-
-     defsynth SinOscDef, note: 69, out_bus: 0 do
-       bar = %AwesomeSubmodule{bar: 0}
-       %Out{bus: out_bus, channels: bar}
-     end
-   end)
-  end
-
-  test "compiles a synth that mixes ar & kr" do
-   assert_synthdef(
-     @mouse_panner_def,
-     defsynth MousePanner, [] do
-       %Out{
-         channels: Pan2.ar(
-           in: WhiteNoise.ar(freq: 0.1),
-           pos: MouseX.kr(minval: -1, maxval: 1),
-           level: 1
-         )
-       }
-     end
-   )
-  end
-
-  test "compiles a more complex synth def into %Def" do
-   assert_synthdef(
-     @saw_def,
-     defsynth SawDef,
-       # midi A4
-       note: 69,
-       out_bus: 0,
-       foo: 0,
-       bar: 0 do
-       #
-       freq = midicps(note)
-       freq2 = freq * 2.0
-
-       sawfreq = if foo > 0.5, do: freq, else: freq2
-
-       saw = %Saw{
-         freq: freq,
-         mul: 1.0,
-         add: 2.0
-       }
-
-       %Out{bus: out_bus, channels: saw}
-     end
-   )
-  end
-
-  test "compiles synth with an adsr envelope into %Def" do
-   assert_synthdef(
-     @envelope1_def,
-     defsynth Env1, [] do
-       sin_osc = SinOsc.ar(freq: 550, phase: 7)
-
-       env_gen =
-         EnvGen.kr(
-           gate: 24,
-           level_scale: 25,
-           level_bias: 26,
-           time_scale: 27,
-           done_action: 8,
-           envelope:
-             Env.adsr(
-               attack_time: 0.01,
-               decay_time: 0.02,
-               sustain_level: 0.03,
-               release_time: 0.04
-             )
-         )
-
-       Out.ar(
-         bus: 999,
-         channels: sin_osc * env_gen
-       )
-     end
-   )
-  end
+      Out.ar(
+        bus: 999,
+        channels: sin_osc * env_gen
+      )
+    end
+  )
+ end
 
   test "compiles synth with generic envelope into %Def" do
    assert_synthdef(
@@ -784,6 +784,60 @@ defmodule Waveform.Synth.DefTest do
       defsynth Repeat, [] do
         sines = (SinOsc.ar(freq: 440) | 2)
         Out.ar(channels: sines)
+      end
+    )
+  end
+
+  test "can build an asr Env" do
+    assert_synthdef(
+      %Subject{
+        synthdefs: [
+          %Subject.Synth{
+            name: "atari",
+            constants: [
+              1.0, 0.0, 2.0,
+              -99.0, 0.01,
+              5.0, -4.0, 0.05
+            ],
+            ugens: [
+              %Subject.Ugen{
+                name: "EnvGen",
+                rate: 1,
+                inputs: [
+                  %Subject.Ugen.Input{src: -1, constant_index: 0},
+                  %Subject.Ugen.Input{src: -1, constant_index: 0},
+                  %Subject.Ugen.Input{src: -1, constant_index: 1},
+                  %Subject.Ugen.Input{src: -1, constant_index: 0},
+                  %Subject.Ugen.Input{src: -1, constant_index: 2},
+                  %Subject.Ugen.Input{src: -1, constant_index: 1},
+                  %Subject.Ugen.Input{src: -1, constant_index: 2},
+                  %Subject.Ugen.Input{src: -1, constant_index: 0},
+                  %Subject.Ugen.Input{src: -1, constant_index: 3},
+                  %Subject.Ugen.Input{src: -1, constant_index: 0},
+                  %Subject.Ugen.Input{src: -1, constant_index: 4},
+                  %Subject.Ugen.Input{src: -1, constant_index: 5},
+                  %Subject.Ugen.Input{src: -1, constant_index: 6},
+                  %Subject.Ugen.Input{src: -1, constant_index: 1},
+                  %Subject.Ugen.Input{src: -1, constant_index: 7},
+                  %Subject.Ugen.Input{src: -1, constant_index: 5},
+                  %Subject.Ugen.Input{src: -1, constant_index: 6}
+                ],
+                outputs: [1]
+              }
+            ]
+          }
+        ]
+      },
+      defsynth Atari, [] do
+        EnvGen.kr(
+           gate: 1,
+           done_action: Done.free_self,
+           envelope: Env.asr(
+             attack_time: 0.01,
+             sustain_level: 1,
+             release_time: 0.05
+           )
+         )
       end
     )
   end
