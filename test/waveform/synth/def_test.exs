@@ -168,7 +168,7 @@ defmodule Waveform.Synth.DefTest do
         note: 69,
         out_bus: 0 do
         #
-        sin_osc = %SinOsc{freq: midicps(note), mul: 1.0, add: 2.0, phase: 0.0}
+        sin_osc = SinOsc.ar(freq: midicps(note), mul: 1.0, add: 2.0, phase: 0.0)
         %Out{bus: out_bus, channels: sin_osc}
       end
     )
@@ -658,7 +658,7 @@ defmodule Waveform.Synth.DefTest do
   test "random numbers" do
     {
       %Subject{
-        synthdefs: [%Subject.Synth{constants: [c1, c2]}]
+        synthdefs: [%Subject.Synth{constants: [c1, _c2]}]
       },
       _
     } =
@@ -668,11 +668,10 @@ defmodule Waveform.Synth.DefTest do
 
     assert c1 > 0
     assert c1 < 1
-    assert c2 == 0
 
     {
       %Subject{
-        synthdefs: [%Subject.Synth{constants: [c1, c2]}]
+        synthdefs: [%Subject.Synth{constants: [c1, _c2]}]
       },
       _
     } =
@@ -680,7 +679,6 @@ defmodule Waveform.Synth.DefTest do
         SinOsc.ar(freq: rrand(10, 20))
       end
 
-    assert c2 == 0
     assert c1 > 10
     assert c1 < 20
   end
