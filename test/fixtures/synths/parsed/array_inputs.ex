@@ -3,10 +3,14 @@
     %Waveform.Synth.Def.Synth{
       name: "array-inputs",
       constants: [
+        # 0#0
         440.0,
+        # 3#1
+        600.0,
+        # 1#2
         0.0,
-        1.0,
-        600.0
+        # 2#3
+        1.0
       ],
       param_values: [],
       param_names: [],
@@ -22,7 +26,7 @@
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 1
+              constant_index: 2
             }
           ],
           outputs: [
@@ -40,11 +44,11 @@
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 2
+              constant_index: 3
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 1
+              constant_index: 2
             }
           ],
           outputs: [
@@ -58,11 +62,11 @@
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 3
+              constant_index: 1
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 1
+              constant_index: 2
             }
           ],
           outputs: [
@@ -80,11 +84,11 @@
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 2
+              constant_index: 3
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 1
+              constant_index: 2
             }
           ],
           outputs: [
@@ -98,7 +102,7 @@
           inputs: [
             %Waveform.Synth.Def.Ugen.Input{
               src: -1,
-              constant_index: 1
+              constant_index: 2
             },
             %Waveform.Synth.Def.Ugen.Input{
               src: 1,

@@ -790,6 +790,117 @@ defmodule Waveform.Synth.DefTest do
     )
   end
 
+  @repeat_array_def %Subject{
+    synthdefs: [
+      %Subject.Synth{
+        name: "repeat-array",
+        constants: [
+          0.0,
+          440.0
+        ],
+        ugens: [
+          %Subject.Ugen{
+            name: "SinOsc",
+            rate: 2,
+            inputs: [
+              %Subject.Ugen.Input{src: -1, constant_index: 1},
+              %Subject.Ugen.Input{src: -1, constant_index: 0}
+            ],
+            outputs: [2]
+          },
+          %Subject.Ugen{
+            name: "SinOsc",
+            rate: 2,
+            inputs: [
+              %Subject.Ugen.Input{src: -1, constant_index: 1},
+              %Subject.Ugen.Input{src: -1, constant_index: 0}
+            ],
+            outputs: [2]
+          },
+          %Subject.Ugen{
+            name: "Out",
+            rate: 2,
+            inputs: [
+              %Subject.Ugen.Input{src: -1, constant_index: 0},
+              %Subject.Ugen.Input{src: 0, constant_index: 0},
+              %Subject.Ugen.Input{src: 1, constant_index: 0}
+            ],
+            outputs: []
+          }
+        ]
+      }
+    ]
+  }
+
+  test "array can be multiplied by scalar" do
+    assert_synthdef(
+      @repeat_array_def,
+      defsynth RepeatArray, [] do
+        Out.ar(channels: SinOsc.ar(freq: [220, 220] * 2))
+      end
+    )
+
+    assert_synthdef(
+      @repeat_array_def,
+      defsynth RepeatArray, [] do
+        Out.ar(channels: SinOsc.ar(freq: 2 * [220, 220]))
+      end
+    )
+
+    assert_synthdef(
+      @repeat_array_def,
+      defsynth RepeatArray, [] do
+        Out.ar(channels: SinOsc.ar(freq: [2, 2] * 220))
+      end
+    )
+
+    assert_synthdef(
+      @repeat_array_def,
+      defsynth RepeatArray, [] do
+        Out.ar(channels: SinOsc.ar(freq: 220 * [2, 2]))
+      end
+    )
+  end
+
+  test "array can be multiplied by array" do
+    assert_synthdef(
+      @repeat_array_def,
+      defsynth RepeatArray, [] do
+        Out.ar(channels: SinOsc.ar(freq: [220, 220] * [2, 2]))
+      end
+    )
+
+    assert_synthdef(
+      @repeat_array_def,
+      defsynth RepeatArray, [] do
+        Out.ar(channels: SinOsc.ar(freq: [2] * [220, 220]))
+      end
+    )
+
+    assert_synthdef(
+      @repeat_array_def,
+      defsynth RepeatArray, [] do
+        Out.ar(channels: SinOsc.ar(freq: [220] * [2, 2]))
+      end
+    )
+
+    assert_synthdef(
+      @repeat_array_def,
+      defsynth RepeatArray, [] do
+        Out.ar(channels: SinOsc.ar(freq: [2, 2] * [220]))
+      end
+    )
+  end
+
+  test "repeated argument treated as array" do
+    assert_synthdef(
+      @repeat_array_def,
+      defsynth RepeatArray, [] do
+        Out.ar(channels: SinOsc.ar(freq: 440) | 2)
+      end
+    )
+  end
+
   test "can build an asr Env" do
     assert_synthdef(
       %Subject{

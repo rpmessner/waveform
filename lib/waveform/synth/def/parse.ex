@@ -14,6 +14,8 @@ defmodule Waveform.Synth.Def.Parse do
   @kr %{rate: 1}
   @ar %{rate: 2}
 
+  @arithmetic [:*, :-, :/, :+]
+
   def parse(%Synth{} = synth, definition), do: parse({synth, nil}, definition)
 
   # parse list
@@ -283,10 +285,46 @@ defmodule Waveform.Synth.Def.Parse do
         {:|, _, [expr, times]}
       ) do
     1..times
-    |> Enum.reduce({s, []}, fn n, {s, inputs} ->
+    |> Enum.reduce({s, []}, fn _, {s, inputs} ->
       {s, input} = parse({s, i}, expr)
       {s, inputs ++ [input]}
     end)
+  end
+
+  # array arithmetic
+  def parse(
+        {%Synth{} = s, i},
+        {op, m, [args1, args2]}
+      )
+      when op in @arithmetic and is_list(args1) and is_list(args2) do
+    if Enum.count(args2) > Enum.count(args1) do
+      parse({s, i}, {op, m, [args2, args1]})
+    else
+      args1
+      |> Enum.with_index()
+      |> Enum.reduce({s, []}, fn {arg1, idx}, {s, inputs} ->
+        arg2 = Enum.at(args2, rem(idx, Enum.count(args2)))
+        {s, input} = parse({s, i}, {op, m, [arg1, arg2]})
+        {s, inputs ++ [input]}
+      end)
+    end
+  end
+
+  # multiply by scalar
+  def parse(
+        {%Synth{} = s, i},
+        {op, m, [arg1, arg2]}
+      )
+      when op in @arithmetic and is_list(arg1) do
+    parse({s, i}, {op, m, [arg1, [arg2]]})
+  end
+
+  def parse(
+        {%Synth{} = s, i},
+        {op, m, [arg1, arg2]}
+      )
+      when op in @arithmetic and is_list(arg2) do
+    parse({s, i}, {op, m, [[arg1], arg2]})
   end
 
   # parse binary op
@@ -295,7 +333,7 @@ defmodule Waveform.Synth.Def.Parse do
         {operator, _, [arg1, arg2]} = expression
       ) do
     try do
-      if operator in [:*, :-, :/, :+] do
+      if operator in @arithmetic do
         string_expression = Macro.to_string(expression)
 
         assigns =
@@ -450,7 +488,7 @@ defmodule Waveform.Synth.Def.Parse do
     end
   end
 
-  def parse({s, i}, {{:., _, [{:__aliases__, _, [:Done]}, action]} = expr, _, []}) do
+  def parse({s, i}, {{:., _, [{:__aliases__, _, [:Done]}, action]}, _, []}) do
     parse({s, i}, apply(Done, action, []))
   end
 
@@ -516,7 +554,7 @@ defmodule Waveform.Synth.Def.Parse do
     end
   end
 
-  defp parse_ugen({synth, i}, ugen_name, options) do
+  defp parse_ugen({synth, input}, ugen_name, options) do
     unless Keyword.keyword?(options) do
       raise "Arguments #{Macro.to_string(options)} to " +
               "#{Macro.to_string(ugen_name)} must be a keyword list"
@@ -536,9 +574,13 @@ defmodule Waveform.Synth.Def.Parse do
     # the rest of the array args
     # turn the output ugen into an array
     # e.g. %SinOsc{freq: [400, 600]} = [%SinOsc{freq: 400}, %SinOsc{freq: 600}]
-    array_args =
+    {{synth, i}, array_args} =
       Enum.filter(options, fn {key, value} ->
-        !Enum.member?(allow_array_args, key) && is_list(value)
+        !Enum.member?(allow_array_args, key) && (is_list(value) || collapses_to_list?(value))
+      end)
+      |> Enum.reduce({{synth, input}, []}, fn {k, v}, {{s, input}, outputs} ->
+        {s, i} = parse({s, input}, v)
+        {{s, input}, Keyword.put(outputs, k, i)}
       end)
 
     case array_args do
@@ -735,4 +777,10 @@ defmodule Waveform.Synth.Def.Parse do
   def uniform_rand() do
     :rand.uniform()
   end
+
+  defp collapses_to_list?({op, _, [arg1, arg2]}) when op in @arithmetic do
+    is_list(arg1) || is_list(arg2)
+  end
+
+  defp collapses_to_list?(_), do: false
 end
