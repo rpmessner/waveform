@@ -23,3 +23,5 @@ erl_crash.dump
 waveform-*.tar
 
 /user_synthdefs/
+
+/.elixir_ls/
