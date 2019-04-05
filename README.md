@@ -8,6 +8,10 @@ Install supercollider:
 
 `brew install supercollider`
 
+Install portmidi:
+
+`brew install portmidi`
+
 or point to the `sclang` executable with the `SCLANG_PATH` environment variable
 
 Download repo and: 
