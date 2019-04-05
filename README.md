@@ -6,7 +6,7 @@ Supercollider live coding with Elixir
 
 Install supercollider:
 
-`brew install supercollider`
+`brew cask install supercollider`
 
 Install portmidi:
 
