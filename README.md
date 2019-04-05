@@ -6,7 +6,7 @@ Supercollider live coding with Elixir
 
 Install supercollider:
 
-`brew install supercollider`
+`brew cask install supercollider`
 
 or point to the `sclang` executable with the `SCLANG_PATH` environment variable
 
