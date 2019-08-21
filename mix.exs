@@ -5,7 +5,7 @@ defmodule Waveform.MixProject do
     [
       app: :waveform,
       version: "0.1.0",
-      elixir: "~> 1.6",
+      elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -14,7 +14,7 @@ defmodule Waveform.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      applications: [:porcelain, :portmidi],
+      # applications: [:portmidi],
       extra_applications: [:logger],
       mod: {Waveform.Application, []}
     ]
@@ -23,10 +23,10 @@ defmodule Waveform.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:porcelain, "~> 2.0"},
+      {:exexec, "~> 0.2"},
       {:recase, "~> 0.2"},
       {:mock, "~> 0.3.2", only: :test},
-      {:portmidi, "~> 5.1.1"}
+      {:portmidi, "~> 5.1.2"}
     ]
   end
 end
