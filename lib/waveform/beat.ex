@@ -123,14 +123,15 @@ defmodule Waveform.Beat do
   end
 
   def handle_cast({:on_beat, name, beats, over, func, group, synth}, state) do
-    callbacks = Enum.filter(state.callbacks, fn %Tick{name: name} -> name != name end)
+    # callbacks = Enum.filter(state.callbacks, fn %Tick{name: name} -> name != name end)
 
+    # IO.inspect { callbacks, name }
     {:noreply,
      %{
        state
        | callbacks: [
            %Tick{group: group, name: name, over: over, beats: beats, func: func, synth: synth}
-           | callbacks
+           | state.callbacks
          ]
      }}
   end
@@ -171,6 +172,7 @@ defmodule Waveform.Beat do
                                     beats: beats,
                                     over: over
                                   } = s ->
+      IO.inspect {beats, over, state }
       if beats == 1 || rem(state.current_beat, beats) == 1 do
         beat_value = beat_value(state)
 

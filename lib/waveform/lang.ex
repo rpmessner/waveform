@@ -1,15 +1,13 @@
 defmodule Waveform.Lang do
   use GenServer
 
-  alias Porcelain.Process, as: Proc
-
   @me __MODULE__
   @path System.get_env("SCLANG_PATH") || "/Applications/SuperCollider.app/Contents/MacOS/sclang"
 
   defmodule State do
     defstruct(
-      sclang_proc: nil,
-      output_pid: nil
+      sclang_pid: nil,
+      sclang_os_pid: nil,
     )
   end
 
@@ -37,45 +35,37 @@ defmodule Waveform.Lang do
   end
 
   def init(_state) do
-    sclang_proc =
-      %Proc{out: outstream} =
-      Porcelain.spawn(
-        @path,
-        [],
-        in: :receive,
-        out: :stream
-      )
+    {:ok, sclang_pid, sclang_os_pid } = Exexec.run(
+      @path,
+      [
+        {:stdin, true},
+        {:stdout, fn :stdout, _bytes, line ->
+        # IO.puts(line)
+        case line do
+          "SuperCollider 3 server ready" <> _rest ->
+            Waveform.OSC.setup()
 
-    output_pid =
-      spawn(fn ->
-        Enum.map(outstream, fn line ->
-          # IO.puts(line)
-          case line do
-            "SuperCollider 3 server ready" <> _rest ->
-              Waveform.OSC.setup()
-
-            _ ->
-              nil
-          end
-
-          line
-        end)
-      end)
+          _ ->
+            nil
+            end
+        end}
+      ]
+    )
 
     state = %State{
-      sclang_proc: sclang_proc,
-      output_pid: output_pid
+      sclang_pid: sclang_pid,
+      sclang_os_pid: sclang_os_pid,
     }
 
     {:ok, state}
   end
 
   def terminate(_reason, state) do
-    Process.exit(state.output_pid, :kill)
+    Exexec.stop(state.sclang_pid)
   end
 
   def handle_call({:command, command}, _from, state) do
-    Proc.send_input(state.sclang_proc, "#{command}\n")
+    Exexec.send(state.sclang_os_pid, "#{command}\n")
 
     {:reply, nil, state}
   end
