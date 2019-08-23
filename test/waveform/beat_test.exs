@@ -21,8 +21,6 @@ defmodule Waveform.BeatTest do
       callbacks: callbacks
     } = Subject.state()
 
-    # IO.inspect(state)
-
-    assert Enum.count(callbacks) == 1
+    assert Enum.count(callbacks) == 2
   end
 end
