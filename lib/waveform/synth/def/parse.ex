@@ -768,9 +768,7 @@ defmodule Waveform.Synth.Def.Parse do
     arguments = MapSet.new(arguments)
 
     unless MapSet.subset?(arguments, allowed) do
-      raise "Unknown arguments \"#{Enum.join(MapSet.difference(arguments, allowed), "\",\"")}\" for ugen \"#{
-              name
-            }\", allowed arguments are: \"#{Enum.join(allowed, "\",\"")}\""
+      raise "Unknown arguments \"#{Enum.join(MapSet.difference(arguments, allowed), "\",\"")}\" for ugen \"#{name}\", allowed arguments are: \"#{Enum.join(allowed, "\",\"")}\""
     end
   end
 

@@ -1,8 +1,6 @@
 defmodule Waveform.Synth do
-  alias Waveform.Beat
-
-  alias Waveform.Music.Note
-  alias Waveform.Music.Chord
+  alias Harmony.Note
+  alias Harmony.Chord
 
   alias Waveform.OSC
   alias Waveform.OSC.Group
@@ -20,15 +18,11 @@ defmodule Waveform.Synth do
     Manager.set_current_synth(self(), synth)
   end
 
-  def stop, do: Beat.stop()
-  def start, do: Beat.start()
-  def pause, do: Beat.pause()
-
-  def play(%Chord{} = c), do: play(c, [])
-  def play(note), do: synth(note)
+  def play(n), do: play(n, [])
 
   def play(%Chord{} = c, options) do
-    name = "#{c.tonic} #{c.quality} #{c.inversion}"
+    name =
+      "#{c.tonic} #{c.quality}#{if c.root_degree > 0, do: " #{c.root}", else: ""} #{c.root_degree + 1}"
 
     group =
       if options[:group] do
@@ -37,50 +31,45 @@ defmodule Waveform.Synth do
         Group.chord_group(name)
       end
 
-    c
-    |> Chord.notes()
-    |> Enum.map(&synth(&1, options |> Enum.into(%{}) |> Map.merge(%{group: group})))
+    c.notes
+    |> Enum.map(fn note ->
+      synth(note, options |> Keyword.put(:group, group))
+    end)
   end
 
-  def play(note, args), do: synth(note, args)
+  def synth(note), do: synth(note, [])
 
-  def synth(note) when is_atom(note), do: note |> Note.to_midi() |> synth
-  def synth(note) when is_number(note), do: synth(note, [])
-  def synth(note, args) when is_atom(note), do: play(Note.to_midi(note), args)
-  def synth(note, args) when is_list(args), do: play(note, Enum.into(args, %{}))
+  def synth(note, opts) when is_binary(note) do
+    Note.get(note).midi
+    |> synth(opts)
+  end
 
-  def synth(note, args) when is_number(note) and is_map(args) do
-    {group, args} = group_arg(args)
+  def synth(note, opts) when is_number(note) do
+    {group, args} = group_arg(opts |> Enum.into(%{}))
 
     args
-    |> calculate_sustain
+    |> calculate_sustain()
     |> Enum.reduce([:note, note], normalizer())
     |> synth(group)
   end
 
-  def synth(args, nil) when is_list(args) do
-    synth(args, Group.synth_group(self()))
+  def synth(opts, %Group{in_bus: out_bus} = g) when out_bus != nil do
+    %{id: group_id} = g
+    trigger_synth(group_id, [:out_bus, out_bus | opts])
   end
 
-  def synth(args, %Group{
-        in_bus: out_bus,
-        id: group_id
-      })
-      when is_list(args) and out_bus != nil do
-    trigger_synth([:out_bus, out_bus | args], group_id)
+  def synth(opts, %Group{} = g) do
+    %{id: group_id} = g
+    trigger_synth(group_id, opts)
   end
 
-  def synth(args, %Group{id: group_id}) when is_list(args) do
-    trigger_synth(args, group_id)
-  end
-
-  defp trigger_synth(args, group_id) do
+  defp trigger_synth(group_id, opts) do
     %Node{id: node_id} = Node.next_synth_node()
     synth_name = Manager.current_synth_value(self())
     add_action = :head
 
     # http://doc.sccode.org/Reference/Server-Command-Reference.html#/s_new
-    OSC.new_synth(synth_name, node_id, add_action, group_id, args)
+    OSC.new_synth(synth_name, node_id, add_action, group_id, opts)
   end
 
   def chord(tonic, quality, options \\ []) do

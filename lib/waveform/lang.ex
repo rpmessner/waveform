@@ -7,7 +7,7 @@ defmodule Waveform.Lang do
   defmodule State do
     defstruct(
       sclang_pid: nil,
-      sclang_os_pid: nil,
+      sclang_os_pid: nil
     )
   end
 
@@ -35,26 +35,28 @@ defmodule Waveform.Lang do
   end
 
   def init(_state) do
-    {:ok, sclang_pid, sclang_os_pid } = Exexec.run(
-      @path,
-      [
-        {:stdin, true},
-        {:stdout, fn :stdout, _bytes, line ->
-        # IO.puts(line)
-        case line do
-          "SuperCollider 3 server ready" <> _rest ->
-            Waveform.OSC.setup()
+    {:ok, sclang_pid, sclang_os_pid} =
+      Exexec.run(
+        @path,
+        [
+          {:stdin, true},
+          {:stdout,
+           fn :stdout, _bytes, line ->
+             # IO.puts(line)
+             case line do
+               "SuperCollider 3 server ready" <> _rest ->
+                 Waveform.OSC.setup()
 
-          _ ->
-            nil
-            end
-        end}
-      ]
-    )
+               _ ->
+                 nil
+             end
+           end}
+        ]
+      )
 
     state = %State{
       sclang_pid: sclang_pid,
-      sclang_os_pid: sclang_os_pid,
+      sclang_os_pid: sclang_os_pid
     }
 
     {:ok, state}

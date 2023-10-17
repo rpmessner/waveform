@@ -172,7 +172,8 @@ defmodule Waveform.Beat do
                                     beats: beats,
                                     over: over
                                   } = s ->
-      IO.inspect {beats, over, state }
+      IO.inspect({beats, over, state})
+
       if beats == 1 || rem(state.current_beat, beats) == 1 do
         beat_value = beat_value(state)
 

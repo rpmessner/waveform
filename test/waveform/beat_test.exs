@@ -14,8 +14,8 @@ defmodule Waveform.BeatTest do
   end
 
   test "creates a beat handler" do
-    Subject.on_beat(:bass, 1, fn -> IO.inspect("foo") end)
-    Subject.on_beat(:bass, 2, fn -> IO.inspect("bar") end)
+    Subject.on_beat(:bass, 1, fn -> "foo" end)
+    Subject.on_beat(:bass, 2, fn -> "bar" end)
 
     %Subject.State{
       callbacks: callbacks

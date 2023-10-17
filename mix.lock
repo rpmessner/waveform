@@ -1,8 +1,10 @@
 %{
-  "erlexec": {:hex, :erlexec, "1.10.0", "cba7924cf526097d2082ceb0ec34e7db6bca2624b8f3867fb3fa89c4cf25d227", [:rebar3], [], "hexpm"},
-  "exexec": {:hex, :exexec, "0.2.0", "a6ffc48cba3ac9420891b847e4dc7120692fb8c08c9e82220ebddc0bb8d96103", [:mix], [{:erlexec, "~> 1.10", [hex: :erlexec, repo: "hexpm", optional: false]}], "hexpm"},
-  "meck": {:hex, :meck, "0.8.13", "ffedb39f99b0b99703b8601c6f17c7f76313ee12de6b646e671e3188401f7866", [:rebar3], [], "hexpm"},
-  "mock": {:hex, :mock, "0.3.3", "42a433794b1291a9cf1525c6d26b38e039e0d3a360732b5e467bfc77ef26c914", [:mix], [{:meck, "~> 0.8.13", [hex: :meck, repo: "hexpm", optional: false]}], "hexpm"},
-  "portmidi": {:hex, :portmidi, "5.1.2", "17a70db5d09885b15f841f878e2f4622996c02cf05ffeb90173d69d38f2589a8", [:make, :mix], [], "hexpm"},
-  "recase": {:hex, :recase, "0.6.0", "1dd2dd2f4e06603b74977630e739f08b7fedbb9420cc14de353666c2fc8b99f4", [:mix], [], "hexpm"},
+  "erlexec": {:hex, :erlexec, "1.10.0", "cba7924cf526097d2082ceb0ec34e7db6bca2624b8f3867fb3fa89c4cf25d227", [:rebar3], [], "hexpm", "54901b6e565f4cb4d0de36532d3653d351a3d7bf700bcbe2cf6f242a434ade2f"},
+  "exexec": {:hex, :exexec, "0.2.0", "a6ffc48cba3ac9420891b847e4dc7120692fb8c08c9e82220ebddc0bb8d96103", [:mix], [{:erlexec, "~> 1.10", [hex: :erlexec, repo: "hexpm", optional: false]}], "hexpm", "312cd1c9befba9e078e57f3541e4f4257eabda6eb9c348154fe899d6ac633299"},
+  "harmony": {:git, "https://github.com/rpmessner/harmony", "456de947ce79b565847cb14fa982a69bb8933d7c", []},
+  "meck": {:hex, :meck, "0.8.13", "ffedb39f99b0b99703b8601c6f17c7f76313ee12de6b646e671e3188401f7866", [:rebar3], [], "hexpm", "d34f013c156db51ad57cc556891b9720e6a1c1df5fe2e15af999c84d6cebeb1a"},
+  "mimic": {:hex, :mimic, "1.7.4", "cd2772ffbc9edefe964bc668bfd4059487fa639a5b7f1cbdf4fd22946505aa4f", [:mix], [], "hexpm", "437c61041ecf8a7fae35763ce89859e4973bb0666e6ce76d75efc789204447c3"},
+  "mock": {:hex, :mock, "0.3.3", "42a433794b1291a9cf1525c6d26b38e039e0d3a360732b5e467bfc77ef26c914", [:mix], [{:meck, "~> 0.8.13", [hex: :meck, repo: "hexpm", optional: false]}], "hexpm", "a280d1f7b6f4bbcbd9282616e57502721781c66ee5b540720efabeaf627cc7eb"},
+  "portmidi": {:hex, :portmidi, "5.1.2", "17a70db5d09885b15f841f878e2f4622996c02cf05ffeb90173d69d38f2589a8", [:make, :mix], [], "hexpm", "988044c7248883db855f129cd784698a300a9b86d4245164449e574545ec7de0"},
+  "recase": {:hex, :recase, "0.6.0", "1dd2dd2f4e06603b74977630e739f08b7fedbb9420cc14de353666c2fc8b99f4", [:mix], [], "hexpm", "8712e318420a228eb2e6366ada230148ed3a4316a798319edd5512f64d78c990"},
 }

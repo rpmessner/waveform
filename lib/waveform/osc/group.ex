@@ -114,11 +114,12 @@ defmodule Waveform.OSC.Group do
   end
 
   def handle_call(
-        {:new_group, name, type, action,
-         %Group{id: parent_id, in_bus: in_bus, out_bus: out_bus} = parent},
+        {:new_group, name, type, action, %Group{} = parent},
         _from,
         state
       ) do
+    %{id: parent_id, in_bus: in_bus, out_bus: out_bus} = parent
+
     new_group = %Group{
       parent: parent,
       in_bus: in_bus,
@@ -134,11 +135,12 @@ defmodule Waveform.OSC.Group do
   end
 
   def handle_call(
-        {:new_group, name, type, action, out_bus,
-         %Group{id: parent_id, out_bus: in_bus} = parent},
+        {:new_group, name, type, action, out_bus, %Group{} = parent},
         _from,
         state
       ) do
+    %{id: parent_id, out_bus: in_bus} = parent
+
     new_group = %Group{
       parent: parent,
       out_bus: out_bus,
