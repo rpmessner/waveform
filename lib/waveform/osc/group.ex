@@ -1,4 +1,13 @@
 defmodule Waveform.OSC.Group do
+  @moduledoc """
+  Manages group allocation and hierarchy for SuperCollider.
+
+  Groups organize synths into a tree structure. This module provides basic
+  group management with per-process group stacks for scoped group activation.
+
+  Process monitors ensure that dead processes don't leak memory in the
+  per-process group tracking.
+  """
   use GenServer
 
   @me __MODULE__
@@ -22,7 +31,10 @@ defmodule Waveform.OSC.Group do
     defstruct(
       root_group: %Group{id: 1, name: :root},
       root_synth_group: nil,
-      active_synth_group: %{}
+      # Map of pid => [group stack], with monitors to clean up dead processes
+      active_synth_group: %{},
+      # Map of monitor_ref => pid for cleanup
+      monitors: %{}
     )
   end
 
@@ -54,23 +66,17 @@ defmodule Waveform.OSC.Group do
     GenServer.call(@me, {:root_synth_group})
   end
 
-  def chord_group(name) do
-    GenServer.call(
-      @me,
-      {:new_group, name, :chord_group, :head, synth_group(self()) || state().root_synth_group}
-    )
-  end
+  @doc """
+  Create a new group with the given name.
 
-  def chord_group(name, %Group{} = parent) do
-    GenServer.call(@me, {:new_group, name, :chord_group, :head, parent})
-  end
+  ## Examples
 
-  def fx_container_group(name, %Group{} = parent) do
-    GenServer.call(@me, {:new_group, name, :fx_container_group, :head, parent})
-  end
-
-  def track_container_group(name) do
-    GenServer.call(@me, {:new_group, name, :track_container_group, :tail})
+      Group.new_group("my-group")
+      Group.new_group("my-group", parent_group)
+  """
+  def new_group(name, parent \\ nil) do
+    parent = parent || synth_group(self()) || state().root_synth_group
+    GenServer.call(@me, {:new_group, name, :custom, :head, parent})
   end
 
   def start_link(_state) do
@@ -87,7 +93,16 @@ defmodule Waveform.OSC.Group do
 
   def handle_call({:restore_synth_group, pid}, _from, %State{active_synth_group: asg} = state) do
     [_ | t] = asg[pid] || []
-    asg = Map.put(asg, pid, t)
+    asg = if t == [], do: Map.delete(asg, pid), else: Map.put(asg, pid, t)
+
+    # If we just removed the last group for this pid, demonitor it
+    state =
+      if t == [] do
+        demonitor_pid(state, pid)
+      else
+        state
+      end
+
     {:reply, {:ok, List.first(t)}, %{state | active_synth_group: asg}}
   end
 
@@ -102,11 +117,20 @@ defmodule Waveform.OSC.Group do
   def handle_call(
         {:activate_group, pid, %Group{} = g},
         _from,
-        %State{active_synth_group: asg} = state
+        %State{active_synth_group: asg, monitors: monitors} = state
       ) do
+    # Monitor this process if we're not already monitoring it
+    {state, monitors} =
+      if Map.has_key?(asg, pid) do
+        {state, monitors}
+      else
+        ref = Process.monitor(pid)
+        {state, Map.put(monitors, ref, pid)}
+      end
+
     pid_groups = asg[pid] || []
     asg = Map.put(asg, pid, [g | pid_groups])
-    {:reply, :ok, %{state | active_synth_group: asg}}
+    {:reply, :ok, %{state | active_synth_group: asg, monitors: monitors}}
   end
 
   def handle_call({:new_group, name, type, action}, from, state) do
@@ -163,7 +187,34 @@ defmodule Waveform.OSC.Group do
     {:reply, state, state}
   end
 
+  # Handle process death - clean up the group stack for that pid
+  def handle_info(
+        {:DOWN, ref, :process, _pid, _reason},
+        %State{monitors: monitors, active_synth_group: asg} = state
+      ) do
+    case Map.pop(monitors, ref) do
+      {nil, _} ->
+        {:noreply, state}
+
+      {pid, monitors} ->
+        asg = Map.delete(asg, pid)
+        {:noreply, %{state | monitors: monitors, active_synth_group: asg}}
+    end
+  end
+
   defp create_group(id, action, parent) do
     OSC.new_group(id, action, parent)
+  end
+
+  defp demonitor_pid(state, pid) do
+    # Find and remove the monitor for this pid
+    case Enum.find(state.monitors, fn {_ref, p} -> p == pid end) do
+      nil ->
+        state
+
+      {ref, _pid} ->
+        Process.demonitor(ref, [:flush])
+        %{state | monitors: Map.delete(state.monitors, ref)}
+    end
   end
 end
