@@ -57,31 +57,65 @@ defmodule Waveform.Lang do
   end
 
   def init(_state) do
-    {:ok, sclang_pid, sclang_os_pid} =
-      Exexec.run(
-        @path,
-        [
-          {:stdin, true},
-          {:stdout,
-           fn :stdout, _bytes, line ->
-             # IO.puts(line)
-             case line do
-               "SuperCollider 3 server ready" <> _rest ->
-                 Waveform.OSC.setup()
+    unless File.exists?(@path) do
+      raise """
+      SuperCollider not found at: #{@path}
 
-               _ ->
-                 nil
-             end
-           end}
-        ]
-      )
+      Waveform requires SuperCollider to be installed on your system.
 
-    state = %State{
-      sclang_pid: sclang_pid,
-      sclang_os_pid: sclang_os_pid
-    }
+      Installation instructions:
 
-    {:ok, state}
+      macOS:
+        brew install supercollider
+
+      Linux (Debian/Ubuntu):
+        sudo apt-get install supercollider
+
+      Linux (Arch):
+        sudo pacman -S supercollider
+
+      Windows:
+        Download from https://supercollider.github.io/
+
+      If SuperCollider is installed in a non-standard location, set the SCLANG_PATH
+      environment variable:
+
+        export SCLANG_PATH=/path/to/sclang
+
+      For more information, see: https://github.com/rpmessner/waveform#prerequisites
+      """
+    end
+
+    case Exexec.run(
+           @path,
+           [
+             {:stdin, true},
+             {:stdout,
+              fn :stdout, _bytes, line ->
+                # IO.puts(line)
+                case line do
+                  "SuperCollider 3 server ready" <> _rest ->
+                    Waveform.OSC.setup()
+
+                  _ ->
+                    nil
+                end
+              end}
+           ]
+         ) do
+      {:ok, sclang_pid, sclang_os_pid} ->
+        state = %State{
+          sclang_pid: sclang_pid,
+          sclang_os_pid: sclang_os_pid
+        }
+
+        {:ok, state}
+
+      {:error, reason} ->
+        {:stop,
+         "Failed to start SuperCollider (sclang): #{inspect(reason)}. " <>
+           "Make sure SuperCollider is properly installed and sclang is executable."}
+    end
   end
 
   def terminate(_reason, state) do
