@@ -16,7 +16,8 @@ defmodule Mix.Tasks.Waveform.Doctor do
 
   use Mix.Task
 
-  @sclang_path System.get_env("SCLANG_PATH") || "/Applications/SuperCollider.app/Contents/MacOS/sclang"
+  @sclang_path System.get_env("SCLANG_PATH") ||
+                 "/Applications/SuperCollider.app/Contents/MacOS/sclang"
 
   @impl Mix.Task
   def run(_args) do
@@ -35,15 +36,11 @@ defmodule Mix.Tasks.Waveform.Doctor do
     Mix.shell().info("\n" <> String.duplicate("=", 60))
 
     if failed == 0 do
-      Mix.shell().info(
-        [:green, "✓ All checks passed (#{passed}/#{passed})", :reset]
-      )
+      Mix.shell().info([:green, "✓ All checks passed (#{passed}/#{passed})", :reset])
 
       Mix.shell().info("\nYour system is ready to use Waveform!")
     else
-      Mix.shell().error(
-        "✗ #{failed} check(s) failed, #{passed} passed"
-      )
+      Mix.shell().error("✗ #{failed} check(s) failed, #{passed} passed")
 
       Mix.shell().info("\nPlease address the issues above before using Waveform.")
       Mix.shell().info("See: https://github.com/rpmessner/waveform#prerequisites")
@@ -75,40 +72,53 @@ defmodule Mix.Tasks.Waveform.Doctor do
 
     path = if File.exists?(@sclang_path), do: @sclang_path, else: System.find_executable("sclang")
 
-    if path && File.exists?(path) do
-      stat = File.stat!(path)
+    cond do
+      is_nil(path) or not File.exists?(path) ->
+        Mix.shell().info([:yellow, "  ⊘ Skipping (sclang not found)", :reset])
+        :ok
 
-      case stat.access do
-        access when access in [:read_write, :read] ->
-          # Try to get version
-          case System.cmd(path, ["-v"], stderr_to_stdout: true) do
-            {output, 0} ->
-              version = extract_version(output)
-              Mix.shell().info([:green, "  ✓ sclang is executable (version: #{version})", :reset])
-              :ok
+      not readable?(path) ->
+        Mix.shell().error("  ✗ sclang is not executable")
+        Mix.shell().info("    Run: chmod +x #{path}")
+        :error
 
-            {output, _} ->
-              # Some versions of sclang return non-zero with -v
-              if String.contains?(output, "SuperCollider") do
-                version = extract_version(output)
-                Mix.shell().info([:green, "  ✓ sclang is executable (version: #{version})", :reset])
-                :ok
-              else
-                Mix.shell().error("  ✗ sclang exists but failed to execute")
-                Mix.shell().info("    Output: #{String.trim(output)}")
-                :error
-              end
-          end
-
-        _ ->
-          Mix.shell().error("  ✗ sclang is not executable")
-          Mix.shell().info("    Run: chmod +x #{path}")
-          :error
-      end
-    else
-      Mix.shell().info([:yellow, "  ⊘ Skipping (sclang not found)", :reset])
-      :ok
+      true ->
+        check_sclang_version(path)
     end
+  end
+
+  defp readable?(path) do
+    stat = File.stat!(path)
+    stat.access in [:read_write, :read]
+  end
+
+  defp check_sclang_version(path) do
+    case System.cmd(path, ["-v"], stderr_to_stdout: true) do
+      {output, 0} ->
+        report_version(output)
+
+      {output, _} ->
+        # Some versions of sclang return non-zero with -v
+        if String.contains?(output, "SuperCollider") do
+          report_version(output)
+        else
+          Mix.shell().error("  ✗ sclang exists but failed to execute")
+          Mix.shell().info("    Output: #{String.trim(output)}")
+          :error
+        end
+    end
+  end
+
+  defp report_version(output) do
+    version = extract_version(output)
+
+    Mix.shell().info([
+      :green,
+      "  ✓ sclang is executable (version: #{version})",
+      :reset
+    ])
+
+    :ok
   end
 
   defp check_scsynth do
