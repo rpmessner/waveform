@@ -1,4 +1,26 @@
 defmodule Waveform.Lang do
+  @moduledoc """
+  Manages the SuperCollider language (sclang) process.
+
+  This module spawns and manages the `sclang` interpreter process, which in turn
+  boots the SuperCollider audio server. It handles sending commands to sclang
+  and monitors the process lifecycle.
+
+  The sclang executable location can be configured via the `SCLANG_PATH` environment
+  variable. If not set, it defaults to the standard macOS installation path.
+
+  ## Examples
+
+      # Send arbitrary SuperCollider code
+      Lang.send_command("s.boot;")
+
+      # Define a synth
+      Lang.send_command(\"\"\"
+        SynthDef(\\\\simple, { |freq=440|
+          Out.ar(0, SinOsc.ar(freq, 0, 0.1))
+        }).add;
+      \"\"\")
+  """
   use GenServer
 
   @me __MODULE__

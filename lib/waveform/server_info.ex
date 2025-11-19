@@ -1,4 +1,13 @@
 defmodule Waveform.ServerInfo do
+  @moduledoc """
+  Tracks SuperCollider server capabilities and configuration.
+
+  This module stores information about the running SuperCollider server,
+  including sample rate, number of busses, buffers, and other server parameters.
+
+  The information is populated automatically when the server boots and reports
+  its status.
+  """
   use GenServer
 
   @me __MODULE__

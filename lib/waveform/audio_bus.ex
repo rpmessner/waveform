@@ -1,4 +1,14 @@
 defmodule Waveform.AudioBus do
+  @moduledoc """
+  Manages audio bus allocation for SuperCollider.
+
+  Audio buses are used for routing audio between synths in SuperCollider.
+  This module tracks available buses and allocates them on demand to avoid
+  conflicts.
+
+  The bus allocation is initialized based on server capabilities reported
+  by SuperCollider during startup.
+  """
   use GenServer
 
   @me __MODULE__
