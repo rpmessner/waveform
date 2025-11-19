@@ -1,0 +1,344 @@
+# Waveform Project Context
+
+## Project Overview
+
+**Waveform** is an Elixir library for live coding music with SuperCollider. It provides a bridge between Elixir/Livebook and the SuperCollider audio synthesis platform via OSC (Open Sound Control) messaging.
+
+**Current Status**: Active but poorly documented, has superfluous features (macro synth definitions) that are being reconsidered.
+
+**Future Direction**: Being repurposed as the audio backend for KinoSpaetzle (a TidalCycles-like live coding environment for Livebook).
+
+## Repository Information
+
+- **Location**: /Users/ryanmessner/dev/waveform
+- **Git Remote**: https://github.com/rpmessner/waveform
+- **Current Branch**: master
+- **License**: Not specified (needs to be added)
+- **Contributors**: 3 contributors, 89 commits
+- **Last Activity**: 2024-01-30 (refactor: moved music theory to separate Harmony library)
+
+## Project Goals
+
+1. **Document better** - Currently minimal documentation
+2. **Remove superfluous features** - Specifically the macro synth definitions (Synth.Def macros)
+3. **Set up CI flow** - GitHub Actions for testing
+4. **Pre-publish checks** - Linting, formatting, documentation coverage
+5. **Publish to Hex** - Make it publicly available as a package
+
+## Architecture
+
+### Core Components
+
+1. **Waveform.Lang** (lib/waveform/lang.ex)
+   - GenServer that manages sclang (SuperCollider language) process
+   - Uses `exexec` to spawn and communicate with sclang
+   - Sends commands to SuperCollider via stdin
+   - Monitors stdout for "SuperCollider 3 server ready" to trigger OSC setup
+
+2. **Waveform.OSC** (lib/waveform/osc.ex)
+   - Handles OSC message communication with SuperCollider server
+   - Sends synth trigger messages, node management commands
+   - Core function: `new_synth(name, node_id, action, group_id, params)`
+
+3. **Waveform.Synth** (lib/waveform/synth.ex)
+   - Main user-facing API
+   - `play/2` - Play notes or chords
+   - `synth/2` - Trigger individual synth nodes
+   - Converts note names (e.g., "c4") to MIDI numbers via Harmony library
+   - Manages synth groups for organization
+
+4. **Waveform.Application** (lib/waveform/application.ex)
+   - Supervision tree starts 10+ GenServers
+   - Includes SmartCell registration for Livebook integration
+   - Key processes: AudioBus, Beat, Lang, OSC, Node, Group, ServerInfo, Synth.Manager
+
+5. **Waveform.Synth.Def** - MACRO SYSTEM (CANDIDATE FOR REMOVAL)
+   - Complex macro-based DSL for defining synth definitions
+   - `defsynth` and `defsubmodule` macros
+   - Compiles Elixir-like syntax to SuperCollider synthdef format
+   - Includes 20+ UGen modules (filters, reverbs, envelopes, etc.)
+   - **Status**: Thinking of removing this - it's complex and may not be needed
+
+### Dependencies
+
+```elixir
+{:exexec, "~> 0.2"},        # Process execution (manages sclang)
+{:recase, "~> 0.2"},        # String case conversion
+{:mock, "~> 0.3.2", only: :test},
+{:harmony, git: "https://github.com/rpmessner/harmony"}  # Music theory (notes, chords)
+```
+
+### Setup Requirements
+
+- SuperCollider installed: `brew install supercollider` (macOS)
+- Or set `SCLANG_PATH` environment variable
+- Default path: `/Applications/SuperCollider.app/Contents/MacOS/sclang`
+
+## Relationship to KinoSpaetzle
+
+**KinoSpaetzle** (located at ~/dev/kino_spaetzle) is a live coding environment being built for Livebook that will use Waveform as its SuperCollider backend.
+
+### KinoSpaetzle Architecture (from its docs)
+
+- **Purpose**: TidalCycles/Strudel-like pattern language for Livebook
+- **Pattern Language**: Uzu mini-notation (e.g., `note("c a f e").sound("piano")`)
+- **Audio Backend**: SuperCollider via SuperDirt
+- **Widget**: Kino.JS.Live custom widget with CodeMirror editor
+- **Pattern Engine**: Elixir-based parser and evaluator
+- **Target**: SuperDirt (not plain SuperCollider)
+
+### What KinoSpaetzle Needs from Waveform
+
+1. **OSC Communication** - ✅ Waveform already has this
+2. **SuperDirt Message Formatting** - ❌ Needs to be added
+3. **Pattern Scheduling** - ❌ Waveform uses `Process.sleep`, needs better timing
+4. **High-precision scheduler** - ❌ For tight rhythmic patterns
+5. **Hot-swappable patterns** - ❌ For live coding (change patterns while playing)
+
+### Integration Strategy
+
+**Phase 1**: Simplify Waveform
+- Remove macro synth definition system (too complex for the use case)
+- Keep core OSC communication
+- Document the simple API: `Synth.play/2`, OSC messaging
+- Publish to Hex as a minimal SuperCollider bridge
+
+**Phase 2**: KinoSpaetzle extends it
+- KinoSpaetzle adds SuperDirt-specific formatting
+- Builds pattern scheduler on top of Waveform's OSC layer
+- May contribute improvements back to Waveform
+
+## Current Status (2025-11-19)
+
+**MAJOR REFACTORING COMPLETE** - Library simplified to focus on OSC transport.
+
+### Files Changed: 72 total
+- **Deleted**: ~45 files (macro synth system, Beat/Track, SonicPi-specific code)
+- **Modified**: 8 core files (simplified APIs, added documentation)
+- **Added**: 3 files (LICENSE, CHANGELOG.md, .claude_code_notes)
+
+### Remaining Source Files: 9
+Only the essential OSC transport layer remains:
+- lib/waveform/application.ex - Simplified supervision tree
+- lib/waveform/synth.ex - Simple trigger/play API
+- lib/waveform/lang.ex - sclang process manager
+- lib/waveform/osc.ex - OSC messaging
+- lib/waveform/audio_bus.ex - Bus allocation
+- lib/waveform/server_info.ex - Server capabilities
+- lib/waveform/osc/node.ex - Node management
+- lib/waveform/osc/node/id.ex - Node ID allocation
+- lib/waveform/osc/group.ex - Group management
+
+### Ready for Publishing
+- ✅ Code compiles successfully
+- ✅ All files formatted
+- ✅ Comprehensive README
+- ✅ MIT License added
+- ✅ CHANGELOG.md created
+- ✅ Package metadata in mix.exs
+- ✅ All modules documented
+- ⏳ Needs: Git commit, version tag, hex publish
+
+## Features to Remove (Candidates)
+
+### Macro Synth Definition System
+**Files**:
+- lib/waveform/synth/def.ex (152 lines)
+- lib/waveform/synth/def/*.ex (compile, parse, envelope, submodule, ugens/)
+- 20+ UGen definition modules under lib/waveform/synth/def/ugens/
+
+**Reasoning**:
+- Complex macro DSL that may be overengineered for the use case
+- Most users just need to send OSC messages to existing SuperCollider synths
+- SuperDirt (TidalCycles) already provides synth definitions
+- Users can define synths directly in SuperCollider if needed
+- Maintenance burden for limited benefit
+
+**Keep Instead**:
+- Simple OSC messaging API
+- Note/MIDI conversion (via Harmony)
+- Node and group management
+- Basic synth triggering
+
+## Tasks Before Hex Publish
+
+### 1. Documentation
+- [ ] Add comprehensive README with examples
+- [ ] Add @moduledoc to all public modules
+- [ ] Add @doc to all public functions
+- [ ] Create hex.pm package description
+- [ ] Add CHANGELOG.md
+- [ ] Add CODE_OF_CONDUCT.md
+- [ ] Add CONTRIBUTING.md
+
+### 2. Clean Up Code
+- [ ] Review and commit/revert modified files
+- [ ] Remove or finalize synth macro system
+- [ ] Ensure tests pass
+- [ ] Run `mix format` on all files
+- [ ] Run Credo for code quality checks
+
+### 3. Package Metadata (mix.exs)
+- [ ] Add description
+- [ ] Add package metadata (licenses, links, files)
+- [ ] Specify Elixir version compatibility
+- [ ] Version bump to 0.1.0 or 1.0.0
+- [ ] Add source_url and homepage_url
+
+### 4. Testing & CI
+- [ ] Ensure existing tests pass
+- [ ] Add more integration tests
+- [ ] Set up GitHub Actions CI
+  - [ ] Run tests on multiple Elixir/OTP versions
+  - [ ] Check formatting (`mix format --check-formatted`)
+  - [ ] Run Credo
+  - [ ] Check docs build
+- [ ] Add test coverage reporting
+
+### 5. License
+- [ ] Add LICENSE file (Apache 2.0 or MIT)
+- [ ] Add license header comments to source files
+- [ ] Update mix.exs with license info
+
+### 6. Pre-publish Checks
+- [ ] `mix hex.build` - Build package locally
+- [ ] `mix hex.publish --dry-run` - Validate package
+- [ ] Test installation from local package
+- [ ] Write release notes
+
+## Example Usage (Current)
+
+```elixir
+# In Livebook setup cell
+Mix.install([{:waveform, git: "https://github.com/rpmessner/waveform"}])
+
+# Play a single note
+alias Waveform.Synth
+Synth.synth("d4")
+
+# Play a chord progression (requires Harmony)
+alias Harmony.Chord
+ii_V_I = [
+  {Chord.get("min7", "d4"), 2},
+  {Chord.get("7", "g5"), 2},
+  {Chord.get("maj7", "c5"), 4}
+]
+
+progression = fn ->
+  Stream.cycle(ii_V_I)
+  |> Enum.map(fn {chord, beats} ->
+    Synth.play chord, duration: beats, attack: 0.2, decay: 1
+    Process.sleep beats
+  end)
+end
+
+pid = spawn(progression)
+
+# Stop it
+Process.exit(pid, :kill)
+```
+
+## File Structure
+
+```
+waveform/
+├── lib/
+│   └── waveform/
+│       ├── application.ex       # Supervision tree
+│       ├── lang.ex              # sclang process manager
+│       ├── osc.ex               # OSC messaging
+│       ├── synth.ex             # Main API
+│       ├── synth/
+│       │   ├── manager.ex       # Synth state management
+│       │   ├── fx.ex            # Effects
+│       │   └── def/             # MACRO SYSTEM (removal candidate)
+│       │       ├── def.ex
+│       │       ├── compile.ex
+│       │       ├── parse.ex
+│       │       ├── envelope.ex
+│       │       ├── submodule.ex
+│       │       └── ugens/       # 20+ UGen modules
+│       ├── osc/
+│       │   ├── node.ex          # Node management
+│       │   ├── node/id.ex       # Node ID allocation
+│       │   └── group.ex         # Group management
+│       ├── audio_bus.ex
+│       ├── server_info.ex
+│       ├── beat.ex
+│       ├── track.ex
+│       ├── smart_cell.ex        # Livebook integration (new)
+│       └── util.ex
+├── test/
+│   ├── waveform/                # Tests mirror lib structure
+│   ├── fixtures/
+│   └── test_helper.exs
+├── examples/
+│   └── simple.livemd            # Example Livebook (new)
+├── mix.exs
+├── README.md
+├── OUTLINE.md                   # Incomplete outline (new)
+└── TODO.md                      # Empty file
+
+Dependencies (deps/):
+├── exexec/
+├── harmony/
+├── mock/
+└── recase/
+```
+
+## Notes from Recent Commits
+
+- 2024-01-30: Moved music theory code to separate `harmony` library
+- 2024-01-30: Updated README for Livebook usage
+- 2023-10-16: Switched from Porcelain to ExExec for process management
+- 2023-02-17: Various synth macro improvements (envelopes, ugen ranges, etc.)
+
+## Development Commands
+
+```bash
+# Install dependencies
+mix deps.get
+
+# Compile
+mix compile
+
+# Run tests
+mix test
+
+# Format code
+mix format
+
+# Type checking (if dialyzer added)
+mix dialyzer
+
+# Build docs
+mix docs
+
+# Check package build
+mix hex.build
+```
+
+## Questions to Answer
+
+- [ ] Keep or remove the macro synth definition system?
+- [ ] What's the minimal viable API for KinoSpaetzle?
+- [ ] Should Beat/Track modules stay or go?
+- [ ] What's the relationship between Synth.Manager and the current synth state?
+- [ ] Are AudioBus and ServerInfo needed for basic usage?
+
+## Reference Documentation
+
+- **SuperCollider**: https://supercollider.github.io/
+- **OSC Spec**: http://opensoundcontrol.org/
+- **SuperCollider Server Commands**: http://doc.sccode.org/Reference/Server-Command-Reference.html
+- **Hex Publishing Guide**: https://hex.pm/docs/publish
+- **KinoSpaetzle Docs**: ~/dev/kino_spaetzle/docs/WAVEFORM.md
+
+## Next Session TODO
+
+1. Review uncommitted changes in modified files
+2. Decide on macro system (keep or remove)
+3. Write comprehensive README
+4. Set up GitHub Actions CI
+5. Add license and package metadata
+6. Run through pre-publish checklist
