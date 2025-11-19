@@ -10,14 +10,12 @@ defmodule Waveform.OSC.GroupTest do
   alias Waveform.OSC.Node.ID
 
   setup do
-    # Start the application if not already started
-    {:ok, _} = Application.ensure_all_started(:waveform)
+    # Start only the GenServers needed for these tests
+    # Don't start the full application to avoid SuperCollider dependency
+    start_supervised!({Waveform.OSC.Node.ID, 100})
+    start_supervised!(Waveform.OSC.Group)
 
     Subject.reset()
-
-    on_exit(fn ->
-      Subject.reset()
-    end)
 
     :ok
   end
