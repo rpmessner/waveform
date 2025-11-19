@@ -5,8 +5,21 @@ defmodule Waveform.ServerInfo do
   This module stores information about the running SuperCollider server,
   including sample rate, number of busses, buffers, and other server parameters.
 
-  The information is populated automatically when the server boots and reports
-  its status.
+  The information is populated automatically when the server boots and responds
+  to a `/status` request with a `/status.reply` message.
+
+  ## Status Reply Format
+
+  The `/status.reply` message contains:
+  1. unused (int)
+  2. num_ugens (int)
+  3. num_synths (int)
+  4. num_groups (int)
+  5. num_loaded_synthdefs (int)
+  6. avg_cpu (float)
+  7. peak_cpu (float)
+  8. nominal_sample_rate (double)
+  9. actual_sample_rate (double)
   """
   use GenServer
 
@@ -16,11 +29,6 @@ defmodule Waveform.ServerInfo do
     @moduledoc false
     defstruct(
       sample_rate: nil,
-      sample_dur: nil,
-      radians_per_sample: nil,
-      control_rate: nil,
-      control_dur: nil,
-      subsample_offset: nil,
       num_output_busses: nil,
       num_input_busses: nil,
       num_audio_busses: nil,
@@ -49,36 +57,29 @@ defmodule Waveform.ServerInfo do
     {:reply, state, state}
   end
 
-  def handle_call({:set_state, state}, _from, _state) do
-    [
-      sample_rate,
-      sample_dur,
-      radians_per_sample,
-      control_rate,
-      control_dur,
-      subsample_offset,
-      num_output_busses,
-      num_input_busses,
-      num_audio_busses,
-      num_control_busses,
-      num_buffers,
-      _
-    ] = state
+  def handle_call({:set_state, status_reply}, _from, state) do
+    # /status.reply format: [unused, ugens, synths, groups, synthdefs, avg_cpu, peak_cpu, nominal_sr, actual_sr]
+    # We primarily care about sample_rate for now
+    # Note: We'll need to get bus/buffer counts from server boot options or assume defaults
+    case status_reply do
+      [_, _, _, _, _, _, _, _nominal_sr, actual_sr] ->
+        new_state = %State{
+          state
+          | sample_rate: actual_sr,
+            # SuperCollider defaults - these could be made configurable
+            num_output_busses: 8,
+            num_input_busses: 8,
+            num_audio_busses: 1024,
+            num_control_busses: 16_384,
+            num_buffers: 1024
+        }
 
-    new_state = %State{
-      sample_rate: sample_rate,
-      sample_dur: sample_dur,
-      radians_per_sample: radians_per_sample,
-      control_rate: control_rate,
-      control_dur: control_dur,
-      subsample_offset: subsample_offset,
-      num_output_busses: num_output_busses,
-      num_input_busses: num_input_busses,
-      num_audio_busses: num_audio_busses,
-      num_control_busses: num_control_busses,
-      num_buffers: num_buffers
-    }
+        {:reply, new_state, new_state}
 
-    {:reply, new_state, new_state}
+      _ ->
+        require Logger
+        Logger.warning("Unexpected /status.reply format: #{inspect(status_reply)}")
+        {:reply, state, state}
+    end
   end
 end

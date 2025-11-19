@@ -18,6 +18,7 @@ defmodule Waveform.OSC do
   - `/d_recv` - Receive a synth definition
   - `/d_loadDir` - Load synth definitions from a directory
   - `/notify` - Request server notifications
+  - `/status` - Request server status information
 
   ## Examples
 
@@ -59,9 +60,8 @@ defmodule Waveform.OSC do
   @d_load_dir ~c"/d_loadDir"
   @n_go ~c"/n_go"
   @n_end ~c"/n_end"
-  @server_info ~c"/sonic-pi/server-info"
-
-  @server_info_synth ~c"sonic-pi-server-info"
+  @status ~c"/status"
+  @status_reply ~c"/status.reply"
 
   @yes 1
 
@@ -126,14 +126,8 @@ defmodule Waveform.OSC do
     send_command([@notify, @yes])
   end
 
-  # Use high node IDs to avoid conflicts with user-allocated nodes
-  # SuperCollider node IDs can go up to 2^31-1
-  @synth_info_group 1_000_000
-  @synth_info_node 1_000_001
-
-  def request_server_info do
-    new_group(@synth_info_group, 0, 0)
-    send_command([@s_new, @server_info_synth, @synth_info_node, 0, @synth_info_group])
+  def request_server_status do
+    send_command([@status])
   end
 
   def load_user_synthdefs do
@@ -211,15 +205,14 @@ defmodule Waveform.OSC do
       udp_receive(socket)
   end
 
-  defp process_osc_message({:cmd, [@server_info, _id, _ | response]}) do
+  defp process_osc_message({:cmd, [@status_reply, _ | response]}) do
     si = ServerInfo.set_state(response)
-    OSC.clear_group(@synth_info_group)
     AudioBus.setup(si.num_audio_busses, si.num_output_busses + si.num_input_busses)
   end
 
   defp process_osc_message({:cmd, [@n_go, 1 | _]}) do
     Group.setup()
-    OSC.request_server_info()
+    OSC.request_server_status()
   end
 
   defp process_osc_message({:cmd, [@n_go, node_id | _]}) do
