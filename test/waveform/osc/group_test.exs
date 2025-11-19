@@ -86,9 +86,20 @@ defmodule Waveform.OSC.GroupTest do
 
       Subject.setup()
 
-      # Create two short-lived processes
-      task1 = Task.async(fn -> :ok end)
-      task2 = Task.async(fn -> :ok end)
+      # Create two processes that wait for messages before exiting
+      task1 =
+        Task.async(fn ->
+          receive do
+            :exit -> :ok
+          end
+        end)
+
+      task2 =
+        Task.async(fn ->
+          receive do
+            :exit -> :ok
+          end
+        end)
 
       pid = task1.pid
       pid2 = task2.pid
@@ -101,6 +112,10 @@ defmodule Waveform.OSC.GroupTest do
 
       assert :ok = Subject.activate_synth_group(pid2, bar)
       assert ^bar = Subject.synth_group(pid2)
+
+      # Now signal the tasks to exit
+      send(pid, :exit)
+      send(pid2, :exit)
 
       # Wait for tasks to complete
       Task.await(task1)

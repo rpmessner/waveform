@@ -6,7 +6,8 @@
       "Bash(git commit:*)",
       "Bash(mix format:*)",
       "Bash(git reset:*)",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": [],
     "ask": []

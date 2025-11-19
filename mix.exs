@@ -20,10 +20,16 @@ defmodule Waveform.MixProject do
   end
 
   def application do
-    [
-      extra_applications: [:logger],
-      mod: {Waveform.Application, []}
-    ]
+    case Mix.env() do
+      :test ->
+        [extra_applications: [:logger]]
+
+      _ ->
+        [
+          extra_applications: [:logger],
+          mod: {Waveform.Application, []}
+        ]
+    end
   end
 
   defp deps do
