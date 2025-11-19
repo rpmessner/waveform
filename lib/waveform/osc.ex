@@ -9,6 +9,20 @@ defmodule Waveform.OSC do
   The OSC module starts automatically as part of the Waveform supervision tree
   and initializes communication with SuperCollider via the sclang process.
 
+  ## Synth Definitions
+
+  Waveform does not include any built-in synth definitions. Users should define
+  synths directly in SuperCollider, or use a synth engine like SuperDirt.
+
+  To load synth definitions from a directory:
+
+      OSC.load_synthdef_dir("/path/to/synthdefs")
+
+  Or send a compiled synthdef directly:
+
+      bytes = File.read!("my_synth.scsyndef")
+      OSC.send_synthdef(bytes)
+
   ## OSC Message Types
 
   - `/s_new` - Create a new synth node
@@ -22,7 +36,7 @@ defmodule Waveform.OSC do
 
   ## Examples
 
-      # Create a new synth
+      # Create a new synth (assumes synth is defined in SuperCollider)
       OSC.new_synth("saw", 1001, :head, 1, [:freq, 440, :amp, 0.5])
 
       # Create a new group
@@ -30,6 +44,9 @@ defmodule Waveform.OSC do
 
       # Delete a group
       OSC.delete_group(100)
+
+      # Load synthdefs from a directory
+      OSC.load_synthdef_dir("/path/to/synthdefs")
   """
   use GenServer
 
@@ -40,15 +57,6 @@ defmodule Waveform.OSC do
 
   alias __MODULE__
   @me __MODULE__
-  @synth_folder __ENV__.file
-                |> Path.dirname()
-                |> Path.join("../../synthdefs/compiled")
-                |> to_charlist
-
-  @user_synth_folder __ENV__.file
-                     |> Path.dirname()
-                     |> Path.join("../../user_synthdefs/compiled")
-                     |> to_charlist
 
   @s_new ~c"/s_new"
   @g_new ~c"/g_new"
@@ -91,17 +99,15 @@ defmodule Waveform.OSC do
   end
 
   def setup do
-    load_synthdefs()
     request_notifications()
-  end
-
-  def save_synthdef(name, bytes) do
-    path = Path.join(@user_synth_folder, "#{name}.scsyndef")
-    File.write(path, bytes)
   end
 
   def send_synthdef(bytes) do
     send_command([@d_recv, bytes])
+  end
+
+  def load_synthdef_dir(path) do
+    send_command([@d_load_dir, to_charlist(path)])
   end
 
   def new_synth(name, id, action, group_id, args) do
@@ -128,14 +134,6 @@ defmodule Waveform.OSC do
 
   def request_server_status do
     send_command([@status])
-  end
-
-  def load_user_synthdefs do
-    send_command([@d_load_dir, @user_synth_folder])
-  end
-
-  def load_synthdefs do
-    send_command([@d_load_dir, @synth_folder])
   end
 
   def send_command(command) do
