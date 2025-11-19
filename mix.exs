@@ -45,6 +45,7 @@ defmodule Waveform.MixProject do
     """
     A simple OSC transport layer for communicating with SuperCollider from Elixir.
     Provides low-level OSC messaging and node/group management for live coding and audio synthesis.
+    Requires SuperCollider to be installed on your system.
     """
   end
 
