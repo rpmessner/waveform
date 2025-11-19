@@ -1,4 +1,35 @@
 defmodule Waveform.OSC do
+  @moduledoc """
+  OSC (Open Sound Control) transport layer for SuperCollider communication.
+
+  This module manages the UDP socket for sending OSC messages to and receiving
+  messages from SuperCollider. It provides functions for creating synths, groups,
+  loading synth definitions, and handling server notifications.
+
+  The OSC module starts automatically as part of the Waveform supervision tree
+  and initializes communication with SuperCollider via the sclang process.
+
+  ## OSC Message Types
+
+  - `/s_new` - Create a new synth node
+  - `/g_new` - Create a new group
+  - `/g_deepFree` - Delete a group and all its nodes
+  - `/g_freeAll` - Free all nodes in a group
+  - `/d_recv` - Receive a synth definition
+  - `/d_loadDir` - Load synth definitions from a directory
+  - `/notify` - Request server notifications
+
+  ## Examples
+
+      # Create a new synth
+      OSC.new_synth("saw", 1001, :head, 1, [:freq, 440, :amp, 0.5])
+
+      # Create a new group
+      OSC.new_group(100, :tail, 0)
+
+      # Delete a group
+      OSC.delete_group(100)
+  """
   use GenServer
 
   alias Waveform.AudioBus
@@ -18,19 +49,19 @@ defmodule Waveform.OSC do
                      |> Path.join("../../user_synthdefs/compiled")
                      |> to_charlist
 
-  @s_new '/s_new'
-  @g_new '/g_new'
-  @g_deepFree '/g_deepFree'
-  @g_freeAll '/g_freeAll'
-  @notify '/notify'
+  @s_new ~c"/s_new"
+  @g_new ~c"/g_new"
+  @g_deepFree ~c"/g_deepFree"
+  @g_freeAll ~c"/g_freeAll"
+  @notify ~c"/notify"
   # @d_load '/d_load'
-  @d_recv '/d_recv'
-  @d_loadDir '/d_loadDir'
-  @n_go '/n_go'
-  @n_end '/n_end'
-  @server_info '/sonic-pi/server-info'
+  @d_recv ~c"/d_recv"
+  @d_loadDir ~c"/d_loadDir"
+  @n_go ~c"/n_go"
+  @n_end ~c"/n_end"
+  @server_info ~c"/sonic-pi/server-info"
 
-  @server_info_synth 'sonic-pi-server-info'
+  @server_info_synth ~c"sonic-pi-server-info"
 
   @yes 1
 
@@ -52,7 +83,7 @@ defmodule Waveform.OSC do
     defstruct(
       socket: nil,
       pid: nil,
-      host: '127.0.0.1',
+      host: ~c"127.0.0.1",
       host_port: 57110,
       udp_port: 57111
     )
@@ -94,8 +125,10 @@ defmodule Waveform.OSC do
     send_command([@notify, @yes])
   end
 
-  @synth_info_group 2
-  @synth_info_node 3
+  # Use high node IDs to avoid conflicts with user-allocated nodes
+  # SuperCollider node IDs can go up to 2^31-1
+  @synth_info_group 1_000_000
+  @synth_info_node 1_000_001
 
   def request_server_info() do
     new_group(@synth_info_group, 0, 0)
@@ -121,21 +154,28 @@ defmodule Waveform.OSC do
   def init(state) do
     {:ok, socket} = :gen_udp.open(state.udp_port, [:binary, {:active, false}])
 
-    Waveform.Lang.start_server()
-
-    pid = spawn(fn -> udp_receive(socket) end)
+    # Start UDP receiver as a linked task so it's supervised
+    {:ok, pid} = Task.start_link(fn -> udp_receive(socket) end)
 
     state = %State{
       socket: socket,
       pid: pid
     }
 
+    # Defer server startup to avoid blocking init
+    send(self(), :start_server)
+
     {:ok, state}
   end
 
   def terminate(_reason, state) do
     :gen_udp.close(state.socket)
-    Process.exit(state.pid, :kill)
+    # No need to kill pid - it will die when socket closes or when this process dies (linked)
+  end
+
+  def handle_info(:start_server, state) do
+    Waveform.Lang.start_server()
+    {:noreply, state}
   end
 
   def handle_cast({:command, command}, state) do
@@ -146,37 +186,57 @@ defmodule Waveform.OSC do
   defp udp_receive(socket) do
     case :gen_udp.recv(socket, 0, 1000) do
       {:ok, {_ip, _port, the_message}} ->
-        message = :osc.decode(the_message)
+        try do
+          message = :osc.decode(the_message)
 
-        # IO.inspect({"osc receieve:", message})
+          # IO.inspect({"osc receive:", message})
 
-        case message do
-          {:cmd, [@server_info, _id, _ | response]} ->
-            si = ServerInfo.set_state(response)
-            OSC.clear_group(@synth_info_group)
+          case message do
+            {:cmd, [@server_info, _id, _ | response]} ->
+              si = ServerInfo.set_state(response)
+              OSC.clear_group(@synth_info_group)
 
-            AudioBus.setup(
-              si.num_audio_busses,
-              si.num_output_busses + si.num_input_busses
-            )
+              AudioBus.setup(
+                si.num_audio_busses,
+                si.num_output_busses + si.num_input_busses
+              )
 
-          {:cmd, [@n_go, 1 | _]} ->
-            Group.setup()
-            OSC.request_server_info()
+            {:cmd, [@n_go, 1 | _]} ->
+              Group.setup()
+              OSC.request_server_info()
 
-          {:cmd, [@n_go, node_id | _]} ->
-            Node.activate_node(node_id)
+            {:cmd, [@n_go, node_id | _]} ->
+              Node.activate_node(node_id)
 
-          {:cmd, [@n_end, node_id | _]} ->
-            Node.deactivate_node(node_id)
+            {:cmd, [@n_end, node_id | _]} ->
+              Node.deactivate_node(node_id)
 
-          _ ->
-            nil
+            _ ->
+              nil
+          end
+
+          udp_receive(socket)
+        rescue
+          error ->
+            require Logger
+            Logger.warning("Error decoding OSC message: #{inspect(error)}")
+            udp_receive(socket)
         end
 
+      {:error, :timeout} ->
         udp_receive(socket)
 
-      {:error, :timeout} ->
+      {:error, :closed} ->
+        # Socket closed, exit gracefully
+        require Logger
+        Logger.info("UDP socket closed, stopping receiver")
+        :ok
+
+      {:error, reason} ->
+        require Logger
+        Logger.error("UDP receive error: #{inspect(reason)}")
+        # Wait a bit before retrying to avoid tight error loop
+        Process.sleep(100)
         udp_receive(socket)
     end
   end
