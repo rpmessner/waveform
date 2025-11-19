@@ -96,7 +96,7 @@ defmodule Waveform.Lang do
     end
   end
 
-  defp start_sclang(state) do
+  defp start_sclang(_state) do
     case Exexec.run(
            @path,
            [

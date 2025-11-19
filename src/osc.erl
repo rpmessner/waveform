@@ -12,7 +12,7 @@
 %% notice is included.
 %% ++
 
--compile(export_all).
+-export([encode/1, decode/1, test0/0, test1/0, test2/0, now/0, osc_time_to_local/1, pack_ts/2, encode_time/1]).
 
 %% Note: not all tags are implemented yet
 %%       note super well tested - appears to work :-)
