@@ -220,15 +220,25 @@ end
 
 ### Integrating with SuperDirt
 
-For TidalCycles-style live coding, you can send messages to SuperDirt:
+Waveform is a perfect foundation for building TidalCycles-style live coding environments. SuperDirt should be loaded and configured separately in SuperCollider, then you can send it OSC messages directly.
+
+For more advanced SuperDirt integration and pattern languages, see [KinoSpaetzle](https://github.com/rpmessner/kino_spaetzle) - a TidalCycles-inspired live coding environment for Livebook that uses Waveform as its transport layer.
+
+Example of triggering SuperDirt samples:
 
 ```elixir
-# SuperDirt expects specific OSC message formats
-OSC.send_command([
-  '/dirt/play',
-  's', 'bd',  # sample name
-  'n', 0,     # sample number
-  'gain', 1.0
+alias Waveform.OSC
+
+# SuperDirt listens on port 57120 by default
+# You'll need to configure a separate OSC connection to SuperDirt
+# or load SuperDirt into the same scsynth instance
+
+# Trigger a sample (after setting up SuperDirt routing)
+Synth.trigger("dirt", [
+  s: "bd",      # sample name
+  n: 0,         # sample number
+  gain: 1.0,
+  orbit: 0
 ])
 ```
 
@@ -275,4 +285,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-Built for live coding music in Elixir and Livebook. Inspired by TidalCycles, Sonic Pi, and the SuperCollider community.
+Built for live coding music in Elixir and Livebook. Inspired by TidalCycles and the SuperCollider community.
