@@ -79,6 +79,11 @@ defmodule Waveform.OSC.GroupTest do
 
   test "activates synth group and cleans up on process death" do
     with_mock OSC, new_group: fn _, _, _ -> nil end do
+      # Ensure Group is alive before calling setup
+      unless Process.alive?(Process.whereis(Group)) do
+        {:ok, _} = Group.start_link(nil)
+      end
+
       Subject.setup()
 
       # Create two short-lived processes
