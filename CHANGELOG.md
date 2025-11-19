@@ -13,10 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now uses standard `/status` and `/status.reply` messages for server capabilities
   - ServerInfo module simplified to use SuperCollider defaults for bus/buffer counts
   - More portable and standard SuperCollider integration
+- **BREAKING**: Renamed `OSC.load_synthdefs/0` to `OSC.load_synthdef_dir/1`
+  - Now requires explicit path argument
+  - No longer auto-loads built-in synthdefs on startup
+  - Users must define or load their own synth definitions
 
 ### Removed
 - Sonic Pi-specific server information gathering
 - Internal node/group allocation for server info queries
+- All built-in Sonic Pi synth definitions (~90 .scsyndef files)
+  - Users should define synths in SuperCollider directly
+  - Or use SuperDirt for TidalCycles-style live coding
+  - Or load custom synthdefs from their own directory
+- `OSC.save_synthdef/2` function (use standard file operations instead)
+- `OSC.load_user_synthdefs/0` function (use `load_synthdef_dir/1` instead)
 
 ## [0.2.0] - 2025-11-19
 
