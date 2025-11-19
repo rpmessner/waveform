@@ -1,5 +1,5 @@
 defmodule Waveform.OSC.GroupTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
   import Mock
 
   alias Waveform.OSC.Group, as: Subject
@@ -10,6 +10,9 @@ defmodule Waveform.OSC.GroupTest do
   alias Waveform.OSC.Node.ID
 
   setup do
+    # Start the application if not already started
+    {:ok, _} = Application.ensure_all_started(:waveform)
+
     Subject.reset()
 
     on_exit(fn ->
@@ -29,7 +32,7 @@ defmodule Waveform.OSC.GroupTest do
     end
   end
 
-  test "creates track container group" do
+  test "creates custom group" do
     with_mock OSC, new_group: fn _, _, _ -> nil end do
       Subject.setup()
 
@@ -41,48 +44,61 @@ defmodule Waveform.OSC.GroupTest do
 
       assert %Group{
                id: ^next_id,
-               type: :track_container_group,
+               type: :custom,
                name: :foo,
                parent: ^root_synth_group
-             } = Subject.track_container_group(:foo)
+             } = Subject.new_group(:foo)
 
-      assert called(OSC.new_group(ID.state().current_id, :tail, root_synth_group.id))
+      assert called(OSC.new_group(ID.state().current_id, :head, root_synth_group.id))
     end
   end
 
-  @tag :wip
-  test "activates synth group" do
+  test "activates synth group and cleans up on process death" do
     with_mock OSC, new_group: fn _, _, _ -> nil end do
       Subject.setup()
 
-      pid = spawn(fn -> nil end)
-      pid2 = spawn(fn -> nil end)
+      # Create two short-lived processes
+      task1 = Task.async(fn -> :ok end)
+      task2 = Task.async(fn -> :ok end)
 
-      assert %Group{} = foo = Subject.track_container_group(:foo)
-      assert %Group{} = bar = Subject.track_container_group(:bar)
+      pid = task1.pid
+      pid2 = task2.pid
+
+      assert %Group{} = foo = Subject.new_group(:foo)
+      assert %Group{} = bar = Subject.new_group(:bar)
 
       assert :ok = Subject.activate_synth_group(pid, foo)
-
       assert ^foo = Subject.synth_group(pid)
 
       assert :ok = Subject.activate_synth_group(pid2, bar)
-
       assert ^bar = Subject.synth_group(pid2)
+
+      # Wait for tasks to complete
+      Task.await(task1)
+      Task.await(task2)
+
+      # Give the DOWN message time to be processed
+      Process.sleep(50)
+
+      # Verify that dead processes were cleaned up
+      state = Subject.state()
+      refute Map.has_key?(state.active_synth_group, pid)
+      refute Map.has_key?(state.active_synth_group, pid2)
     end
   end
 
-  test "creates chord group" do
+  test "creates nested groups" do
     with_mock OSC, new_group: fn _, _, _ -> nil end do
       Subject.setup()
       root_synth_group = Subject.state().root_synth_group
 
-      assert %Group{} = foo = Subject.track_container_group(:foo)
+      assert %Group{} = foo = Subject.new_group(:foo)
 
       assert %Group{
                parent: ^root_synth_group,
                name: :bar,
-               type: :chord_group
-             } = cg1 = Subject.chord_group(:bar)
+               type: :custom
+             } = cg1 = Subject.new_group(:bar)
 
       assert called(OSC.new_group(foo.id + 1, :head, root_synth_group.id))
       assert :ok = Subject.activate_synth_group(self(), foo)
@@ -91,13 +107,13 @@ defmodule Waveform.OSC.GroupTest do
 
       assert %Group{
                parent: ^foo
-             } = Subject.chord_group(:bar)
+             } = Subject.new_group(:bar)
 
       assert called(OSC.new_group(cg1.id + 1, :head, foo.id))
 
       assert %Group{
                parent: ^root_synth_group
-             } = Subject.chord_group(:bar, root_synth_group)
+             } = Subject.new_group(:bar, root_synth_group)
     end
   end
 end
