@@ -13,6 +13,7 @@ defmodule Waveform.ServerInfo do
   @me __MODULE__
 
   defmodule State do
+    @moduledoc false
     defstruct(
       sample_rate: nil,
       sample_dur: nil,

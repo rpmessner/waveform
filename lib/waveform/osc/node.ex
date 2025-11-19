@@ -20,6 +20,7 @@ defmodule Waveform.OSC.Node do
   @max_dead_node_age_ms 60_000
 
   defmodule State do
+    @moduledoc false
     defstruct(
       # Nodes waiting for SuperCollider confirmation
       inactive_nodes: %{},

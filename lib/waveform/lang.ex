@@ -27,6 +27,7 @@ defmodule Waveform.Lang do
   @path System.get_env("SCLANG_PATH") || "/Applications/SuperCollider.app/Contents/MacOS/sclang"
 
   defmodule State do
+    @moduledoc false
     defstruct(
       sclang_pid: nil,
       sclang_os_pid: nil

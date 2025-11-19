@@ -13,8 +13,8 @@ defmodule Waveform.OSC.Group do
   @me __MODULE__
   alias __MODULE__
 
-  alias Waveform.OSC.Node.ID
   alias Waveform.OSC
+  alias Waveform.OSC.Node.ID
 
   defstruct(
     id: nil,
@@ -28,6 +28,7 @@ defmodule Waveform.OSC.Group do
   )
 
   defmodule State do
+    @moduledoc false
     defstruct(
       root_group: %Group{id: 1, name: :root},
       root_synth_group: nil,

@@ -15,6 +15,7 @@ defmodule Waveform.AudioBus do
   @allocation_size 2
 
   defmodule State do
+    @moduledoc false
     defstruct(idx: 0, max_id: 1000, idx_offset: 4)
   end
 
@@ -26,7 +27,7 @@ defmodule Waveform.AudioBus do
     %State{}
   end
 
-  def reset() do
+  def reset do
     GenServer.call(@me, {:reset})
   end
 
@@ -34,11 +35,11 @@ defmodule Waveform.AudioBus do
     {:ok, state}
   end
 
-  def peek() do
+  def peek do
     GenServer.call(@me, {:peek})
   end
 
-  def next() do
+  def next do
     GenServer.call(@me, {:next})
   end
 

@@ -51,12 +51,12 @@ defmodule Waveform.OSC do
 
   @s_new ~c"/s_new"
   @g_new ~c"/g_new"
-  @g_deepFree ~c"/g_deepFree"
-  @g_freeAll ~c"/g_freeAll"
+  @g_deep_free ~c"/g_deepFree"
+  @g_free_all ~c"/g_freeAll"
   @notify ~c"/notify"
   # @d_load '/d_load'
   @d_recv ~c"/d_recv"
-  @d_loadDir ~c"/d_loadDir"
+  @d_load_dir ~c"/d_loadDir"
   @n_go ~c"/n_go"
   @n_end ~c"/n_end"
   @server_info ~c"/sonic-pi/server-info"
@@ -80,12 +80,13 @@ defmodule Waveform.OSC do
   }
 
   defmodule State do
+    @moduledoc false
     defstruct(
       socket: nil,
       pid: nil,
       host: ~c"127.0.0.1",
-      host_port: 57110,
-      udp_port: 57111
+      host_port: 57_110,
+      udp_port: 57_111
     )
   end
 
@@ -110,11 +111,11 @@ defmodule Waveform.OSC do
   def delete_group(id) when is_number(id), do: delete_group([id])
 
   def delete_group(ids) do
-    send_command([@g_deepFree | ids])
+    send_command([@g_deep_free | ids])
   end
 
   def clear_group(id) do
-    send_command([@g_freeAll, id])
+    send_command([@g_free_all, id])
   end
 
   def new_group(id, action, parent) do
@@ -130,17 +131,17 @@ defmodule Waveform.OSC do
   @synth_info_group 1_000_000
   @synth_info_node 1_000_001
 
-  def request_server_info() do
+  def request_server_info do
     new_group(@synth_info_group, 0, 0)
     send_command([@s_new, @server_info_synth, @synth_info_node, 0, @synth_info_group])
   end
 
   def load_user_synthdefs do
-    send_command([@d_loadDir, @user_synth_folder])
+    send_command([@d_load_dir, @user_synth_folder])
   end
 
   def load_synthdefs do
-    send_command([@d_loadDir, @synth_folder])
+    send_command([@d_load_dir, @synth_folder])
   end
 
   def send_command(command) do
@@ -186,59 +187,62 @@ defmodule Waveform.OSC do
   defp udp_receive(socket) do
     case :gen_udp.recv(socket, 0, 1000) do
       {:ok, {_ip, _port, the_message}} ->
-        try do
-          message = :osc.decode(the_message)
-
-          # IO.inspect({"osc receive:", message})
-
-          case message do
-            {:cmd, [@server_info, _id, _ | response]} ->
-              si = ServerInfo.set_state(response)
-              OSC.clear_group(@synth_info_group)
-
-              AudioBus.setup(
-                si.num_audio_busses,
-                si.num_output_busses + si.num_input_busses
-              )
-
-            {:cmd, [@n_go, 1 | _]} ->
-              Group.setup()
-              OSC.request_server_info()
-
-            {:cmd, [@n_go, node_id | _]} ->
-              Node.activate_node(node_id)
-
-            {:cmd, [@n_end, node_id | _]} ->
-              Node.deactivate_node(node_id)
-
-            _ ->
-              nil
-          end
-
-          udp_receive(socket)
-        rescue
-          error ->
-            require Logger
-            Logger.warning("Error decoding OSC message: #{inspect(error)}")
-            udp_receive(socket)
-        end
+        handle_udp_message(socket, the_message)
 
       {:error, :timeout} ->
         udp_receive(socket)
 
       {:error, :closed} ->
-        # Socket closed, exit gracefully
-        require Logger
-        Logger.info("UDP socket closed, stopping receiver")
-        :ok
+        handle_socket_closed()
 
       {:error, reason} ->
-        require Logger
-        Logger.error("UDP receive error: #{inspect(reason)}")
-        # Wait a bit before retrying to avoid tight error loop
-        Process.sleep(100)
-        udp_receive(socket)
+        handle_udp_error(socket, reason)
     end
+  end
+
+  defp handle_udp_message(socket, the_message) do
+    message = :osc.decode(the_message)
+    process_osc_message(message)
+    udp_receive(socket)
+  rescue
+    error ->
+      require Logger
+      Logger.warning("Error decoding OSC message: #{inspect(error)}")
+      udp_receive(socket)
+  end
+
+  defp process_osc_message({:cmd, [@server_info, _id, _ | response]}) do
+    si = ServerInfo.set_state(response)
+    OSC.clear_group(@synth_info_group)
+    AudioBus.setup(si.num_audio_busses, si.num_output_busses + si.num_input_busses)
+  end
+
+  defp process_osc_message({:cmd, [@n_go, 1 | _]}) do
+    Group.setup()
+    OSC.request_server_info()
+  end
+
+  defp process_osc_message({:cmd, [@n_go, node_id | _]}) do
+    Node.activate_node(node_id)
+  end
+
+  defp process_osc_message({:cmd, [@n_end, node_id | _]}) do
+    Node.deactivate_node(node_id)
+  end
+
+  defp process_osc_message(_), do: nil
+
+  defp handle_socket_closed do
+    require Logger
+    Logger.info("UDP socket closed, stopping receiver")
+    :ok
+  end
+
+  defp handle_udp_error(socket, reason) do
+    require Logger
+    Logger.error("UDP receive error: #{inspect(reason)}")
+    Process.sleep(100)
+    udp_receive(socket)
   end
 
   defp osc(state, command) do
