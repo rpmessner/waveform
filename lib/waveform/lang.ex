@@ -57,8 +57,9 @@ defmodule Waveform.Lang do
     GenServer.start_link(@me, %State{}, name: @me)
   end
 
-  def init(_state) do
-    unless File.exists?(@path) do
+  def init(state) do
+    # Skip SuperCollider check in CI environments
+    unless System.get_env("CI") || File.exists?(@path) do
       raise """
       SuperCollider not found at: #{@path}
 
@@ -87,6 +88,15 @@ defmodule Waveform.Lang do
       """
     end
 
+    # Skip starting sclang in CI environments
+    if System.get_env("CI") do
+      {:ok, %State{}}
+    else
+      start_sclang(state)
+    end
+  end
+
+  defp start_sclang(state) do
     case Exexec.run(
            @path,
            [
@@ -120,11 +130,13 @@ defmodule Waveform.Lang do
   end
 
   def terminate(_reason, state) do
-    Exexec.stop(state.sclang_pid)
+    if state.sclang_pid, do: Exexec.stop(state.sclang_pid)
   end
 
   def handle_call({:command, command}, _from, state) do
-    Exexec.send(state.sclang_os_pid, "#{command}\n")
+    if state.sclang_os_pid do
+      Exexec.send(state.sclang_os_pid, "#{command}\n")
+    end
 
     {:reply, nil, state}
   end

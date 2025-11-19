@@ -53,6 +53,8 @@ jobs:
 
       - name: Run tests
         run: mix test
+        env:
+          CI: true
 
   quality:
     name: Code Quality
