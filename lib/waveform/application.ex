@@ -1,19 +1,27 @@
 defmodule Waveform.Application do
+  @moduledoc """
+  Main application supervisor for Waveform.
+
+  Starts the essential processes for OSC communication with SuperCollider:
+  - Lang: Manages the sclang process
+  - OSC: Handles OSC message transport
+  - Node: Node ID allocation and tracking
+  - Group: Group management
+  - AudioBus: Audio bus allocation
+  - ServerInfo: Tracks server capabilities
+  """
   use Application
 
   def start(_type, _args) do
     children = [
-      {Waveform.AudioBus, nil},
-      {Waveform.Beat, nil},
       {Waveform.Lang, nil},
-      # {Waveform.Midi, nil},
       {Waveform.OSC, nil},
-      {Waveform.OSC.Node.ID, 3},
+      # Start node IDs at 100 to leave room for system nodes
+      {Waveform.OSC.Node.ID, 100},
       {Waveform.OSC.Node, nil},
       {Waveform.OSC.Group, nil},
-      {Waveform.ServerInfo, nil},
-      {Waveform.Synth.Manager, nil},
-      {Waveform.Synth.Def.Submodule, nil}
+      {Waveform.AudioBus, nil},
+      {Waveform.ServerInfo, nil}
     ]
 
     opts = [strategy: :one_for_one, name: Waveform.Supervisor]

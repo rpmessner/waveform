@@ -1,98 +1,97 @@
 defmodule Waveform.Synth do
-  alias Harmony.Note
-  alias Harmony.Chord
+  @moduledoc """
+  High-level API for triggering synths in SuperCollider.
+
+  This module provides a simple interface for playing notes and synths
+  via OSC messaging. It handles node allocation, group management, and
+  basic parameter normalization.
+
+  ## Examples
+
+      # Trigger a synth with a MIDI note number
+      Synth.trigger("my-synth", note: 60, amp: 0.5)
+
+      # Trigger with specific node and group IDs
+      Synth.trigger("my-synth", [note: 60], node_id: 1001, group_id: 1)
+
+      # Play a note by name (requires Harmony library)
+      Synth.play("c4", synth: "saw", amp: 0.8)
+  """
 
   alias Waveform.OSC
   alias Waveform.OSC.Group
   alias Waveform.OSC.Node
 
-  alias Waveform.Synth.Manager
+  @doc """
+  Trigger a synth with the given name and parameters.
 
-  import Waveform.Util
+  ## Parameters
+  - `synth_name` - Name of the SuperCollider synth to trigger (string or charlist)
+  - `params` - Keyword list of synth parameters
+  - `opts` - Options for node and group (optional)
+    - `:node_id` - Specific node ID (defaults to auto-allocated)
+    - `:group_id` - Target group ID (defaults to process-specific group)
+    - `:action` - Add action (defaults to :head)
 
-  def current_synth() do
-    Manager.current_synth_name(self())
+  ## Examples
+
+      Synth.trigger("saw", note: 60, amp: 0.5)
+      Synth.trigger("kick", amp: 0.8, group_id: 10)
+  """
+  def trigger(synth_name, params \\ [], opts \\ []) do
+    node_id = opts[:node_id] || Node.next_synth_node().id
+    group_id = opts[:group_id] || Group.synth_group(self()).id
+    action = opts[:action] || :head
+
+    # Normalize params to flat list: [:key1, value1, :key2, value2, ...]
+    normalized_params = normalize_params(params)
+
+    OSC.new_synth(to_charlist(synth_name), node_id, action, group_id, normalized_params)
+
+    %{node_id: node_id, group_id: group_id}
   end
 
-  def use_synth(synth) do
-    Manager.set_current_synth(self(), synth)
-  end
+  @doc """
+  Play a note using a synth.
 
-  def play(n), do: play(n, [])
+  This is a convenience function that adds a `:note` parameter.
+  If the Harmony library is available, you can pass note names like "c4".
 
-  def play(%Chord{} = c, options) do
-    name =
-      "#{c.tonic} #{c.quality}#{if c.root_degree > 0, do: " #{c.root}", else: ""} #{c.root_degree + 1}"
+  ## Examples
 
-    group =
-      if options[:group] do
-        Group.chord_group(name, options[:group])
-      else
-        Group.chord_group(name)
-      end
+      # With MIDI number
+      Synth.play(60, synth: "saw", amp: 0.5)
 
-    c.notes
-    |> Enum.map(fn note ->
-      synth(note, options |> Keyword.put(:group, group))
-    end)
-  end
+      # With note name (requires Harmony)
+      Synth.play("c4", synth: "piano")
+  """
+  def play(note, opts \\ [])
 
-  def synth(note), do: synth(note, [])
-
-  def synth(note, opts) when is_binary(note) do
-    Note.get(note).midi
-    |> synth(opts)
-  end
-
-  def synth(note, opts) when is_number(note) do
-    {group, args} = group_arg(opts |> Enum.into(%{}))
-
-    args
-    |> calculate_sustain()
-    |> Enum.reduce([:note, note], normalizer())
-    |> synth(group)
-  end
-
-  def synth(opts, %Group{in_bus: out_bus} = g) when out_bus != nil do
-    %{id: group_id} = g
-    trigger_synth(group_id, [:out_bus, out_bus | opts])
-  end
-
-  def synth(opts, %Group{} = g) do
-    %{id: group_id} = g
-    trigger_synth(group_id, opts)
-  end
-
-  defp trigger_synth(group_id, opts) do
-    %Node{id: node_id} = Node.next_synth_node()
-    synth_name = Manager.current_synth_value(self())
-    add_action = :head
-
-    # http://doc.sccode.org/Reference/Server-Command-Reference.html#/s_new
-    OSC.new_synth(synth_name, node_id, add_action, group_id, opts)
-  end
-
-  def chord(tonic, quality, options \\ []) do
-    options_map = Enum.into(options, %{})
-    struct(Chord, Map.merge(%{tonic: tonic, quality: quality}, options_map))
-  end
-
-  defp group_arg(args) do
-    case args[:group] do
-      %Group{} = g ->
-        {g, Map.delete(args, :group)}
-
-      nil ->
-        {Group.synth_group(self()), args}
+  def play(note, opts) when is_binary(note) do
+    if Code.ensure_loaded?(Harmony.Note) do
+      midi = Harmony.Note.get(note).midi
+      play(midi, opts)
+    else
+      raise "Harmony library not available. Use MIDI numbers instead or add {:harmony, ...} to deps."
     end
   end
 
-  defp normalizer,
-    do: fn {key, value}, coll ->
+  def play(note, opts) when is_number(note) do
+    synth_name = opts[:synth] || "default"
+    params = Keyword.merge([note: note], Keyword.delete(opts, :synth))
+
+    trigger(synth_name, params)
+  end
+
+  # Normalize parameters to the flat list format expected by OSC
+  defp normalize_params(params) when is_list(params) do
+    Enum.reduce(params, [], fn {key, value}, acc ->
       if is_number(value) do
-        [key, value | coll]
+        [key, value | acc]
       else
-        coll
+        acc
       end
-    end
+    end)
+    |> Enum.reverse()
+  end
 end
