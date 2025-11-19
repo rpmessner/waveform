@@ -84,9 +84,38 @@ Synth.trigger("default", note: 60, amp: 0.5)
 
 ## Usage
 
+### Defining Synths
+
+Waveform does not include any built-in synth definitions. You need to define synths in SuperCollider first.
+
+You can define synths in several ways:
+
+**Option 1: Define in SuperCollider directly**
+
+```elixir
+alias Waveform.Lang
+
+Lang.send_command("""
+  SynthDef(\\saw, { |freq=440, amp=0.1, out=0|
+    Out.ar(out, Saw.ar(freq, amp))
+  }).add;
+""")
+```
+
+**Option 2: Load from a file**
+
+```elixir
+# Place your .scsyndef files in a directory
+OSC.load_synthdef_dir("/path/to/synthdefs")
+```
+
+**Option 3: Use SuperDirt**
+
+For TidalCycles-style live coding, load SuperDirt which includes many synths and samples. See the [SuperDirt integration](#integrating-with-superdirt) section below.
+
 ### Triggering Synths
 
-The simplest way to trigger a synth:
+Once you have synths defined, trigger them with:
 
 ```elixir
 alias Waveform.Synth
@@ -130,8 +159,8 @@ OSC.new_group(group_id, :tail, parent_group_id)
 # Delete a group and all its nodes
 OSC.delete_group(group_id)
 
-# Load synth definitions from a directory
-OSC.load_synthdefs()
+# Load synth definitions from a directory (if you have custom synthdefs)
+OSC.load_synthdef_dir("/path/to/your/synthdefs")
 ```
 
 ### Node and Group Management
