@@ -12,9 +12,9 @@ defmodule Waveform.OSC.GroupTest do
   setup do
     # Ensure GenServers are running, restart if needed
     # Check and start Node.ID
-    case Process.whereis(Waveform.OSC.Node.ID) do
+    case Process.whereis(ID) do
       nil ->
-        {:ok, _} = Waveform.OSC.Node.ID.start_link(100)
+        {:ok, _} = ID.start_link(100)
 
       pid ->
         # Check if it's alive
@@ -22,22 +22,22 @@ defmodule Waveform.OSC.GroupTest do
           :ok
         else
           # Dead process still registered, unregister and start new one
-          Process.unregister(Waveform.OSC.Node.ID)
-          {:ok, _} = Waveform.OSC.Node.ID.start_link(100)
+          Process.unregister(ID)
+          {:ok, _} = ID.start_link(100)
         end
     end
 
     # Check and start Group
-    case Process.whereis(Waveform.OSC.Group) do
+    case Process.whereis(Group) do
       nil ->
-        {:ok, _} = Waveform.OSC.Group.start_link(nil)
+        {:ok, _} = Group.start_link(nil)
 
       pid ->
         if Process.alive?(pid) do
           :ok
         else
-          Process.unregister(Waveform.OSC.Group)
-          {:ok, _} = Waveform.OSC.Group.start_link(nil)
+          Process.unregister(Group)
+          {:ok, _} = Group.start_link(nil)
         end
     end
 
