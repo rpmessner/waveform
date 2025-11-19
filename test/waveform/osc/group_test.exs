@@ -10,10 +10,15 @@ defmodule Waveform.OSC.GroupTest do
   alias Waveform.OSC.Node.ID
 
   setup do
-    # Start only the GenServers needed for these tests
-    # Don't start the full application to avoid SuperCollider dependency
-    start_supervised!({Waveform.OSC.Node.ID, 100})
-    start_supervised!(Waveform.OSC.Group)
+    # Ensure the GenServers we need are started
+    # They may already be running from a previous test or application startup
+    unless Process.whereis(Waveform.OSC.Node.ID) do
+      {:ok, _} = Waveform.OSC.Node.ID.start_link(100)
+    end
+
+    unless Process.whereis(Waveform.OSC.Group) do
+      {:ok, _} = Waveform.OSC.Group.start_link(nil)
+    end
 
     Subject.reset()
 
