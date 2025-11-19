@@ -4,6 +4,45 @@ A lightweight OSC transport layer for communicating with SuperCollider from Elix
 
 Waveform provides low-level OSC messaging, node/group management, and a simple API for triggering synths. Perfect for live coding, algorithmic composition, and building custom audio applications on top of SuperCollider.
 
+## Prerequisites
+
+**⚠️ SuperCollider must be installed on your system before using Waveform.**
+
+**macOS:**
+```bash
+brew install supercollider
+```
+
+**Linux:**
+```bash
+# Debian/Ubuntu
+sudo apt-get install supercollider
+
+# Arch
+sudo pacman -S supercollider
+```
+
+**Windows:**
+Download from [supercollider.github.io](https://supercollider.github.io/)
+
+### Custom Installation Path
+
+If SuperCollider is installed in a non-standard location, set the `SCLANG_PATH` environment variable:
+
+```bash
+export SCLANG_PATH=/path/to/sclang
+```
+
+### Verify Installation
+
+After installing SuperCollider and adding Waveform to your project, run:
+
+```bash
+mix waveform.doctor
+```
+
+This will verify that your system is properly configured.
+
 ## Features
 
 - **OSC Transport**: Send and receive OSC messages to/from SuperCollider
@@ -24,30 +63,11 @@ def deps do
 end
 ```
 
-### Prerequisites
-
-SuperCollider must be installed on your system:
-
-**macOS:**
-```bash
-brew install supercollider
-```
-
-**Linux:**
-```bash
-# Debian/Ubuntu
-sudo apt-get install supercollider
-
-# Or build from source
-```
-
-**Windows:**
-Download from [supercollider.github.io](https://supercollider.github.io/)
-
-If SuperCollider is installed in a non-standard location, set the `SCLANG_PATH` environment variable:
+Then run:
 
 ```bash
-export SCLANG_PATH=/path/to/sclang
+mix deps.get
+mix waveform.doctor  # Verify SuperCollider is installed
 ```
 
 ## Quick Start
