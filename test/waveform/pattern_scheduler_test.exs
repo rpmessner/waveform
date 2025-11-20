@@ -17,8 +17,18 @@ defmodule Waveform.PatternSchedulerTest do
     end
 
     on_exit(fn ->
-      if Process.whereis(Waveform.SuperDirt), do: GenServer.stop(Waveform.SuperDirt)
-      if Process.whereis(PatternScheduler), do: GenServer.stop(PatternScheduler)
+      # Safely stop processes - they may have already been stopped
+      try do
+        if Process.whereis(Waveform.SuperDirt), do: GenServer.stop(Waveform.SuperDirt)
+      catch
+        :exit, _ -> :ok
+      end
+
+      try do
+        if Process.whereis(PatternScheduler), do: GenServer.stop(PatternScheduler)
+      catch
+        :exit, _ -> :ok
+      end
     end)
 
     :ok

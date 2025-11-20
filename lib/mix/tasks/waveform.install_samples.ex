@@ -116,9 +116,7 @@ defmodule Mix.Tasks.Waveform.InstallSamples do
   defp get_sample_path do
     case :os.type() do
       {:unix, :darwin} ->
-        Path.expand(
-          "~/Library/Application Support/SuperCollider/downloaded-quarks/Dirt-Samples"
-        )
+        Path.expand("~/Library/Application Support/SuperCollider/downloaded-quarks/Dirt-Samples")
 
       {:unix, _} ->
         Path.expand("~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples")
@@ -205,9 +203,9 @@ defmodule Mix.Tasks.Waveform.InstallSamples do
     IO.puts("(This may take several minutes depending on your connection)\n")
 
     # Install via Quarks
-    Lang.send_command(
-      "Quarks.install(\"Dirt-Samples\"); \"DIRT_SAMPLES_INSTALL_STARTED\".postln;"
-    )
+    Lang.send_command(~S"""
+    Quarks.install("Dirt-Samples"); "DIRT_SAMPLES_INSTALL_STARTED".postln;
+    """)
 
     IO.puts("Installation started. Waiting for download to complete...")
 
@@ -218,43 +216,53 @@ defmodule Mix.Tasks.Waveform.InstallSamples do
   defp wait_for_installation(sample_path, max_attempts) do
     Enum.reduce_while(1..max_attempts, 0, fn attempt, prev_count ->
       Process.sleep(2000)
-
       current_count = count_wav_files(sample_path)
-
-      cond do
-        current_count > 1000 ->
-          IO.puts("\n✓ Installation complete! Found #{current_count}+ sample files.")
-          show_post_install_instructions(sample_path)
-          {:halt, current_count}
-
-        current_count > prev_count && current_count > 0 ->
-          IO.write(".")
-          {:cont, current_count}
-
-        attempt == max_attempts ->
-          IO.puts("""
-
-
-          ⚠ Installation timeout or incomplete.
-
-          Expected: 1800+ .wav files
-          Found: #{current_count} files
-
-          The installation may still be in progress. Check:
-          1. SuperCollider console for download progress
-          2. #{sample_path}
-          3. Your internet connection
-
-          You can run this command again to retry.
-          """)
-
-          {:halt, current_count}
-
-        true ->
-          if rem(attempt, 5) == 0, do: IO.write(".")
-          {:cont, current_count}
-      end
+      check_installation_progress(current_count, prev_count, attempt, max_attempts, sample_path)
     end)
+  end
+
+  defp check_installation_progress(current_count, prev_count, attempt, max_attempts, sample_path) do
+    cond do
+      current_count > 1000 ->
+        installation_complete(current_count, sample_path)
+
+      current_count > prev_count && current_count > 0 ->
+        IO.write(".")
+        {:cont, current_count}
+
+      attempt == max_attempts ->
+        installation_timeout(current_count, sample_path)
+
+      true ->
+        if rem(attempt, 5) == 0, do: IO.write(".")
+        {:cont, current_count}
+    end
+  end
+
+  defp installation_complete(count, sample_path) do
+    IO.puts("\n✓ Installation complete! Found #{count}+ sample files.")
+    show_post_install_instructions(sample_path)
+    {:halt, count}
+  end
+
+  defp installation_timeout(count, sample_path) do
+    IO.puts("""
+
+
+    ⚠ Installation timeout or incomplete.
+
+    Expected: 1800+ .wav files
+    Found: #{count} files
+
+    The installation may still be in progress. Check:
+    1. SuperCollider console for download progress
+    2. #{sample_path}
+    3. Your internet connection
+
+    You can run this command again to retry.
+    """)
+
+    {:halt, count}
   end
 
   defp show_post_install_instructions(sample_path) do

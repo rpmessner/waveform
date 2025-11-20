@@ -45,8 +45,8 @@ defmodule Mix.Tasks.Waveform.Install do
     ╚═══════════════════════════════════════════════════════════╝
 
     This will install:
-      #{unless opts[:skip_sc], do: "✓", else: "⊘"} SuperCollider (audio synthesis platform)
-      #{unless opts[:skip_superdirt], do: "✓", else: "⊘"} SuperDirt (TidalCycles-compatible sampler)
+      #{if opts[:skip_sc], do: "⊘", else: "✓"} SuperCollider (audio synthesis platform)
+      #{if opts[:skip_superdirt], do: "⊘", else: "✓"} SuperDirt (TidalCycles-compatible sampler)
 
     """)
 
@@ -295,7 +295,8 @@ defmodule Mix.Tasks.Waveform.Install do
   # Helper to run SuperCollider code via a temp file
   defp run_sclang_code(sclang_path, code) do
     # Create a temporary file
-    temp_file = Path.join(System.tmp_dir!(), "waveform_install_#{:erlang.unique_integer([:positive])}.scd")
+    temp_file =
+      Path.join(System.tmp_dir!(), "waveform_install_#{:erlang.unique_integer([:positive])}.scd")
 
     try do
       # Write code to temp file
@@ -317,7 +318,6 @@ defmodule Mix.Tasks.Waveform.Install do
     Mix.shell().info("Installing SuperDirt Quark via sclang...")
     Mix.shell().info("This may take a few minutes as it downloads samples...\n")
 
-    # Install SuperDirt Quark
     install_command = """
     Quarks.install("SuperDirt");
     "SUPERDIRT_QUARK_INSTALLED".postln;
@@ -325,52 +325,59 @@ defmodule Mix.Tasks.Waveform.Install do
     """
 
     case run_sclang_code(sclang_path, install_command) do
-      {output, _} ->
-        if String.contains?(output, "SUPERDIRT_QUARK_INSTALLED") ||
-             String.contains?(output, "already installed") do
-          Mix.shell().info([:green, "✓ SuperDirt Quark installed", :reset])
-
-          # Recompile class library
-          Mix.shell().info("\nRecompiling SuperCollider class library...")
-
-          recompile_command = """
-          thisProcess.recompile;
-          "RECOMPILE_COMPLETE".postln;
-          2.wait;
-          0.exit;
-          """
-
-          case run_sclang_code(sclang_path, recompile_command) do
-            {recompile_output, _} ->
-              if String.contains?(recompile_output, "RECOMPILE_COMPLETE") ||
-                   String.contains?(recompile_output, "compile done") do
-                Mix.shell().info([:green, "✓ Class library recompiled", :reset])
-
-                # Verify installation
-                if superdirt_installed?() do
-                  Mix.shell().info([:green, "\n✓ SuperDirt installed successfully!", :reset])
-                  :ok
-                else
-                  Mix.shell().error("\n✗ SuperDirt installation could not be verified")
-                  Mix.shell().info("Try running: mix waveform.doctor")
-                  :error
-                end
-              else
-                Mix.shell().error("\n✗ Class library recompilation failed")
-                Mix.shell().info("Output: #{recompile_output}")
-                :error
-              end
-          end
-        else
-          Mix.shell().error("\n✗ SuperDirt Quark installation failed")
-          Mix.shell().info("Output: #{output}")
-          :error
-        end
+      {output, _} -> handle_superdirt_quark_install(output, sclang_path)
     end
   rescue
     error ->
       Mix.shell().error("\n✗ Exception during SuperDirt installation: #{inspect(error)}")
       :error
+  end
+
+  defp handle_superdirt_quark_install(output, sclang_path) do
+    if String.contains?(output, "SUPERDIRT_QUARK_INSTALLED") ||
+         String.contains?(output, "already installed") do
+      Mix.shell().info([:green, "✓ SuperDirt Quark installed", :reset])
+      recompile_and_verify(sclang_path)
+    else
+      Mix.shell().error("\n✗ SuperDirt Quark installation failed")
+      Mix.shell().info("Output: #{output}")
+      :error
+    end
+  end
+
+  defp recompile_and_verify(sclang_path) do
+    Mix.shell().info("\nRecompiling SuperCollider class library...")
+
+    recompile_command = """
+    thisProcess.recompile;
+    "RECOMPILE_COMPLETE".postln;
+    2.wait;
+    0.exit;
+    """
+
+    case run_sclang_code(sclang_path, recompile_command) do
+      {recompile_output, _} -> verify_recompile_and_installation(recompile_output)
+    end
+  end
+
+  defp verify_recompile_and_installation(recompile_output) do
+    if String.contains?(recompile_output, "RECOMPILE_COMPLETE") ||
+         String.contains?(recompile_output, "compile done") do
+      Mix.shell().info([:green, "✓ Class library recompiled", :reset])
+
+      if superdirt_installed?() do
+        Mix.shell().info([:green, "\n✓ SuperDirt installed successfully!", :reset])
+        :ok
+      else
+        Mix.shell().error("\n✗ SuperDirt installation could not be verified")
+        Mix.shell().info("Try running: mix waveform.doctor")
+        :error
+      end
+    else
+      Mix.shell().error("\n✗ Class library recompilation failed")
+      Mix.shell().info("Output: #{recompile_output}")
+      :error
+    end
   end
 
   # --- Platform Detection ---
@@ -441,26 +448,44 @@ defmodule Mix.Tasks.Waveform.Install do
   end
 
   defp print_summary(sc_result, sd_result, opts) do
+    print_summary_header()
+    print_sc_result(sc_result, opts)
+    print_sd_result(sd_result, opts)
+    print_summary_footer(sc_result, sd_result)
+  end
+
+  defp print_summary_header do
     Mix.shell().info("\n")
     Mix.shell().info(String.duplicate("═", 60))
     Mix.shell().info("Installation Summary")
     Mix.shell().info(String.duplicate("═", 60))
+  end
 
+  defp print_sc_result(result, opts) do
     unless opts[:skip_sc] do
-      case sc_result do
-        :ok -> Mix.shell().info([:green, "✓ SuperCollider: Installed", :reset])
-        :manual -> Mix.shell().info([:yellow, "⊘ SuperCollider: Manual installation required", :reset])
-        :error -> Mix.shell().error("✗ SuperCollider: Installation failed")
+      case result do
+        :ok ->
+          Mix.shell().info([:green, "✓ SuperCollider: Installed", :reset])
+
+        :manual ->
+          Mix.shell().info([:yellow, "⊘ SuperCollider: Manual installation required", :reset])
+
+        :error ->
+          Mix.shell().error("✗ SuperCollider: Installation failed")
       end
     end
+  end
 
+  defp print_sd_result(result, opts) do
     unless opts[:skip_superdirt] do
-      case sd_result do
+      case result do
         :ok -> Mix.shell().info([:green, "✓ SuperDirt: Installed", :reset])
         :error -> Mix.shell().error("✗ SuperDirt: Installation failed")
       end
     end
+  end
 
+  defp print_summary_footer(sc_result, sd_result) do
     Mix.shell().info(String.duplicate("═", 60))
 
     if sc_result == :ok && sd_result == :ok do

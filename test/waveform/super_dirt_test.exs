@@ -13,7 +13,12 @@ defmodule Waveform.SuperDirtTest do
     end
 
     on_exit(fn ->
-      if Process.whereis(SuperDirt), do: GenServer.stop(SuperDirt)
+      # Safely stop process - may have already been stopped
+      try do
+        if Process.whereis(SuperDirt), do: GenServer.stop(SuperDirt)
+      catch
+        :exit, _ -> :ok
+      end
     end)
 
     :ok

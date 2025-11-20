@@ -22,10 +22,30 @@ defmodule Waveform.SynthTest do
     Group.setup()
 
     on_exit(fn ->
-      if Process.whereis(OSC), do: GenServer.stop(OSC)
-      if Process.whereis(Node.ID), do: Agent.stop(Node.ID)
-      if Process.whereis(Node), do: GenServer.stop(Node)
-      if Process.whereis(Group), do: GenServer.stop(Group)
+      # Safely stop processes - they may have already been stopped
+      try do
+        if Process.whereis(OSC), do: GenServer.stop(OSC)
+      catch
+        :exit, _ -> :ok
+      end
+
+      try do
+        if Process.whereis(Node.ID), do: Agent.stop(Node.ID)
+      catch
+        :exit, _ -> :ok
+      end
+
+      try do
+        if Process.whereis(Node), do: GenServer.stop(Node)
+      catch
+        :exit, _ -> :ok
+      end
+
+      try do
+        if Process.whereis(Group), do: GenServer.stop(Group)
+      catch
+        :exit, _ -> :ok
+      end
     end)
 
     :ok
