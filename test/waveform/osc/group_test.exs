@@ -1,5 +1,6 @@
 defmodule Waveform.OSC.GroupTest do
-  use ExUnit.Case, async: true
+  # Cannot use async: true because tests use global Node.ID singleton
+  use ExUnit.Case, async: false
 
   alias Waveform.OSC.Group
   alias Waveform.OSC.Node
