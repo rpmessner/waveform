@@ -1,5 +1,6 @@
 defmodule Waveform.OSC.Node.IDTest do
-  use ExUnit.Case, async: true
+  # Cannot use async: true because "production usage with singleton" tests use global ID process
+  use ExUnit.Case, async: false
 
   alias Waveform.OSC.Node.ID
 
