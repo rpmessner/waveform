@@ -9,13 +9,15 @@ defmodule Waveform.OSC.GroupTest do
     node_id_name = :"node_id_#{test_id}"
     group_name = :"group_#{test_id}"
 
-    # Start with custom names using GenServer.start directly
-    {:ok, node_id_pid} = GenServer.start(Waveform.OSC.Node.ID, %Waveform.OSC.Node.ID.State{current_id: 100}, name: node_id_name)
+    # Start with custom names
+    # Node.ID is now an Agent (just stores an integer)
+    {:ok, node_id_pid} = Agent.start_link(fn -> 100 end, name: node_id_name)
+    # Group is still a GenServer
     {:ok, group_pid} = GenServer.start(Group, %Group.State{}, name: group_name)
 
     # Clean up after test
     on_exit(fn ->
-      if Process.alive?(node_id_pid), do: GenServer.stop(node_id_pid)
+      if Process.alive?(node_id_pid), do: Agent.stop(node_id_pid)
       if Process.alive?(group_pid), do: GenServer.stop(group_pid)
     end)
 
