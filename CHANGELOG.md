@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Pattern Scheduler** - High-precision continuous pattern playback
+  - Cycle-based timing model (like TidalCycles)
+  - Look-ahead scheduling with 10ms tick interval
+  - Pattern hot-swapping without stopping playback
+  - Multiple concurrent patterns
+  - `PatternScheduler.schedule_pattern/2` - Start a looping pattern
+  - `PatternScheduler.update_pattern/2` - Change pattern while playing
+  - `PatternScheduler.stop_pattern/1` - Stop a specific pattern
+  - `PatternScheduler.set_cps/1` - Adjust tempo (cycles per second)
+  - `PatternScheduler.hush/0` - Emergency stop all patterns
+  - MapSet-based deduplication prevents event double-triggering
+  - No drift over time using monotonic clock and cycle arithmetic
 - **SuperDirt OSC Bundle Support** - Messages now sent with timestamps for precise scheduling
   - All `/dirt/play` messages wrapped in OSC bundles with timestamps
   - Configurable latency (default 20ms) for scheduling stability
