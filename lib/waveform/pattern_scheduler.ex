@@ -332,7 +332,8 @@ defmodule Waveform.PatternScheduler do
       if Process.whereis(Waveform.SuperDirt) do
         Waveform.SuperDirt.get_latency()
       else
-        0.02  # Default latency if SuperDirt not running
+        # Default latency if SuperDirt not running
+        0.02
       end
 
     latency_cycles = latency_seconds * state.cps
