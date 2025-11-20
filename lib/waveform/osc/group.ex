@@ -3,7 +3,7 @@ defmodule Waveform.OSC.Group do
   Manages group allocation and hierarchy for SuperCollider.
 
   Groups organize synths into a tree structure. This module provides basic
-  group management with per-process group stacks for scoped group activation.
+  group management with per-process group tracking for scoped group activation.
 
   Process monitors ensure that dead processes don't leak memory in the
   per-process group tracking.
@@ -32,8 +32,8 @@ defmodule Waveform.OSC.Group do
     defstruct(
       root_group: %Group{id: 1, name: :root},
       root_synth_group: nil,
-      # Map of pid => [group stack], with monitors to clean up dead processes
-      active_synth_group: %{},
+      # Map of pid => group (single group per process)
+      process_groups: %{},
       # Map of monitor_ref => pid for cleanup
       monitors: %{}
     )
@@ -47,20 +47,42 @@ defmodule Waveform.OSC.Group do
     GenServer.call(@me, {:state})
   end
 
-  def restore_synth_group(pid) when is_pid(pid) do
-    GenServer.call(@me, {:restore_synth_group, pid})
+  @doc """
+  Set the current group for a process.
+
+  This replaces any previously set group for the process.
+  The process will be monitored and automatically cleaned up when it dies.
+
+  ## Examples
+
+      group = Group.new_group("my-group")
+      Group.set_process_group(self(), group)
+  """
+  def set_process_group(pid, %Group{} = group) when is_pid(pid) do
+    GenServer.call(@me, {:set_process_group, pid, group})
   end
 
-  def activate_synth_group(pid, %Group{} = g) when is_pid(pid) do
-    GenServer.call(@me, {:activate_group, pid, g})
+  @doc """
+  Get the current group for a process.
+
+  Returns the process's current group, or the root synth group if none is set.
+
+  ## Examples
+
+      Group.get_process_group(self())
+  """
+  def get_process_group(pid) when is_pid(pid) do
+    %State{process_groups: pg, root_synth_group: rsg} = state()
+    pg[pid] || rsg
   end
 
-  def synth_group(pid) do
-    %State{active_synth_group: asg, root_synth_group: rsg} = state()
+  @doc """
+  Get the synth group for a process (backwards compatibility).
 
-    synth_group = (asg[pid] || []) |> List.first()
-
-    synth_group || rsg
+  This is an alias for `get_process_group/1`.
+  """
+  def synth_group(pid) when is_pid(pid) do
+    get_process_group(pid)
   end
 
   def setup do
@@ -92,21 +114,6 @@ defmodule Waveform.OSC.Group do
     {:ok, state}
   end
 
-  def handle_call({:restore_synth_group, pid}, _from, %State{active_synth_group: asg} = state) do
-    [_ | t] = asg[pid] || []
-    asg = if t == [], do: Map.delete(asg, pid), else: Map.put(asg, pid, t)
-
-    # If we just removed the last group for this pid, demonitor it
-    state =
-      if t == [] do
-        demonitor_pid(state, pid)
-      else
-        state
-      end
-
-    {:reply, {:ok, List.first(t)}, %{state | active_synth_group: asg}}
-  end
-
   def handle_call({:root_synth_group}, _from, state) do
     group = %Group{type: :synth, name: :root_synth_group, id: ID.next()}
 
@@ -116,22 +123,21 @@ defmodule Waveform.OSC.Group do
   end
 
   def handle_call(
-        {:activate_group, pid, %Group{} = g},
+        {:set_process_group, pid, %Group{} = group},
         _from,
-        %State{active_synth_group: asg, monitors: monitors} = state
+        %State{process_groups: pg, monitors: monitors} = state
       ) do
     # Monitor this process if we're not already monitoring it
-    {state, monitors} =
-      if Map.has_key?(asg, pid) do
-        {state, monitors}
+    {monitors, _new_monitor?} =
+      if Map.has_key?(pg, pid) do
+        {monitors, false}
       else
         ref = Process.monitor(pid)
-        {state, Map.put(monitors, ref, pid)}
+        {Map.put(monitors, ref, pid), true}
       end
 
-    pid_groups = asg[pid] || []
-    asg = Map.put(asg, pid, [g | pid_groups])
-    {:reply, :ok, %{state | active_synth_group: asg, monitors: monitors}}
+    pg = Map.put(pg, pid, group)
+    {:reply, :ok, %{state | process_groups: pg, monitors: monitors}}
   end
 
   def handle_call({:new_group, name, type, action}, from, state) do
@@ -188,34 +194,22 @@ defmodule Waveform.OSC.Group do
     {:reply, state, state}
   end
 
-  # Handle process death - clean up the group stack for that pid
+  # Handle process death - clean up the group for that pid
   def handle_info(
         {:DOWN, ref, :process, _pid, _reason},
-        %State{monitors: monitors, active_synth_group: asg} = state
+        %State{monitors: monitors, process_groups: pg} = state
       ) do
     case Map.pop(monitors, ref) do
       {nil, _} ->
         {:noreply, state}
 
       {pid, monitors} ->
-        asg = Map.delete(asg, pid)
-        {:noreply, %{state | monitors: monitors, active_synth_group: asg}}
+        pg = Map.delete(pg, pid)
+        {:noreply, %{state | monitors: monitors, process_groups: pg}}
     end
   end
 
   defp create_group(id, action, parent) do
     OSC.new_group(id, action, parent)
-  end
-
-  defp demonitor_pid(state, pid) do
-    # Find and remove the monitor for this pid
-    case Enum.find(state.monitors, fn {_ref, p} -> p == pid end) do
-      nil ->
-        state
-
-      {ref, _pid} ->
-        Process.demonitor(ref, [:flush])
-        %{state | monitors: Map.delete(state.monitors, ref)}
-    end
   end
 end

@@ -1,6 +1,5 @@
 defmodule Waveform.OSC.GroupTest do
   use ExUnit.Case, async: false
-  import Mock
 
   alias Waveform.OSC.Group, as: Subject
 
@@ -77,7 +76,7 @@ defmodule Waveform.OSC.GroupTest do
     end
   end
 
-  test "activates synth group and cleans up on process death" do
+  test "sets process group and cleans up on process death" do
     with_mock OSC, new_group: fn _, _, _ -> nil end do
       # Ensure Group is alive before calling setup
       unless Process.alive?(Process.whereis(Group)) do
@@ -107,10 +106,10 @@ defmodule Waveform.OSC.GroupTest do
       assert %Group{} = foo = Subject.new_group(:foo)
       assert %Group{} = bar = Subject.new_group(:bar)
 
-      assert :ok = Subject.activate_synth_group(pid, foo)
+      assert :ok = Subject.set_process_group(pid, foo)
       assert ^foo = Subject.synth_group(pid)
 
-      assert :ok = Subject.activate_synth_group(pid2, bar)
+      assert :ok = Subject.set_process_group(pid2, bar)
       assert ^bar = Subject.synth_group(pid2)
 
       # Now signal the tasks to exit
@@ -126,8 +125,8 @@ defmodule Waveform.OSC.GroupTest do
 
       # Verify that dead processes were cleaned up
       state = Subject.state()
-      refute Map.has_key?(state.active_synth_group, pid)
-      refute Map.has_key?(state.active_synth_group, pid2)
+      refute Map.has_key?(state.process_groups, pid)
+      refute Map.has_key?(state.process_groups, pid2)
     end
   end
 
@@ -145,7 +144,7 @@ defmodule Waveform.OSC.GroupTest do
              } = cg1 = Subject.new_group(:bar)
 
       assert called(OSC.new_group(foo.id + 1, :head, root_synth_group.id))
-      assert :ok = Subject.activate_synth_group(self(), foo)
+      assert :ok = Subject.set_process_group(self(), foo)
 
       assert ^foo = Subject.synth_group(self())
 
