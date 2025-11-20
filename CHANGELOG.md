@@ -17,6 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now requires explicit path argument
   - No longer auto-loads built-in synthdefs on startup
   - Users must define or load their own synth definitions
+- **BREAKING**: Simplified `OSC.Group` API - removed stack-based group management
+  - Changed from per-process group stacks to single group per process
+  - Removed `activate_synth_group/2` and `restore_synth_group/1` functions
+  - Added simpler `set_process_group/2` and `get_process_group/1` functions
+  - `synth_group/1` remains as backwards-compatible alias
+  - Still monitors processes and automatically cleans up on process death
+  - Reduces complexity while maintaining essential functionality
+- Added platform-specific sclang path detection
+  - `Lang` module now detects macOS, Linux, and Windows installations
+  - Same platform detection as `mix waveform.doctor` task
+  - Falls back to sensible defaults for each platform
 
 ### Removed
 - Sonic Pi-specific server information gathering
@@ -27,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Or load custom synthdefs from their own directory
 - `OSC.save_synthdef/2` function (use standard file operations instead)
 - `OSC.load_user_synthdefs/0` function (use `load_synthdef_dir/1` instead)
+- `Waveform.AudioBus` module - automatic bus allocation removed
+  - Not needed for basic synth triggering
+  - Users can manage bus numbers directly in synth parameters if needed
+  - Simplifies supervision tree (6 processes instead of 7)
 
 ## [0.2.0] - 2025-11-19
 
