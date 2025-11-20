@@ -1,5 +1,6 @@
 defmodule Waveform.ServerInfoTest do
   use ExUnit.Case, async: false  # :persistent_term is global, can't run in parallel
+  import ExUnit.CaptureLog
 
   alias Waveform.ServerInfo
 
@@ -36,11 +37,14 @@ defmodule Waveform.ServerInfoTest do
     end
 
     test "returns error for invalid status reply" do
-      # Wrong number of elements
-      assert :error = ServerInfo.set_from_status_reply([1, 2, 3])
+      # Suppress expected warning logs during error condition tests
+      capture_log(fn ->
+        # Wrong number of elements
+        assert :error = ServerInfo.set_from_status_reply([1, 2, 3])
 
-      # Empty list
-      assert :error = ServerInfo.set_from_status_reply([])
+        # Empty list
+        assert :error = ServerInfo.set_from_status_reply([])
+      end)
     end
 
     test "handles mismatched nominal vs actual sample rate" do
