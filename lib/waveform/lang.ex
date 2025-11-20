@@ -29,7 +29,9 @@ defmodule Waveform.Lang do
     @moduledoc false
     defstruct(
       sclang_pid: nil,
-      sclang_os_pid: nil
+      sclang_os_pid: nil,
+      server_ready: false,
+      server_ready_subscribers: []
     )
   end
 
@@ -46,9 +48,31 @@ defmodule Waveform.Lang do
          Server.internal.options.sampleRate = 44100
          Server.local.options.maxLogins = 2
          Server.internal.options.maxLogins = 2
+         Server.local.options.numBuffers = 4096
+         Server.internal.options.numBuffers = 4096
          Server.default.boot
        """}
     )
+  end
+
+  @doc """
+  Wait for the SuperCollider server to be ready.
+
+  Blocks until the server has booted and is ready to receive commands.
+  Returns immediately if the server is already ready.
+
+  ## Options
+
+  - `:timeout` - Maximum time to wait in milliseconds (default: 30000)
+
+  ## Examples
+
+      Lang.wait_for_server()
+      Lang.wait_for_server(timeout: 10000)
+  """
+  def wait_for_server(opts \\ []) do
+    timeout = Keyword.get(opts, :timeout, 30_000)
+    GenServer.call(@me, :wait_for_server, timeout)
   end
 
   # gen_server callbacks
@@ -132,10 +156,11 @@ defmodule Waveform.Lang do
              {:stdin, true},
              {:stdout,
               fn :stdout, _bytes, line ->
-                # IO.puts(line)
+                # Uncomment for debugging: IO.puts("[SC] #{line}")
                 case line do
                   "SuperCollider 3 server ready" <> _rest ->
                     Waveform.OSC.setup()
+                    send(@me, :server_ready)
 
                   _ ->
                     nil
@@ -162,11 +187,31 @@ defmodule Waveform.Lang do
     if state.sclang_pid, do: Exexec.stop(state.sclang_pid)
   end
 
+  def handle_call(:wait_for_server, _from, %State{server_ready: true} = state) do
+    # Server already ready, reply immediately
+    {:reply, :ok, state}
+  end
+
+  def handle_call(:wait_for_server, from, %State{server_ready: false} = state) do
+    # Server not ready yet, add caller to subscribers list
+    subscribers = [from | state.server_ready_subscribers]
+    {:noreply, %{state | server_ready_subscribers: subscribers}}
+  end
+
   def handle_call({:command, command}, _from, state) do
     if state.sclang_os_pid do
       Exexec.send(state.sclang_os_pid, "#{command}\n")
     end
 
     {:reply, nil, state}
+  end
+
+  def handle_info(:server_ready, state) do
+    # Notify all waiting subscribers
+    Enum.each(state.server_ready_subscribers, fn from ->
+      GenServer.reply(from, :ok)
+    end)
+
+    {:noreply, %{state | server_ready: true, server_ready_subscribers: []}}
   end
 end
