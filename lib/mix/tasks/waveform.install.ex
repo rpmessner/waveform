@@ -495,7 +495,7 @@ defmodule Mix.Tasks.Waveform.Install do
 
       Next steps:
         1. Verify installation: mix waveform.doctor
-        2. Try a demo: mix run demos/creep_simple.exs
+        2. Try a demo: mix run demos/01_basic_patterns.exs
         3. Start coding! See README.md for examples
 
       """)

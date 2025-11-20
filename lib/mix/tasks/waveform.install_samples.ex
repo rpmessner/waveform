@@ -166,12 +166,13 @@ defmodule Mix.Tasks.Waveform.InstallSamples do
     Buffer size is set to 4096 to accommodate all samples.
 
     Test your installation:
-      mix run demos/check_superdirt.exs
+      mix waveform.check
 
-    Run sample demos:
-      mix run demos/superstition.exs
-      mix run demos/creep_simple.exs
-      mix run demos/giant_steps.exs
+    Run sample demos (ordered by complexity):
+      mix run demos/01_basic_patterns.exs
+      mix run demos/02_modular_composition.exs
+      mix run demos/03_syncopated_rhythm.exs
+      mix run demos/04_complex_harmony.exs
     """)
   end
 
@@ -286,12 +287,13 @@ defmodule Mix.Tasks.Waveform.InstallSamples do
        iex> :init.restart()
 
     2. Test your installation:
-       mix run demos/check_superdirt.exs
+       mix waveform.check
 
-    3. Try the music demos:
-       mix run demos/superstition.exs
-       mix run demos/creep_simple.exs
-       mix run demos/giant_steps.exs
+    3. Try the music demos (ordered by complexity):
+       mix run demos/01_basic_patterns.exs
+       mix run demos/02_modular_composition.exs
+       mix run demos/03_syncopated_rhythm.exs
+       mix run demos/04_complex_harmony.exs
 
     4. Verify everything works:
        mix waveform.doctor
