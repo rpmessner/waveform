@@ -68,6 +68,33 @@ If you want to use Waveform's pattern scheduler with SuperDirt (TidalCycles-styl
    Helpers.ensure_superdirt_ready()
    ```
 
+4. **Install sc3-plugins** (optional, for additional synths):
+
+   The sc3-plugins provide additional synthesizers like `superpiano`, `supermandolin`,
+   `supergong`, and more. These are physical modeling synths that extend SuperDirt's
+   capabilities beyond sample playback.
+
+   **Installation:**
+   ```bash
+   # macOS
+   brew install sc3-plugins
+
+   # Linux (Debian/Ubuntu)
+   sudo apt-get install sc3-plugins
+
+   # Arch Linux
+   sudo pacman -S sc3-plugins
+
+   # Windows
+   # Download from https://supercollider.github.io/sc3-plugins/
+   ```
+
+   After installation, restart SuperCollider and Waveform to use these synths.
+
+   **Note:** The demos in this repository use samples from Dirt-Samples by default
+   and don't require sc3-plugins. If you want to experiment with synths like
+   `superpiano`, install sc3-plugins and see `test_superpiano.exs` for an example.
+
 ### Custom Installation Path
 
 If SuperCollider is installed in a non-standard location, set the `SCLANG_PATH` environment variable:
@@ -173,19 +200,6 @@ Synth.trigger("kick", [amp: 0.8], node_id: 1001, group_id: 1)
 
 # Use the convenience play/2 function
 Synth.play(60, synth: "piano", amp: 0.6)
-```
-
-### Using Note Names (Optional)
-
-If you add the [Harmony](https://github.com/rpmessner/harmony) library to your deps, you can use note names:
-
-```elixir
-# In mix.exs
-{:harmony, git: "https://github.com/rpmessner/harmony"}
-
-# In your code
-Synth.play("c4", synth: "saw", amp: 0.5)
-Synth.play("a#5", synth: "piano")
 ```
 
 ### Low-Level OSC API
@@ -486,13 +500,13 @@ export SCLANG_PATH=/path/to/sclang
 ### Getting Help
 
 1. Run diagnostics: `mix waveform.doctor`
-2. Test SuperDirt: `mix run demos/check_superdirt.exs`
+2. Test SuperDirt: `mix waveform.check`
 3. Report issues: https://github.com/rpmessner/waveform/issues
 
 ## Related Projects
 
 - [KinoSpaetzle](https://github.com/rpmessner/kino_spaetzle) - TidalCycles-like live coding for Livebook (uses Waveform)
-- [Harmony](https://github.com/rpmessner/harmony) - Music theory library for Elixir
+- [Harmony](https://github.com/rpmessner/harmony) - Music theory library for Elixir (useful for higher-level integrations)
 - [SuperCollider](https://supercollider.github.io/) - The audio synthesis platform
 
 ## Contributing
