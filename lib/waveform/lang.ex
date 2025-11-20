@@ -7,7 +7,7 @@ defmodule Waveform.Lang do
   and monitors the process lifecycle.
 
   The sclang executable location can be configured via the `SCLANG_PATH` environment
-  variable. If not set, it defaults to the standard macOS installation path.
+  variable. If not set, it defaults to platform-specific installation paths.
 
   ## Examples
 
@@ -24,7 +24,6 @@ defmodule Waveform.Lang do
   use GenServer
 
   @me __MODULE__
-  @path System.get_env("SCLANG_PATH") || "/Applications/SuperCollider.app/Contents/MacOS/sclang"
 
   defmodule State do
     @moduledoc false
@@ -57,11 +56,41 @@ defmodule Waveform.Lang do
     GenServer.start_link(@me, %State{}, name: @me)
   end
 
+  defp get_sclang_path do
+    System.get_env("SCLANG_PATH") || default_sclang_path()
+  end
+
+  defp default_sclang_path do
+    case :os.type() do
+      {:unix, :darwin} ->
+        "/Applications/SuperCollider.app/Contents/MacOS/sclang"
+
+      {:unix, _} ->
+        # Linux: try common installation paths
+        Enum.find(
+          ["/usr/bin/sclang", "/usr/local/bin/sclang"],
+          &File.exists?/1
+        ) || "/usr/bin/sclang"
+
+      {:win32, _} ->
+        # Windows: try common installation paths
+        Enum.find(
+          [
+            "C:\\Program Files\\SuperCollider\\sclang.exe",
+            "C:\\Program Files (x86)\\SuperCollider\\sclang.exe"
+          ],
+          &File.exists?/1
+        ) || "C:\\Program Files\\SuperCollider\\sclang.exe"
+    end
+  end
+
   def init(state) do
+    sclang_path = get_sclang_path()
+
     # Skip SuperCollider check in CI environments
-    unless System.get_env("CI") || File.exists?(@path) do
+    unless System.get_env("CI") || File.exists?(sclang_path) do
       raise """
-      SuperCollider not found at: #{@path}
+      SuperCollider not found at: #{sclang_path}
 
       Waveform requires SuperCollider to be installed on your system.
 
@@ -92,13 +121,13 @@ defmodule Waveform.Lang do
     if System.get_env("CI") do
       {:ok, %State{}}
     else
-      start_sclang(state)
+      start_sclang(state, sclang_path)
     end
   end
 
-  defp start_sclang(_state) do
+  defp start_sclang(_state, sclang_path) do
     case Exexec.run(
-           @path,
+           sclang_path,
            [
              {:stdin, true},
              {:stdout,
