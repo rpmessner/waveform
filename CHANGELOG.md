@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **SuperDirt OSC Bundle Support** - Messages now sent with timestamps for precise scheduling
+  - All `/dirt/play` messages wrapped in OSC bundles with timestamps
+  - Configurable latency (default 20ms) for scheduling stability
+  - New `SuperDirt.set_latency/1` to adjust scheduling latency
+  - New `SuperDirt.get_latency/0` to query current latency
+  - Enables look-ahead scheduling for pattern engines
+  - Foundation for precise pattern timing in KinoSpaetzle
+
 ### Changed
 - Replaced Sonic Pi server info mechanism with standard SuperCollider `/status` command
   - Removed internal `sonic-pi-server-info` synth and `/sonic-pi/server-info` OSC path

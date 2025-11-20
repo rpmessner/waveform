@@ -33,7 +33,8 @@ defmodule Waveform.OSC.Node.IDTest do
 
     test "state returns current value without incrementing", %{name: name} do
       current = Agent.get(name, & &1)
-      assert current == Agent.get(name, & &1)  # Same value on second call
+      # Same value on second call
+      assert current == Agent.get(name, & &1)
     end
   end
 

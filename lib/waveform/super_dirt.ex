@@ -58,6 +58,11 @@ defmodule Waveform.SuperDirt do
   ## Message Format
 
   SuperDirt receives OSC bundles on port 57120 with the path `/dirt/play`.
+
+  **OSC Bundles:** All messages are wrapped in OSC bundles with timestamps for
+  precise timing. A small latency (default 20ms) is added to give SuperDirt
+  time to process events before playback.
+
   Messages contain name-value pairs including:
 
   **Required parameters (automatically added):**
@@ -107,7 +112,8 @@ defmodule Waveform.SuperDirt do
       host: ~c"127.0.0.1",
       port: 57_120,
       cycle: 0.0,
-      cps: 0.5625
+      cps: 0.5625,
+      latency: 0.02
     )
   end
 
@@ -213,6 +219,39 @@ defmodule Waveform.SuperDirt do
     GenServer.call(@me, {:set_cps, cps})
   end
 
+  @doc """
+  Set the OSC bundle latency in seconds.
+
+  Latency determines how far in the future events are scheduled. A small
+  latency (default 20ms) gives SuperDirt time to process events before playback.
+  Increase for more scheduling stability, decrease for lower latency.
+
+  ## Examples
+
+      # Lower latency (10ms) - use for responsive playback
+      SuperDirt.set_latency(0.01)
+
+      # Higher latency (50ms) - use if experiencing timing jitter
+      SuperDirt.set_latency(0.05)
+
+  """
+  def set_latency(latency) when is_number(latency) and latency >= 0 do
+    GenServer.call(@me, {:set_latency, latency})
+  end
+
+  @doc """
+  Get the current OSC bundle latency in seconds.
+
+  ## Examples
+
+      SuperDirt.get_latency()
+      # => 0.02
+
+  """
+  def get_latency do
+    GenServer.call(@me, :get_latency)
+  end
+
   defp send_command(address, args) do
     GenServer.cast(@me, {:command, address, args})
   end
@@ -224,12 +263,14 @@ defmodule Waveform.SuperDirt do
   def init(opts) do
     port = Keyword.get(opts, :port, 57_120)
     udp_port = Keyword.get(opts, :udp_port, 57_121)
+    latency = Keyword.get(opts, :latency, 0.02)
 
     {:ok, socket} = :gen_udp.open(udp_port, [:binary, {:active, false}])
 
     state = %State{
       socket: socket,
-      port: port
+      port: port,
+      latency: latency
     }
 
     {:ok, state}
@@ -256,6 +297,14 @@ defmodule Waveform.SuperDirt do
     {:reply, :ok, %{state | cps: cps}}
   end
 
+  def handle_call({:set_latency, latency}, _from, state) do
+    {:reply, :ok, %{state | latency: latency}}
+  end
+
+  def handle_call(:get_latency, _from, state) do
+    {:reply, state.latency, state}
+  end
+
   def handle_cast({:command, address, args}, state) do
     @transport.send_osc_message(state, address, args)
     {:noreply, state}
@@ -269,21 +318,26 @@ defmodule Waveform.SuperDirt do
     # Build name-value pairs for SuperDirt
     # Format: [name1, value1, name2, value2, ...]
     pairs = [
-      ~c"cps", state.cps,
-      ~c"cycle", state.cycle,
-      ~c"delta", delta,
-      ~c"orbit", orbit
+      ~c"cps",
+      state.cps,
+      ~c"cycle",
+      state.cycle,
+      ~c"delta",
+      delta,
+      ~c"orbit",
+      orbit
     ]
 
     # Add user parameters
-    pairs = Enum.reduce(params, pairs, fn {key, value}, acc ->
-      # Skip parameters we've already added
-      if key in [:orbit, :delta] do
-        acc
-      else
-        acc ++ [to_charlist(to_string(key)), normalize_value(value)]
-      end
-    end)
+    pairs =
+      Enum.reduce(params, pairs, fn {key, value}, acc ->
+        # Skip parameters we've already added
+        if key in [:orbit, :delta] do
+          acc
+        else
+          acc ++ [to_charlist(to_string(key)), normalize_value(value)]
+        end
+      end)
 
     [@dirt_play | pairs]
   end

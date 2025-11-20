@@ -145,6 +145,11 @@ defmodule Waveform.SuperDirtTest do
       assert state.host == ~c"127.0.0.1"
     end
 
+    test "default latency is 0.02 (20ms)" do
+      state = :sys.get_state(SuperDirt)
+      assert state.latency == 0.02
+    end
+
     test "CPS can be updated" do
       SuperDirt.set_cps(1.0)
       state = :sys.get_state(SuperDirt)
@@ -152,6 +157,44 @@ defmodule Waveform.SuperDirtTest do
 
       # Reset to default
       SuperDirt.set_cps(0.5625)
+    end
+  end
+
+  describe "latency management" do
+    setup do
+      # Reset to default after each test
+      on_exit(fn -> SuperDirt.set_latency(0.02) end)
+      :ok
+    end
+
+    test "get_latency returns current latency" do
+      assert SuperDirt.get_latency() == 0.02
+    end
+
+    test "set_latency updates latency" do
+      assert :ok = SuperDirt.set_latency(0.05)
+      assert SuperDirt.get_latency() == 0.05
+    end
+
+    test "set_latency accepts float values" do
+      assert :ok = SuperDirt.set_latency(0.015)
+      assert SuperDirt.get_latency() == 0.015
+    end
+
+    test "set_latency accepts integer values" do
+      assert :ok = SuperDirt.set_latency(1)
+      assert SuperDirt.get_latency() == 1
+    end
+
+    test "set_latency accepts zero latency" do
+      assert :ok = SuperDirt.set_latency(0)
+      assert SuperDirt.get_latency() == 0
+    end
+
+    test "latency persists across play calls" do
+      SuperDirt.set_latency(0.1)
+      SuperDirt.play(s: "bd")
+      assert SuperDirt.get_latency() == 0.1
     end
   end
 end

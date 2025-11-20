@@ -1,5 +1,6 @@
 defmodule Waveform.SynthTest do
-  use ExUnit.Case, async: false  # Uses global Node.ID and Group singletons
+  # Uses global Node.ID and Group singletons
+  use ExUnit.Case, async: false
 
   alias Waveform.Synth
   alias Waveform.OSC
@@ -60,12 +61,17 @@ defmodule Waveform.SynthTest do
 
     test "filters out non-numeric parameters" do
       # Should silently ignore invalid parameters
-      result = Synth.trigger("synth", [
-        note: 60,           # Valid: number
-        amp: 0.5,           # Valid: number
-        invalid: "string",  # Invalid: not a number
-        freq: 440.0         # Valid: float
-      ])
+      result =
+        Synth.trigger("synth",
+          # Valid: number
+          note: 60,
+          # Valid: number
+          amp: 0.5,
+          # Invalid: not a number
+          invalid: "string",
+          # Valid: float
+          freq: 440.0
+        )
 
       assert %{node_id: _, group_id: _} = result
     end

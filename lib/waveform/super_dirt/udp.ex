@@ -10,9 +10,13 @@ defmodule Waveform.SuperDirt.UDP do
 
   @impl true
   def send_osc_bundle(state, message) do
-    # For now, send as a regular OSC message
-    # TODO: Implement proper OSC bundle support with timestamps
-    encoded = :osc.encode(message)
+    # Get current time and add small latency for scheduling stability
+    # Latency in seconds - gives SuperDirt time to process the event
+    latency = Map.get(state, :latency, 0.02)
+    time = :osc.now() + latency
+
+    # Create OSC bundle with timestamp
+    encoded = :osc.pack_ts(time, message)
     :ok = :gen_udp.send(state.socket, state.host, state.port, encoded)
   end
 

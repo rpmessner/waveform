@@ -1,5 +1,6 @@
 defmodule Waveform.ServerInfoTest do
-  use ExUnit.Case, async: false  # :persistent_term is global, can't run in parallel
+  # :persistent_term is global, can't run in parallel
+  use ExUnit.Case, async: false
   import ExUnit.CaptureLog
 
   alias Waveform.ServerInfo

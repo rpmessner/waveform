@@ -39,7 +39,8 @@ defmodule Waveform.OSC.NodeTest do
 
       # Activate it
       GenServer.cast(pid, {:activate_node, 100})
-      Process.sleep(10)  # Give cast time to process
+      # Give cast time to process
+      Process.sleep(10)
 
       # Check state
       state = :sys.get_state(pid)
@@ -102,13 +103,17 @@ defmodule Waveform.OSC.NodeTest do
       assert Map.has_key?(state_before.dead_nodes, 100)
 
       # Manually set created_at to old timestamp
-      old_timestamp = System.monotonic_time(:millisecond) - 120_000  # 2 minutes ago
+      # 2 minutes ago
+      old_timestamp = System.monotonic_time(:millisecond) - 120_000
+
       state_with_old = %{
         state_before
-        | dead_nodes: Map.update!(state_before.dead_nodes, 100, fn node ->
-            %{node | created_at: old_timestamp}
-          end)
+        | dead_nodes:
+            Map.update!(state_before.dead_nodes, 100, fn node ->
+              %{node | created_at: old_timestamp}
+            end)
       }
+
       :sys.replace_state(pid, fn _ -> state_with_old end)
 
       # Trigger prune by sending the message
