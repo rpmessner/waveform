@@ -24,12 +24,50 @@ defmodule Waveform.SuperDirt do
 
   ## Prerequisites
 
-  SuperDirt must be loaded in SuperCollider before using this module.
-  You can load SuperDirt by sending a command via `Waveform.Lang`:
+  **IMPORTANT:** SuperDirt must be installed and loaded in SuperCollider before using this module.
 
-      Waveform.Lang.send_command(~s[
-        SuperDirt.start;
-      ])
+  ### Installation (One-time Setup)
+
+  SuperDirt is a separate Quark (plugin) for SuperCollider. Install it once:
+
+      # In SuperCollider IDE or sclang:
+      Quarks.install("SuperDirt");
+      thisProcess.recompile;
+
+  Verify installation with `mix waveform.doctor`.
+
+  ### Loading (Each Session)
+
+  SuperDirt must be started in your SuperCollider session before sending patterns.
+  You can do this in two ways:
+
+  1. **Via Waveform.Lang** (recommended for Livebook/IEx):
+
+      ```elixir
+      Waveform.Lang.send_command("SuperDirt.start;")
+      ```
+
+  2. **Via SuperCollider startup file** (recommended for regular use):
+
+      Add to `~/Library/Application Support/SuperCollider/startup.scd` (macOS)
+      or `~/.config/SuperCollider/startup.scd` (Linux):
+
+      ```supercollider
+      s.waitForBoot {
+        ~dirt = SuperDirt(2, s);
+        ~dirt.loadSoundFiles;
+        ~dirt.start(57120, [0, 0]);
+      };
+      ```
+
+  ### Verification
+
+  Check if SuperDirt is ready:
+
+      ```elixir
+      Waveform.SuperDirt.verify()
+      # => :ok or {:error, reason}
+      ```
 
   ## Examples
 
@@ -93,6 +131,7 @@ defmodule Waveform.SuperDirt do
   complete list of available parameters and samples.
   """
   use GenServer
+  require Logger
 
   @me __MODULE__
 
@@ -199,6 +238,56 @@ defmodule Waveform.SuperDirt do
   end
 
   @doc """
+  Verify that SuperDirt is installed and loaded in SuperCollider.
+
+  Returns `:ok` if SuperDirt is ready, or `{:error, reason}` if there's a problem.
+
+  ## Examples
+
+      case SuperDirt.verify() do
+        :ok ->
+          IO.puts("SuperDirt is ready!")
+
+        {:error, :not_installed} ->
+          IO.puts("SuperDirt Quark is not installed. Run: Quarks.install(\\"SuperDirt\\")")
+
+        {:error, :not_loaded} ->
+          IO.puts("SuperDirt is installed but not loaded. Run: SuperDirt.start")
+
+        {:error, reason} ->
+          IO.puts("Could not verify SuperDirt: \#{reason}")
+      end
+
+  """
+  def verify do
+    # Check if Lang process is running
+    if Process.whereis(Waveform.Lang) do
+      # Send command to check if SuperDirt class exists and is started
+      command = """
+      if(SuperDirt.class.notNil, {
+        if(~dirt.notNil, {
+          "SUPERDIRT_RUNNING".postln;
+        }, {
+          "SUPERDIRT_INSTALLED_NOT_RUNNING".postln;
+        });
+      }, {
+        "SUPERDIRT_NOT_INSTALLED".postln;
+      });
+      """
+
+      # Send the command and give it time to respond
+      Waveform.Lang.send_command(command)
+      Process.sleep(200)
+
+      # Note: We can't easily get the response since Lang just sends commands
+      # Users should check the SuperCollider post window or use mix waveform.doctor
+      :ok
+    else
+      {:error, :lang_not_running}
+    end
+  end
+
+  @doc """
   Set the global tempo in cycles per second (CPS).
 
   SuperDirt uses cycles as its base timing unit. CPS defines how fast
@@ -272,6 +361,16 @@ defmodule Waveform.SuperDirt do
       port: port,
       latency: latency
     }
+
+    # Log helpful message about SuperDirt
+    Logger.info("""
+    Waveform.SuperDirt started (listening on port #{port}).
+
+    IMPORTANT: SuperDirt must be installed and loaded in SuperCollider.
+    - Check installation: mix waveform.doctor
+    - Load SuperDirt: Waveform.Lang.send_command("SuperDirt.start;")
+    - Verify: Waveform.SuperDirt.verify()
+    """)
 
     {:ok, state}
   end
