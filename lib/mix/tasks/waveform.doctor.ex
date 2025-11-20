@@ -5,6 +5,7 @@ defmodule Mix.Tasks.Waveform.Doctor do
   This task checks for:
   - SuperCollider installation (sclang executable)
   - SuperCollider server executable (scsynth)
+  - SuperDirt Quark installation (for pattern-based live coding)
   - Environment variable configuration
 
   ## Usage
@@ -24,6 +25,7 @@ defmodule Mix.Tasks.Waveform.Doctor do
       check_sclang(),
       check_sclang_executable(),
       check_scsynth(),
+      check_superdirt(),
       check_env_vars()
     ]
 
@@ -139,6 +141,57 @@ defmodule Mix.Tasks.Waveform.Doctor do
     end
   end
 
+  defp check_superdirt do
+    Mix.shell().info("Checking for SuperDirt Quark...")
+
+    sclang_path = get_sclang_path()
+    path = if File.exists?(sclang_path), do: sclang_path, else: System.find_executable("sclang")
+
+    cond do
+      is_nil(path) or not File.exists?(path) ->
+        Mix.shell().info([:yellow, "  ⊘ Skipping (sclang not found)", :reset])
+        :ok
+
+      true ->
+        check_superdirt_installed(path)
+    end
+  end
+
+  defp check_superdirt_installed(sclang_path) do
+    # Run sclang with a command to check if SuperDirt class exists
+    # We use -e to evaluate code and quit immediately
+    command =
+      "SuperDirt.class.notNil.if({ \"SUPERDIRT_INSTALLED\".postln }, { \"SUPERDIRT_NOT_INSTALLED\".postln }); 0.exit;"
+
+    case System.cmd(sclang_path, ["-e", command], stderr_to_stdout: true) do
+      {output, _} ->
+        cond do
+          String.contains?(output, "SUPERDIRT_INSTALLED") ->
+            Mix.shell().info([:green, "  ✓ SuperDirt Quark is installed", :reset])
+            :ok
+
+          String.contains?(output, "SUPERDIRT_NOT_INSTALLED") ->
+            Mix.shell().error("  ✗ SuperDirt Quark is not installed")
+            print_superdirt_installation_instructions()
+            :error
+
+          true ->
+            # Couldn't determine - maybe old SC version or other issue
+            Mix.shell().info([
+              :yellow,
+              "  ⊘ Could not verify SuperDirt (SC may be too old or not responding)",
+              :reset
+            ])
+
+            :ok
+        end
+    end
+  rescue
+    _ ->
+      Mix.shell().info([:yellow, "  ⊘ Could not verify SuperDirt installation", :reset])
+      :ok
+  end
+
   defp check_env_vars do
     Mix.shell().info("Checking environment variables...")
 
@@ -226,5 +279,22 @@ defmodule Mix.Tasks.Waveform.Doctor do
 
     Mix.shell().info("  Custom location:")
     Mix.shell().info("    export SCLANG_PATH=/path/to/sclang")
+  end
+
+  defp print_superdirt_installation_instructions do
+    Mix.shell().info("\n  SuperDirt installation instructions:\n")
+
+    Mix.shell().info("  1. Open SuperCollider IDE (or run sclang)")
+    Mix.shell().info("  2. Install SuperDirt Quark:")
+    Mix.shell().info("     Quarks.install(\"SuperDirt\");\n")
+
+    Mix.shell().info("  3. Recompile the class library:")
+    Mix.shell().info("     thisProcess.recompile;\n")
+
+    Mix.shell().info("  4. (Optional) Add to startup file for automatic loading:")
+    Mix.shell().info("     SuperDirt.start;\n")
+
+    Mix.shell().info("  For more info:")
+    Mix.shell().info("    https://github.com/musikinformatik/SuperDirt")
   end
 end
