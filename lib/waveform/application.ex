@@ -7,7 +7,6 @@ defmodule Waveform.Application do
   - OSC: Handles OSC message transport
   - Node: Node ID allocation and tracking
   - Group: Group management
-  - AudioBus: Audio bus allocation
   - ServerInfo: Tracks server capabilities
   """
   use Application
@@ -20,7 +19,6 @@ defmodule Waveform.Application do
       {Waveform.OSC.Node.ID, 100},
       {Waveform.OSC.Node, nil},
       {Waveform.OSC.Group, nil},
-      {Waveform.AudioBus, nil},
       {Waveform.ServerInfo, nil}
     ]
 

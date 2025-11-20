@@ -48,7 +48,6 @@ This will verify that your system is properly configured.
 - **OSC Transport**: Send and receive OSC messages to/from SuperCollider
 - **Process Management**: Automatically manages the `sclang` process
 - **Node & Group Management**: Track synth nodes and organize them into groups
-- **Audio Bus Allocation**: Automatic audio bus allocation for routing
 - **Simple API**: Minimal, focused API for triggering synths
 
 ## Installation
@@ -201,7 +200,6 @@ Waveform starts a supervision tree with these processes:
 - **Waveform.OSC** - Handles OSC message transport
 - **Waveform.OSC.Node** - Allocates and tracks node IDs
 - **Waveform.OSC.Group** - Manages groups
-- **Waveform.AudioBus** - Allocates audio buses
 - **Waveform.ServerInfo** - Tracks server capabilities
 
 ## Use Cases

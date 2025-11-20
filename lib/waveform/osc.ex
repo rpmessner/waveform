@@ -50,7 +50,6 @@ defmodule Waveform.OSC do
   """
   use GenServer
 
-  alias Waveform.AudioBus
   alias Waveform.OSC.Group
   alias Waveform.OSC.Node
   alias Waveform.ServerInfo
@@ -204,8 +203,7 @@ defmodule Waveform.OSC do
   end
 
   defp process_osc_message({:cmd, [@status_reply, _ | response]}) do
-    si = ServerInfo.set_state(response)
-    AudioBus.setup(si.num_audio_busses, si.num_output_busses + si.num_input_busses)
+    ServerInfo.set_state(response)
   end
 
   defp process_osc_message({:cmd, [@n_go, 1 | _]}) do
