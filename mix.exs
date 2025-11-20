@@ -44,9 +44,6 @@ defmodule Waveform.MixProject do
       {:exexec, "~> 0.2"},
       {:recase, "~> 0.2"},
 
-      # Optional dependencies
-      {:harmony, git: "https://github.com/rpmessner/harmony", optional: true},
-
       # Dev/test dependencies
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},

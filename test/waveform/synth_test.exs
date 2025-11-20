@@ -128,27 +128,4 @@ defmodule Waveform.SynthTest do
       assert %{node_id: _, group_id: _} = result
     end
   end
-
-  describe "play/2 with Harmony (if available)" do
-    test "plays note name if Harmony is loaded" do
-      if Code.ensure_loaded?(Harmony.Note) do
-        result = Synth.play("c4", synth: "piano")
-        assert %{node_id: _, group_id: _} = result
-      else
-        # Skip test if Harmony not available
-        :ok
-      end
-    end
-
-    test "raises error for note name without Harmony" do
-      if Code.ensure_loaded?(Harmony.Note) do
-        # Skip if Harmony is loaded
-        :ok
-      else
-        assert_raise RuntimeError, ~r/Harmony library not available/, fn ->
-          Synth.play("c4", synth: "test")
-        end
-      end
-    end
-  end
 end

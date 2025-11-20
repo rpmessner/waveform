@@ -14,8 +14,8 @@ defmodule Waveform.Synth do
       # Trigger with specific node and group IDs
       Synth.trigger("my-synth", [note: 60], node_id: 1001, group_id: 1)
 
-      # Play a note by name (requires Harmony library)
-      Synth.play("c4", synth: "saw", amp: 0.8)
+      # Play a MIDI note
+      Synth.play(60, synth: "saw", amp: 0.8)
   """
 
   alias Waveform.OSC
@@ -52,31 +52,16 @@ defmodule Waveform.Synth do
   end
 
   @doc """
-  Play a note using a synth.
+  Play a MIDI note using a synth.
 
   This is a convenience function that adds a `:note` parameter.
-  If the Harmony library is available, you can pass note names like "c4".
 
   ## Examples
 
-      # With MIDI number
       Synth.play(60, synth: "saw", amp: 0.5)
-
-      # With note name (requires Harmony)
-      Synth.play("c4", synth: "piano")
+      Synth.play(64, synth: "piano")
   """
-  def play(note, opts \\ [])
-
-  def play(note, opts) when is_binary(note) do
-    if Code.ensure_loaded?(Harmony.Note) do
-      midi = Harmony.Note.get(note).midi
-      play(midi, opts)
-    else
-      raise "Harmony library not available. Use MIDI numbers instead or add {:harmony, ...} to deps."
-    end
-  end
-
-  def play(note, opts) when is_number(note) do
+  def play(note, opts \\ []) when is_number(note) do
     synth_name = opts[:synth] || "default"
     params = Keyword.merge([note: note], Keyword.delete(opts, :synth))
 
