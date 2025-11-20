@@ -2,10 +2,10 @@ defmodule Waveform.SynthTest do
   # Uses global Node.ID and Group singletons
   use ExUnit.Case, async: false
 
-  alias Waveform.Synth
   alias Waveform.OSC
-  alias Waveform.OSC.Node
   alias Waveform.OSC.Group
+  alias Waveform.OSC.Node
+  alias Waveform.Synth
 
   # Note: These tests work because config/test.exs uses NoOp transport
   # No actual OSC messages are sent to SuperCollider
@@ -121,13 +121,13 @@ defmodule Waveform.SynthTest do
     end
 
     test "raises error for note name without Harmony" do
-      unless Code.ensure_loaded?(Harmony.Note) do
+      if Code.ensure_loaded?(Harmony.Note) do
+        # Skip if Harmony is loaded
+        :ok
+      else
         assert_raise RuntimeError, ~r/Harmony library not available/, fn ->
           Synth.play("c4", synth: "test")
         end
-      else
-        # Skip if Harmony is loaded
-        :ok
       end
     end
   end

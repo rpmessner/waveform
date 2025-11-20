@@ -147,13 +147,11 @@ defmodule Mix.Tasks.Waveform.Doctor do
     sclang_path = get_sclang_path()
     path = if File.exists?(sclang_path), do: sclang_path, else: System.find_executable("sclang")
 
-    cond do
-      is_nil(path) or not File.exists?(path) ->
-        Mix.shell().info([:yellow, "  ⊘ Skipping (sclang not found)", :reset])
-        :ok
-
-      true ->
-        check_superdirt_installed(path)
+    if is_nil(path) or not File.exists?(path) do
+      Mix.shell().info([:yellow, "  ⊘ Skipping (sclang not found)", :reset])
+      :ok
+    else
+      check_superdirt_installed(path)
     end
   end
 
