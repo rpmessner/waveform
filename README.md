@@ -39,20 +39,33 @@ If you want to use Waveform's pattern scheduler with SuperDirt (TidalCycles-styl
    thisProcess.recompile;
    ```
 
-2. **Start SuperDirt** (each session):
+2. **Install Dirt-Samples** (optional but recommended):
 
-   Either add to your SuperCollider startup file (`~/Library/Application Support/SuperCollider/startup.scd` on macOS):
-   ```supercollider
-   s.waitForBoot {
-     ~dirt = SuperDirt(2, s);
-     ~dirt.loadSoundFiles;
-     ~dirt.start(57120, [0, 0]);
-   };
+   Dirt-Samples provides 217 sample banks (1800+ audio files) including drum machines,
+   percussion, synths, and instruments. Waveform includes an automated installer:
+
+   ```bash
+   mix waveform.install_samples
    ```
 
-   Or start it manually from Elixir:
+   This will:
+   - Download ~200MB of samples
+   - Install them to the correct location for your OS
+   - Verify the installation
+   - Provide next steps
+
+   **Note:** Waveform is pre-configured with optimal buffer settings (4096 buffers)
+   to support all Dirt-Samples. No additional configuration needed!
+
+3. **Start SuperDirt** (automatic):
+
+   Waveform automatically starts SuperDirt with the correct configuration when you use
+   `Helpers.ensure_superdirt_ready()`. The samples are loaded automatically from the
+   installed Dirt-Samples directory.
+
    ```elixir
-   Waveform.Lang.send_command("SuperDirt.start;")
+   alias Waveform.Helpers
+   Helpers.ensure_superdirt_ready()
    ```
 
 ### Custom Installation Path
@@ -390,6 +403,91 @@ When working on Waveform (especially with AI assistants), consult the session do
 - [ ] MIDI support
 - [ ] More examples and guides
 - [ ] Buffer management for custom samples
+
+## Troubleshooting
+
+### SuperDirt / Dirt-Samples Issues
+
+#### Only hearing kick drum / Some samples don't play
+
+**Cause:** SuperCollider's buffer limit is too low for Dirt-Samples (1817 audio files).
+
+**Solution:** Waveform is pre-configured with `numBuffers = 4096` to support all samples.
+If you're still experiencing issues:
+
+1. Verify Dirt-Samples is installed:
+   ```bash
+   mix waveform.install_samples
+   ```
+
+2. Restart your application completely (not just reload):
+   ```elixir
+   # In IEx
+   :init.restart()
+   ```
+
+3. Check the installation:
+   ```bash
+   ls ~/Library/Application\ Support/SuperCollider/downloaded-quarks/Dirt-Samples/
+   # Should show 217+ directories (bd, sn, hh, cp, etc.)
+   ```
+
+#### ERROR: No more buffer numbers
+
+**Cause:** The buffer limit has been exceeded.
+
+**Solution:** This is handled automatically by Waveform's server configuration. If you see this error:
+
+1. Make sure you're using the latest version of Waveform
+2. Restart your application
+3. If the issue persists, you may have custom server options overriding Waveform's settings
+
+#### Samples installed but not loading
+
+**Cause:** Sample path not configured correctly.
+
+**Solution:** Waveform automatically detects the correct sample path for your OS. If samples
+still don't load:
+
+1. Verify the path exists:
+   - **macOS**: `~/Library/Application Support/SuperCollider/downloaded-quarks/Dirt-Samples`
+   - **Linux**: `~/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples`
+   - **Windows**: `~/AppData/Local/SuperCollider/downloaded-quarks/Dirt-Samples`
+
+2. Check the sample count:
+   ```bash
+   find ~/Library/Application\ Support/SuperCollider/downloaded-quarks/Dirt-Samples/ -name "*.wav" | wc -l
+   # Should show ~1800 files
+   ```
+
+3. If files are missing, reinstall:
+   ```bash
+   mix waveform.install_samples
+   ```
+
+### General SuperCollider Issues
+
+#### SuperCollider not found
+
+Run `mix waveform.doctor` to diagnose installation issues.
+
+If SuperCollider is installed in a custom location:
+```bash
+export SCLANG_PATH=/path/to/sclang
+```
+
+#### Server won't start
+
+1. Check if another SuperCollider instance is running
+2. Verify audio device permissions (macOS/Linux)
+3. Check SuperCollider logs for errors
+4. Try running SuperCollider IDE directly to diagnose
+
+### Getting Help
+
+1. Run diagnostics: `mix waveform.doctor`
+2. Test SuperDirt: `mix run demos/check_superdirt.exs`
+3. Report issues: https://github.com/rpmessner/waveform/issues
 
 ## Related Projects
 
