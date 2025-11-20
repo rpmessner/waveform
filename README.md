@@ -8,6 +8,8 @@ Waveform provides low-level OSC messaging, node/group management, and a simple A
 
 **⚠️ SuperCollider must be installed on your system before using Waveform.**
 
+### Installing SuperCollider
+
 **macOS:**
 ```bash
 brew install supercollider
@@ -25,6 +27,34 @@ sudo pacman -S supercollider
 **Windows:**
 Download from [supercollider.github.io](https://supercollider.github.io/)
 
+### Installing SuperDirt (Optional, for Pattern-Based Live Coding)
+
+If you want to use Waveform's pattern scheduler with SuperDirt (TidalCycles-style live coding):
+
+1. **Install the SuperDirt Quark** (one-time setup):
+
+   Open SuperCollider IDE and run:
+   ```supercollider
+   Quarks.install("SuperDirt");
+   thisProcess.recompile;
+   ```
+
+2. **Start SuperDirt** (each session):
+
+   Either add to your SuperCollider startup file (`~/Library/Application Support/SuperCollider/startup.scd` on macOS):
+   ```supercollider
+   s.waitForBoot {
+     ~dirt = SuperDirt(2, s);
+     ~dirt.loadSoundFiles;
+     ~dirt.start(57120, [0, 0]);
+   };
+   ```
+
+   Or start it manually from Elixir:
+   ```elixir
+   Waveform.Lang.send_command("SuperDirt.start;")
+   ```
+
 ### Custom Installation Path
 
 If SuperCollider is installed in a non-standard location, set the `SCLANG_PATH` environment variable:
@@ -35,13 +65,13 @@ export SCLANG_PATH=/path/to/sclang
 
 ### Verify Installation
 
-After installing SuperCollider and adding Waveform to your project, run:
+After installing SuperCollider (and optionally SuperDirt), run:
 
 ```bash
 mix waveform.doctor
 ```
 
-This will verify that your system is properly configured.
+This will verify that your system is properly configured, including checking for SuperDirt if you plan to use pattern-based features.
 
 ## Features
 
@@ -49,6 +79,9 @@ This will verify that your system is properly configured.
 - **Process Management**: Automatically manages the `sclang` process
 - **Node & Group Management**: Track synth nodes and organize them into groups
 - **Simple API**: Minimal, focused API for triggering synths
+- **SuperDirt Integration**: TidalCycles-compatible sample playback and effects
+- **Pattern Scheduler**: High-precision continuous pattern playback with cycle-based timing
+- **Hot-Swappable Patterns**: Change patterns while they're playing without stopping
 
 ## Installation
 
@@ -245,29 +278,77 @@ defmodule MyPatternEngine do
 end
 ```
 
-### Integrating with SuperDirt
+### Pattern-Based Live Coding with SuperDirt
 
-Waveform is a perfect foundation for building TidalCycles-style live coding environments. SuperDirt should be loaded and configured separately in SuperCollider, then you can send it OSC messages directly.
+Waveform includes built-in SuperDirt integration and a high-precision pattern scheduler for TidalCycles-style live coding.
 
-For more advanced SuperDirt integration and pattern languages, see [KinoSpaetzle](https://github.com/rpmessner/kino_spaetzle) - a TidalCycles-inspired live coding environment for Livebook that uses Waveform as its transport layer.
+**Prerequisites:** Make sure SuperDirt is installed and loaded (see [Prerequisites](#prerequisites)).
 
-Example of triggering SuperDirt samples:
+**Basic SuperDirt playback:**
 
 ```elixir
-alias Waveform.OSC
+alias Waveform.SuperDirt
 
-# SuperDirt listens on port 57120 by default
-# You'll need to configure a separate OSC connection to SuperDirt
-# or load SuperDirt into the same scsynth instance
+# Start SuperDirt in SuperCollider
+Waveform.Lang.send_command("SuperDirt.start;")
 
-# Trigger a sample (after setting up SuperDirt routing)
-Synth.trigger("dirt", [
-  s: "bd",      # sample name
-  n: 0,         # sample number
-  gain: 1.0,
-  orbit: 0
-])
+# Trigger individual samples
+SuperDirt.play(s: "bd")                    # Bass drum
+SuperDirt.play(s: "sn", n: 2, gain: 0.8)  # Snare variant 2
+SuperDirt.play(s: "cp", room: 0.5, size: 0.8)  # Clap with reverb
 ```
+
+**Continuous pattern playback:**
+
+```elixir
+alias Waveform.PatternScheduler
+
+# Set tempo (0.5625 = 135 BPM)
+PatternScheduler.set_cps(0.5625)
+
+# Define a drum pattern (events at cycle positions 0.0 to 1.0)
+drums = [
+  {0.0, [s: "bd"]},      # Kick on the 1
+  {0.25, [s: "cp"]},     # Clap on the 2
+  {0.5, [s: "sn"]},      # Snare on the 3
+  {0.75, [s: "cp"]}      # Clap on the 4
+]
+
+# Start the pattern looping
+PatternScheduler.schedule_pattern(:drums, drums)
+
+# Add a hi-hat pattern
+hats = [
+  {0.0, [s: "hh", n: 0]},
+  {0.125, [s: "hh", n: 1]},
+  {0.25, [s: "hh", n: 0]},
+  {0.375, [s: "hh", n: 1]},
+  {0.5, [s: "hh", n: 0]},
+  {0.625, [s: "hh", n: 1]},
+  {0.75, [s: "hh", n: 0]},
+  {0.875, [s: "hh", n: 1]}
+]
+
+PatternScheduler.schedule_pattern(:hats, hats)
+
+# Hot-swap the drum pattern while it's playing
+new_drums = [
+  {0.0, [s: "bd", n: 1]},
+  {0.5, [s: "bd", n: 2]}
+]
+PatternScheduler.update_pattern(:drums, new_drums)
+
+# Change tempo on the fly
+PatternScheduler.set_cps(0.75)  # Speed up to 180 BPM
+
+# Stop a specific pattern
+PatternScheduler.stop_pattern(:hats)
+
+# Emergency stop all patterns
+PatternScheduler.hush()
+```
+
+**For more advanced pattern languages**, see [KinoSpaetzle](https://github.com/rpmessner/kino_spaetzle) - a TidalCycles-inspired live coding environment for Livebook that adds mini-notation parsing on top of Waveform's scheduler.
 
 ## Development
 
@@ -304,10 +385,11 @@ When working on Waveform (especially with AI assistants), consult the session do
 
 ## Roadmap
 
-- [ ] Better SuperDirt integration
+- [x] SuperDirt integration (✅ Complete - v0.3.0)
+- [x] Pattern scheduling utilities (✅ Complete - v0.3.0)
 - [ ] MIDI support
-- [ ] Pattern scheduling utilities
 - [ ] More examples and guides
+- [ ] Buffer management for custom samples
 
 ## Related Projects
 
