@@ -111,7 +111,10 @@ defmodule Waveform.OSC.Group do
   end
 
   def init(state) do
-    {:ok, state}
+    # Create root synth group on startup
+    group = %Group{type: :synth, name: :root_synth_group, id: ID.next()}
+    create_group(group.id, :head, state.root_group.id)
+    {:ok, %{state | root_synth_group: group}}
   end
 
   def handle_call({:root_synth_group}, _from, state) do
