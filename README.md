@@ -285,9 +285,22 @@ mix compile
 # Run tests
 mix test
 
+# Check code coverage
+MIX_ENV=test mix coveralls
+
 # Generate documentation
 mix docs
 ```
+
+### Development Session Documentation
+
+Development sessions are documented in `docs/sessions/` to maintain context across sessions and help contributors understand recent changes:
+
+- **Session history**: See [docs/sessions/README.md](docs/sessions/README.md)
+- **Latest session**: Check the most recent file in `docs/sessions/`
+- **Project changelog**: See [CHANGELOG.md](CHANGELOG.md)
+
+When working on Waveform (especially with AI assistants), consult the session documentation for context on recent architectural decisions and ongoing work.
 
 ## Roadmap
 
@@ -305,6 +318,15 @@ mix docs
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
+
+When contributing significant changes:
+
+1. Run `mix test` to ensure all tests pass
+2. Check `MIX_ENV=test mix coveralls` to verify coverage
+3. Update or create session documentation in `docs/sessions/` for major features
+4. Update [CHANGELOG.md](CHANGELOG.md) with your changes
+
+See [docs/sessions/README.md](docs/sessions/README.md) for context on recent development work.
 
 ## License
 
