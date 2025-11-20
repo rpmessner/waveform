@@ -2,22 +2,21 @@ defmodule Waveform.OSC.GroupTest do
   use ExUnit.Case, async: true
 
   alias Waveform.OSC.Group
+  alias Waveform.OSC.Node
 
   setup do
-    # Start Node.ID and Group GenServers with unique names for this test
+    # Start Node.ID singleton if not already running (needed by Group)
+    unless Process.whereis(Node.ID), do: Node.ID.start_link(100)
+
+    # Start Group GenServer with unique name for this test
     test_id = :rand.uniform(1_000_000)
-    node_id_name = :"node_id_#{test_id}"
     group_name = :"group_#{test_id}"
 
-    # Start with custom names
-    # Node.ID is now an Agent (just stores an integer)
-    {:ok, node_id_pid} = Agent.start_link(fn -> 100 end, name: node_id_name)
-    # Group is still a GenServer
+    # Group is a GenServer
     {:ok, group_pid} = GenServer.start(Group, %Group.State{}, name: group_name)
 
     # Clean up after test
     on_exit(fn ->
-      if Process.alive?(node_id_pid), do: Agent.stop(node_id_pid)
       if Process.alive?(group_pid), do: GenServer.stop(group_pid)
     end)
 

@@ -97,7 +97,7 @@ defmodule Waveform.OSC.Node do
   def handle_call({:next_node, next}, _from, state) do
     node = %{next | created_at: System.monotonic_time(:millisecond)}
     inactive_nodes = Map.put(state.inactive_nodes, node.id, node)
-    {:reply, next, %{state | inactive_nodes: inactive_nodes}}
+    {:reply, node, %{state | inactive_nodes: inactive_nodes}}
   end
 
   def handle_info(:prune_dead_nodes, state) do
