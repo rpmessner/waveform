@@ -42,8 +42,7 @@ defmodule Waveform.MixProject do
 
       # Dev/test dependencies
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:mock, "~> 0.3.2", only: :test}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
