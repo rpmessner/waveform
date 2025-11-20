@@ -16,9 +16,6 @@ defmodule Mix.Tasks.Waveform.Doctor do
 
   use Mix.Task
 
-  @sclang_path System.get_env("SCLANG_PATH") ||
-                 "/Applications/SuperCollider.app/Contents/MacOS/sclang"
-
   @impl Mix.Task
   def run(_args) do
     Mix.shell().info("Checking Waveform system requirements...\n")
@@ -50,9 +47,11 @@ defmodule Mix.Tasks.Waveform.Doctor do
   defp check_sclang do
     Mix.shell().info("Checking for sclang...")
 
+    sclang_path = get_sclang_path()
+
     cond do
-      File.exists?(@sclang_path) ->
-        Mix.shell().info([:green, "  ✓ Found sclang at: #{@sclang_path}", :reset])
+      File.exists?(sclang_path) ->
+        Mix.shell().info([:green, "  ✓ Found sclang at: #{sclang_path}", :reset])
         :ok
 
       sclang_in_path?() ->
@@ -61,7 +60,7 @@ defmodule Mix.Tasks.Waveform.Doctor do
         :ok
 
       true ->
-        Mix.shell().error("  ✗ sclang not found at: #{@sclang_path}")
+        Mix.shell().error("  ✗ sclang not found at: #{sclang_path}")
         print_installation_instructions()
         :error
     end
@@ -70,7 +69,8 @@ defmodule Mix.Tasks.Waveform.Doctor do
   defp check_sclang_executable do
     Mix.shell().info("Checking if sclang is executable...")
 
-    path = if File.exists?(@sclang_path), do: @sclang_path, else: System.find_executable("sclang")
+    sclang_path = get_sclang_path()
+    path = if File.exists?(sclang_path), do: sclang_path, else: System.find_executable("sclang")
 
     cond do
       is_nil(path) or not File.exists?(path) ->
@@ -125,10 +125,7 @@ defmodule Mix.Tasks.Waveform.Doctor do
     Mix.shell().info("Checking for scsynth (SuperCollider server)...")
 
     # Try to find scsynth in common locations
-    scsynth_paths = [
-      "/Applications/SuperCollider.app/Contents/Resources/scsynth",
-      System.find_executable("scsynth")
-    ]
+    scsynth_paths = default_scsynth_paths() ++ [System.find_executable("scsynth")]
 
     scsynth_path = Enum.find(scsynth_paths, &(&1 && File.exists?(&1)))
 
@@ -152,6 +149,52 @@ defmodule Mix.Tasks.Waveform.Doctor do
     else
       Mix.shell().info([:yellow, "  ⊘ SCLANG_PATH not set (using default location)", :reset])
       :ok
+    end
+  end
+
+  defp get_sclang_path do
+    System.get_env("SCLANG_PATH") || default_sclang_path()
+  end
+
+  defp default_sclang_path do
+    case :os.type() do
+      {:unix, :darwin} ->
+        "/Applications/SuperCollider.app/Contents/MacOS/sclang"
+
+      {:unix, _} ->
+        # Linux: try common installation paths
+        Enum.find(
+          ["/usr/bin/sclang", "/usr/local/bin/sclang"],
+          &File.exists?/1
+        ) || "/usr/bin/sclang"
+
+      {:win32, _} ->
+        # Windows: try common installation paths
+        Enum.find(
+          [
+            "C:\\Program Files\\SuperCollider\\sclang.exe",
+            "C:\\Program Files (x86)\\SuperCollider\\sclang.exe"
+          ],
+          &File.exists?/1
+        ) || "C:\\Program Files\\SuperCollider\\sclang.exe"
+    end
+  end
+
+  defp default_scsynth_paths do
+    case :os.type() do
+      {:unix, :darwin} ->
+        ["/Applications/SuperCollider.app/Contents/Resources/scsynth"]
+
+      {:unix, _} ->
+        # Linux: try common installation paths
+        ["/usr/bin/scsynth", "/usr/local/bin/scsynth"]
+
+      {:win32, _} ->
+        # Windows: try common installation paths
+        [
+          "C:\\Program Files\\SuperCollider\\scsynth.exe",
+          "C:\\Program Files (x86)\\SuperCollider\\scsynth.exe"
+        ]
     end
   end
 
