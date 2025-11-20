@@ -5,6 +5,7 @@ defmodule Waveform.Application do
   Starts the essential processes for OSC communication with SuperCollider:
   - Lang: Manages the sclang process
   - OSC: Handles OSC message transport
+  - SuperDirt: Handles SuperDirt pattern-based audio
   - Node: Node ID allocation and tracking
   - Group: Group management
   """
@@ -14,6 +15,7 @@ defmodule Waveform.Application do
     children = [
       {Waveform.Lang, nil},
       {Waveform.OSC, nil},
+      {Waveform.SuperDirt, []},
       # Start node IDs at 100 to leave room for system nodes
       {Waveform.OSC.Node.ID, 100},
       {Waveform.OSC.Node, nil},
