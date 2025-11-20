@@ -57,6 +57,9 @@ defmodule Waveform.OSC do
   alias __MODULE__
   @me __MODULE__
 
+  # Transport layer - configurable for testing
+  @transport Application.compile_env(:waveform, :osc_transport, Waveform.OSC.UDP)
+
   @s_new ~c"/s_new"
   @g_new ~c"/g_new"
   @g_deep_free ~c"/g_deepFree"
@@ -234,8 +237,8 @@ defmodule Waveform.OSC do
     udp_receive(socket)
   end
 
-  defp osc(state, command) do
-    # IO.inspect({"osc send:", command})
-    :ok = :gen_udp.send(state.socket, state.host, state.host_port, :osc.encode(command))
+  defp osc(state, [address | args]) do
+    # IO.inspect({"osc send:", [address | args]})
+    @transport.send_osc_message(state, address, args)
   end
 end
