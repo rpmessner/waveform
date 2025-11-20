@@ -6,6 +6,7 @@ defmodule Waveform.Application do
   - Lang: Manages the sclang process
   - OSC: Handles OSC message transport
   - SuperDirt: Handles SuperDirt pattern-based audio
+  - PatternScheduler: High-precision pattern scheduling for continuous playback
   - Node: Node ID allocation and tracking
   - Group: Group management
   """
@@ -16,6 +17,7 @@ defmodule Waveform.Application do
       {Waveform.Lang, nil},
       {Waveform.OSC, nil},
       {Waveform.SuperDirt, []},
+      {Waveform.PatternScheduler, []},
       # Start node IDs at 100 to leave room for system nodes
       {Waveform.OSC.Node.ID, 100},
       {Waveform.OSC.Node, nil},
