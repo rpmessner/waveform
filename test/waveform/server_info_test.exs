@@ -21,20 +21,20 @@ defmodule Waveform.ServerInfoTest do
 
     test "stores sample rate from valid status reply" do
       # Format: [unused, ugens, synths, groups, synthdefs, avg_cpu, peak_cpu, nominal_sr, actual_sr]
-      status_reply = [1, 0, 0, 0, 0, 0.0, 0.0, 44100.0, 44100.0]
+      status_reply = [1, 0, 0, 0, 0, 0.0, 0.0, 44_100.0, 44_100.0]
 
       assert :ok = ServerInfo.set_from_status_reply(status_reply)
-      assert 44100.0 == ServerInfo.sample_rate()
+      assert 44_100.0 == ServerInfo.sample_rate()
     end
 
     test "stores different sample rates" do
       # 48kHz
-      ServerInfo.set_from_status_reply([1, 0, 0, 0, 0, 0.0, 0.0, 48000.0, 48000.0])
-      assert 48000.0 == ServerInfo.sample_rate()
+      ServerInfo.set_from_status_reply([1, 0, 0, 0, 0, 0.0, 0.0, 48_000.0, 48_000.0])
+      assert 48_000.0 == ServerInfo.sample_rate()
 
       # 96kHz
-      ServerInfo.set_from_status_reply([1, 0, 0, 0, 0, 0.0, 0.0, 96000.0, 96000.0])
-      assert 96000.0 == ServerInfo.sample_rate()
+      ServerInfo.set_from_status_reply([1, 0, 0, 0, 0, 0.0, 0.0, 96_000.0, 96_000.0])
+      assert 96_000.0 == ServerInfo.sample_rate()
     end
 
     test "returns error for invalid status reply" do
@@ -50,21 +50,21 @@ defmodule Waveform.ServerInfoTest do
 
     test "handles mismatched nominal vs actual sample rate" do
       # Nominal and actual can differ slightly
-      status_reply = [1, 0, 0, 0, 0, 0.0, 0.0, 44100.0, 44099.5]
+      status_reply = [1, 0, 0, 0, 0, 0.0, 0.0, 44_100.0, 44_099.5]
 
       ServerInfo.set_from_status_reply(status_reply)
-      assert 44099.5 == ServerInfo.sample_rate()
+      assert 44_099.5 == ServerInfo.sample_rate()
     end
   end
 
   describe ":persistent_term storage characteristics" do
     test "sample rate persists across calls" do
-      ServerInfo.set_from_status_reply([1, 0, 0, 0, 0, 0.0, 0.0, 44100.0, 44100.0])
+      ServerInfo.set_from_status_reply([1, 0, 0, 0, 0, 0.0, 0.0, 44_100.0, 44_100.0])
 
       # Multiple reads should return same value (no process overhead)
-      assert 44100.0 == ServerInfo.sample_rate()
-      assert 44100.0 == ServerInfo.sample_rate()
-      assert 44100.0 == ServerInfo.sample_rate()
+      assert 44_100.0 == ServerInfo.sample_rate()
+      assert 44_100.0 == ServerInfo.sample_rate()
+      assert 44_100.0 == ServerInfo.sample_rate()
     end
   end
 end
