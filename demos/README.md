@@ -1,6 +1,6 @@
-# Waveform Demo Songs
+# Waveform Demo Patterns
 
-This directory contains demo files showcasing different approaches to creating music with Waveform and SuperDirt.
+This directory contains demo files showcasing different approaches to creating music with Waveform and SuperDirt, ordered by complexity from beginner to advanced.
 
 ## Prerequisites
 
@@ -8,65 +8,92 @@ Before running any demos, make sure:
 
 1. SuperCollider is installed (`brew install supercollider`)
 2. SuperDirt is installed (in SuperCollider: `Quarks.install("SuperDirt")`)
-3. SuperDirt is running:
-   ```elixir
-   Waveform.Lang.send_command("SuperDirt.start;")
-   ```
+3. Dirt-Samples are installed (`mix waveform.install_samples`)
 
 Or verify everything with:
 ```bash
 mix waveform.doctor
+mix waveform.check
 ```
 
-## Demo Files
+## Demo Files (Ordered by Complexity)
 
-### 1. Radiohead - Creep
+### 1. Basic Patterns (Easiest)
 
-Two implementation styles demonstrating different organizational approaches:
-
-**`creep_simple.exs`** - Simple Pattern Style
+**`01_basic_patterns.exs`** - Simple Pattern Style
 - Direct, straightforward pattern definitions
 - Patterns defined as plain lists
-- Good for: Quick experimentation, simple songs
+- Good for: Quick experimentation, learning the basics
 - Shows: Basic pattern structure, multiple simultaneous patterns
+- Musical style: Simple chord progression with arpeggios
 
 ```bash
-mix run demos/creep_simple.exs
+mix run demos/01_basic_patterns.exs
 ```
 
-**`creep_modular.exs`** - Modular/Compositional Style
+**What you'll learn:**
+- How to define patterns as data
+- Cycle-based timing (0.0 to 1.0)
+- Basic SuperDirt parameters (s, n, gain)
+- Running multiple patterns simultaneously
+
+### 2. Modular Composition
+
+**`02_modular_composition.exs`** - Modular/Compositional Style
 - Patterns built with helper functions
 - Supports variations (quiet vs loud sections)
 - Good for: Complex arrangements, reusable components
 - Shows: Function composition, dynamic variation, modules
+- Musical style: Chord progression with dynamic controls
 
 ```bash
-mix run demos/creep_modular.exs
+mix run demos/02_modular_composition.exs
 ```
 
-### 2. John Coltrane - Giant Steps
+**What you'll learn:**
+- Organizing patterns with functions
+- Creating variation functions (play_quiet, play_loud)
+- Parameterized pattern builders
+- Module-based organization
 
-**`giant_steps.exs`** - Complex Harmony Demo
-- Demonstrates rapid chord changes
-- Shows cycle-based timing with dense events
-- Good for: Jazz progressions, fast tempos
-- Shows: Complex harmonic patterns, tempo variations
+### 3. Syncopated Rhythm
 
-```bash
-mix run demos/giant_steps.exs
-```
-
-### 3. Stevie Wonder - Superstition
-
-**`superstition.exs`** - Funk Groove Demo
+**`03_syncopated_rhythm.exs`** - Funk Groove Demo
 - Syncopated rhythms and riffs
 - Demonstrates timing precision for funk grooves
 - Good for: Rhythmic complexity, groove-based music
 - Shows: Syncopation, 16th note patterns, multiple rhythm layers
+- Musical style: Funk groove with syncopated elements
 
 ```bash
-mix run demos/superstition.exs
+mix run demos/03_syncopated_rhythm.exs
 ```
+
+**What you'll learn:**
+- Syncopated rhythms (off-beat timing)
+- 16th note patterns (0.0625 increments)
+- Layering multiple rhythmic elements
+- Creating groove with timing precision
+
+### 4. Complex Harmony (Most Advanced)
+
+**`04_complex_harmony.exs`** - Complex Harmony Demo
+- Demonstrates rapid chord changes
+- Shows cycle-based timing with dense events
+- Good for: Jazz progressions, fast tempos
+- Shows: Complex harmonic patterns, tempo variations
+- Musical style: Fast chord progression through multiple key centers
+
+```bash
+mix run demos/04_complex_harmony.exs
+```
+
+**What you'll learn:**
+- Rapid chord changes (8+ per cycle)
+- Dense event patterns
+- Fast tempos (240 BPM)
+- Walking bass patterns
+- Complex harmonic movement
 
 ## Implementation Patterns Comparison
 
@@ -94,6 +121,8 @@ PatternScheduler.schedule_pattern(:bass, bass)
 - Hard to reuse
 - No built-in variations
 - Gets messy with complex songs
+
+**Example:** `01_basic_patterns.exs`
 
 ### Style 2: Modular/Functional
 
@@ -127,6 +156,8 @@ end
 **Cons:**
 - More verbose
 - Requires more planning
+
+**Examples:** `02_modular_composition.exs`, `03_syncopated_rhythm.exs`, `04_complex_harmony.exs`
 
 ### Style 3: Sectioned/Structured (potential future demo)
 
@@ -193,32 +224,56 @@ PatternScheduler.hush()
 
 Common parameters you'll use:
 
-- `s` - Sample name ("bd", "sn", "cp", "hh", "bass", etc.)
-- `n` - Sample variant (0, 1, 2...)
+- `s` - Sample name ("bd", "sn", "cp", "hh", "bass", "arpy", etc.)
+- `n` - Sample variant or MIDI note number (0, 1, 2... or 60, 64, 67...)
 - `gain` - Volume (0.0 to 1.0+)
 - `speed` - Playback speed (1.0 = normal)
 - `pan` - Stereo position (-1.0 to 1.0)
 - `room` - Reverb amount
 - `cutoff` - Filter cutoff frequency
 
+## Suggested Learning Path
+
+1. **Start with `01_basic_patterns.exs`**
+   - Understand cycle-based timing
+   - Get comfortable with basic patterns
+   - Experiment with changing parameters
+
+2. **Try `02_modular_composition.exs`**
+   - See how to organize code with functions
+   - Try the different variations (play_quiet, play_loud)
+   - Understand parameterized patterns
+
+3. **Explore `03_syncopated_rhythm.exs`**
+   - Learn about syncopation and groove
+   - Practice with 16th note timing
+   - Layer multiple rhythmic elements
+
+4. **Challenge yourself with `04_complex_harmony.exs`**
+   - Handle dense, rapid patterns
+   - Work with complex harmonic movement
+   - Try the slow version (play_slow) first
+
 ## Tips
 
-1. **Start Simple**: Begin with the simple style, then refactor to modular
+1. **Start Simple**: Run the demos in order (01 → 04)
 2. **Use IEx**: Run `iex -S mix` and experiment interactively
 3. **Hot-Swap**: Update patterns while they're playing to hear changes immediately
 4. **Layer Gradually**: Start with one pattern, add more one at a time
 5. **Mind the Gain**: Keep total gain below 1.0 to avoid clipping
+6. **Modify and Experiment**: Change notes, timing, samples - make them your own!
 
 ## Next Steps
 
 - Try modifying the patterns
-- Create your own song demos
-- Experiment with different SuperDirt samples
-- Combine multiple implementation styles
+- Create your own musical patterns
+- Experiment with different SuperDirt samples (see: `IExHelpers.samples()`)
+- Combine implementation styles
 - Build a full song structure with sections
 
 ## Resources
 
 - [Waveform README](../README.md)
 - [SuperDirt GitHub](https://github.com/musikinformatik/SuperDirt)
-- [TidalCycles Patterns](https://tidalcycles.org/docs/)
+- [Dirt-Samples Library](https://github.com/tidalcycles/Dirt-Samples)
+- [TidalCycles Documentation](https://tidalcycles.org/docs/)
