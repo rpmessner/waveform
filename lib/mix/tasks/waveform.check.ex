@@ -65,13 +65,11 @@ defmodule Mix.Tasks.Waveform.Check do
   end
 
   defp ensure_superdirt_ready do
-    try do
-      Waveform.Helpers.ensure_superdirt_ready()
-      :ok
-    rescue
-      e ->
-        {:error, Exception.message(e)}
-    end
+    Waveform.Helpers.ensure_superdirt_ready()
+    :ok
+  rescue
+    e ->
+      {:error, Exception.message(e)}
   end
 
   defp run_sample_tests do
