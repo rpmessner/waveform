@@ -23,3 +23,10 @@ erl_crash.dump
 waveform-*.tar
 
 /.elixir_ls/
+
+# Claude Code local settings
+/.claude/settings.local.json
+
+# Coverage reports
+/cover/
+/coverage/
