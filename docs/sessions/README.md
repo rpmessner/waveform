@@ -17,6 +17,30 @@ Session documents help maintain context across development sessions, especially 
 
 ### 2025
 
+- **[2025-01-19: Pattern Scheduler and SuperDirt Verification](./2025-01-19-pattern-scheduler-and-superdirt-verification.md)**
+  - Implemented high-precision pattern scheduler (528 lines)
+  - Cycle-based timing with 10ms tick interval
+  - Hot-swappable patterns and instant tempo changes
+  - Added SuperDirt verification to mix waveform.doctor
+  - Runtime SuperDirt verification with helpful errors
+  - Enhanced README with installation instructions
+  - Created comprehensive KinoSpaetzle integration guide
+  - Pattern scheduler walkthrough documentation
+
+- **[2025-01-19: OSC Bundle Support](./2025-01-19-osc-bundle-support.md)**
+  - Implemented OSC bundles with timestamps for SuperDirt
+  - Configurable latency (default 20ms)
+  - Added latency management API
+  - 100% test coverage on UDP transport
+  - Foundation for precise pattern scheduling
+
+- **[2025-01-19: SuperDirt Integration](./2025-01-19-superdirt-integration.md)**
+  - Created SuperDirt module (294 lines)
+  - Sample playback and control commands
+  - Automatic parameter handling
+  - 96.7% test coverage (23 tests)
+  - Dual communication architecture (OSC + SuperDirt)
+
 - **[2025-01-19: Test Coverage and Code Quality](./2025-01-19-test-coverage.md)**
   - Added comprehensive test suite (35 tests)
   - Achieved 21.6% code coverage
