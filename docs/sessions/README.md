@@ -17,6 +17,17 @@ Session documents help maintain context across development sessions, especially 
 
 ### 2025
 
+- **[2025-11-20: Dirt-Samples Buffer Fix](./2025-11-20-dirt-samples-buffer-fix.md)**
+  - Fixed critical buffer limit issue (1024 → 4096 buffers)
+  - Resolved "only kick drum plays" bug
+  - Added server ready detection (wait_for_server)
+  - Created Helpers.ensure_superdirt_ready()
+  - Platform-specific sample path detection
+  - Automated installation: mix waveform.install_samples
+  - Comprehensive troubleshooting documentation
+  - Enhanced diagnostics to prevent regression
+  - Song demos: Superstition, Creep, Giant Steps
+
 - **[2025-01-19: Pattern Scheduler and SuperDirt Verification](./2025-01-19-pattern-scheduler-and-superdirt-verification.md)**
   - Implemented high-precision pattern scheduler (528 lines)
   - Cycle-based timing with 10ms tick interval
