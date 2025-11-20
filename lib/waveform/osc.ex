@@ -206,7 +206,7 @@ defmodule Waveform.OSC do
   end
 
   defp process_osc_message({:cmd, [@status_reply, _ | response]}) do
-    ServerInfo.set_state(response)
+    ServerInfo.set_from_status_reply(response)
   end
 
   defp process_osc_message({:cmd, [@n_go, 1 | _]}) do

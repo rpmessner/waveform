@@ -7,7 +7,6 @@ defmodule Waveform.Application do
   - OSC: Handles OSC message transport
   - Node: Node ID allocation and tracking
   - Group: Group management
-  - ServerInfo: Tracks server capabilities
   """
   use Application
 
@@ -18,8 +17,7 @@ defmodule Waveform.Application do
       # Start node IDs at 100 to leave room for system nodes
       {Waveform.OSC.Node.ID, 100},
       {Waveform.OSC.Node, nil},
-      {Waveform.OSC.Group, nil},
-      {Waveform.ServerInfo, nil}
+      {Waveform.OSC.Group, nil}
     ]
 
     opts = [strategy: :one_for_one, name: Waveform.Supervisor]

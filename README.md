@@ -198,9 +198,9 @@ Waveform starts a supervision tree with these processes:
 
 - **Waveform.Lang** - Manages the `sclang` process
 - **Waveform.OSC** - Handles OSC message transport
-- **Waveform.OSC.Node** - Allocates and tracks node IDs
+- **Waveform.OSC.Node.ID** - Allocates unique node IDs (Agent)
+- **Waveform.OSC.Node** - Tracks node lifecycle
 - **Waveform.OSC.Group** - Manages groups
-- **Waveform.ServerInfo** - Tracks server capabilities
 
 ## Use Cases
 
