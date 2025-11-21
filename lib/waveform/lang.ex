@@ -150,23 +150,9 @@ defmodule Waveform.Lang do
   end
 
   defp start_sclang(_state, sclang_path) do
-    case Exexec.run(
-           sclang_path,
-           [
-             {:stdin, true},
-             {:stdout,
-              fn :stdout, _bytes, line ->
-                # Uncomment for debugging: IO.puts("[SC] #{line}")
-                case line do
-                  "SuperCollider 3 server ready" <> _rest ->
-                    Waveform.OSC.setup()
-                    send(@me, :server_ready)
-
-                  _ ->
-                    nil
-                end
-              end}
-           ]
+    case :exec.run(
+           String.to_charlist(sclang_path),
+           [:stdin, :stdout, :monitor]
          ) do
       {:ok, sclang_pid, sclang_os_pid} ->
         state = %State{
@@ -184,7 +170,7 @@ defmodule Waveform.Lang do
   end
 
   def terminate(_reason, state) do
-    if state.sclang_pid, do: Exexec.stop(state.sclang_pid)
+    if state.sclang_os_pid, do: :exec.stop(state.sclang_os_pid)
   end
 
   def handle_call(:wait_for_server, _from, %State{server_ready: true} = state) do
@@ -200,10 +186,27 @@ defmodule Waveform.Lang do
 
   def handle_call({:command, command}, _from, state) do
     if state.sclang_os_pid do
-      Exexec.send(state.sclang_os_pid, "#{command}\n")
+      :exec.send(state.sclang_os_pid, "#{command}\n")
     end
 
     {:reply, nil, state}
+  end
+
+  def handle_info({:stdout, _os_pid, data}, state) do
+    # Process stdout from sclang
+    line = IO.iodata_to_binary(data)
+    # Uncomment for debugging: IO.puts("[SC] #{line}")
+
+    case line do
+      "SuperCollider 3 server ready" <> _rest ->
+        Waveform.OSC.setup()
+        send(@me, :server_ready)
+
+      _ ->
+        nil
+    end
+
+    {:noreply, state}
   end
 
   def handle_info(:server_ready, state) do

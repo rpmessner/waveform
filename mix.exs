@@ -33,7 +33,7 @@ defmodule Waveform.MixProject do
 
       _ ->
         [
-          extra_applications: [:logger],
+          extra_applications: [:logger, :erlexec],
           mod: {Waveform.Application, []}
         ]
     end
@@ -41,7 +41,7 @@ defmodule Waveform.MixProject do
 
   defp deps do
     [
-      {:exexec, "~> 0.2"},
+      {:erlexec, "~> 2.0"},
       {:recase, "~> 0.2"},
 
       # Dev/test dependencies
