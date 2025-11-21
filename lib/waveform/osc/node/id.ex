@@ -10,12 +10,26 @@ defmodule Waveform.OSC.Node.ID do
   @doc """
   Start the node ID counter with an optional initial value.
 
+  ## Options
+
+  - `:initial_id` - Starting ID value (default: 0)
+  - `:name` - Process name (default: #{__MODULE__})
+
   ## Examples
 
       {:ok, _pid} = Node.ID.start_link(100)
+      {:ok, _pid} = Node.ID.start_link(initial_id: 100, name: MyCounter)
   """
-  def start_link(initial_id \\ 0) do
-    Agent.start_link(fn -> initial_id end, name: __MODULE__)
+  def start_link(opts \\ [])
+
+  def start_link(initial_id) when is_integer(initial_id) do
+    start_link(initial_id: initial_id)
+  end
+
+  def start_link(opts) when is_list(opts) do
+    initial_id = Keyword.get(opts, :initial_id, 0)
+    name = Keyword.get(opts, :name, __MODULE__)
+    Agent.start_link(fn -> initial_id end, name: name)
   end
 
   @doc """
@@ -28,8 +42,8 @@ defmodule Waveform.OSC.Node.ID do
       Node.ID.next()  # => 100
       Node.ID.next()  # => 101
   """
-  def next do
-    Agent.get_and_update(__MODULE__, fn id -> {id + 1, id + 1} end)
+  def next(server \\ __MODULE__) do
+    Agent.get_and_update(server, fn id -> {id + 1, id + 1} end)
   end
 
   @doc """
@@ -37,8 +51,8 @@ defmodule Waveform.OSC.Node.ID do
 
   Useful for debugging or testing.
   """
-  def state do
-    Agent.get(__MODULE__, & &1)
+  def state(server \\ __MODULE__) do
+    Agent.get(server, & &1)
   end
 
   defmodule State do

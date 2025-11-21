@@ -19,9 +19,9 @@ defmodule Waveform.Application do
       {Waveform.SuperDirt, []},
       {Waveform.PatternScheduler, []},
       # Start node IDs at 100 to leave room for system nodes
-      {Waveform.OSC.Node.ID, 100},
-      {Waveform.OSC.Node, nil},
-      {Waveform.OSC.Group, nil}
+      {Waveform.OSC.Node.ID, initial_id: 100},
+      {Waveform.OSC.Node, []},
+      {Waveform.OSC.Group, []}
     ]
 
     opts = [strategy: :one_for_one, name: Waveform.Supervisor]

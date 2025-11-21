@@ -183,8 +183,8 @@ defmodule Waveform.SuperDirt do
       SuperDirt.play(s: "cp", speed: 2.0, pan: -0.5)
 
   """
-  def play(params) when is_list(params) do
-    GenServer.call(@me, {:play, params})
+  def play(params, server \\ @me) when is_list(params) do
+    GenServer.call(server, {:play, params})
   end
 
   @doc """
@@ -197,8 +197,8 @@ defmodule Waveform.SuperDirt do
       SuperDirt.hush()
 
   """
-  def hush do
-    send_command(@hush, [])
+  def hush(server \\ @me) do
+    send_command(@hush, [], server)
   end
 
   @doc """
@@ -209,8 +209,8 @@ defmodule Waveform.SuperDirt do
       SuperDirt.mute_all()
 
   """
-  def mute_all do
-    send_command(@mute_all, [])
+  def mute_all(server \\ @me) do
+    send_command(@mute_all, [], server)
   end
 
   @doc """
@@ -221,8 +221,8 @@ defmodule Waveform.SuperDirt do
       SuperDirt.unmute_all()
 
   """
-  def unmute_all do
-    send_command(@unmute_all, [])
+  def unmute_all(server \\ @me) do
+    send_command(@unmute_all, [], server)
   end
 
   @doc """
@@ -233,8 +233,8 @@ defmodule Waveform.SuperDirt do
       SuperDirt.unsolo_all()
 
   """
-  def unsolo_all do
-    send_command(@unsolo_all, [])
+  def unsolo_all(server \\ @me) do
+    send_command(@unsolo_all, [], server)
   end
 
   @doc """
@@ -304,8 +304,8 @@ defmodule Waveform.SuperDirt do
       SuperDirt.set_cps(140 / 240)
 
   """
-  def set_cps(cps) when is_number(cps) do
-    GenServer.call(@me, {:set_cps, cps})
+  def set_cps(cps, server \\ @me) when is_number(cps) do
+    GenServer.call(server, {:set_cps, cps})
   end
 
   @doc """
@@ -324,8 +324,8 @@ defmodule Waveform.SuperDirt do
       SuperDirt.set_latency(0.05)
 
   """
-  def set_latency(latency) when is_number(latency) and latency >= 0 do
-    GenServer.call(@me, {:set_latency, latency})
+  def set_latency(latency, server \\ @me) when is_number(latency) and latency >= 0 do
+    GenServer.call(server, {:set_latency, latency})
   end
 
   @doc """
@@ -337,16 +337,17 @@ defmodule Waveform.SuperDirt do
       # => 0.02
 
   """
-  def get_latency do
-    GenServer.call(@me, :get_latency)
+  def get_latency(server \\ @me) do
+    GenServer.call(server, :get_latency)
   end
 
-  defp send_command(address, args) do
-    GenServer.cast(@me, {:command, address, args})
+  defp send_command(address, args, server) do
+    GenServer.cast(server, {:command, address, args})
   end
 
   def start_link(opts) do
-    GenServer.start_link(@me, opts, name: @me)
+    name = Keyword.get(opts, :name, @me)
+    GenServer.start_link(@me, opts, name: name)
   end
 
   def init(opts) do

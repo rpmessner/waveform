@@ -27,7 +27,9 @@ defmodule Waveform.OSC.Node do
       # Nodes confirmed alive in SuperCollider
       active_nodes: %{},
       # Recently dead nodes (with timestamp for pruning)
-      dead_nodes: %{}
+      dead_nodes: %{},
+      # Node.ID server to use for allocating IDs
+      node_id_server: ID
     )
   end
 
@@ -40,16 +42,18 @@ defmodule Waveform.OSC.Node do
     created_at: nil
   )
 
-  def activate_node(node_id) do
-    GenServer.cast(@me, {:activate_node, node_id})
+  def activate_node(node_id, server \\ @me) do
+    GenServer.cast(server, {:activate_node, node_id})
   end
 
-  def deactivate_node(node_id) do
-    GenServer.cast(@me, {:deactivate_node, node_id})
+  def deactivate_node(node_id, server \\ @me) do
+    GenServer.cast(server, {:deactivate_node, node_id})
   end
 
-  def start_link(_state) do
-    GenServer.start_link(@me, %State{}, name: @me)
+  def start_link(opts \\ []) do
+    name = Keyword.get(opts, :name, @me)
+    node_id_server = Keyword.get(opts, :node_id_server, ID)
+    GenServer.start_link(@me, %State{node_id_server: node_id_server}, name: name)
   end
 
   def init(state) do
@@ -58,12 +62,12 @@ defmodule Waveform.OSC.Node do
     {:ok, state}
   end
 
-  def next_fx_node do
-    GenServer.call(@me, {:next_node, %Node{type: :fx, id: ID.next()}})
+  def next_fx_node(server \\ @me) do
+    GenServer.call(server, :next_fx_node)
   end
 
-  def next_synth_node do
-    GenServer.call(@me, {:next_node, %Node{type: :synth, id: ID.next()}})
+  def next_synth_node(server \\ @me) do
+    GenServer.call(server, :next_synth_node)
   end
 
   def handle_cast({:deactivate_node, node_id}, state) do
@@ -94,7 +98,15 @@ defmodule Waveform.OSC.Node do
     end
   end
 
-  def handle_call({:next_node, next}, _from, state) do
+  def handle_call(:next_fx_node, _from, state) do
+    next = %Node{type: :fx, id: ID.next(state.node_id_server)}
+    node = %{next | created_at: System.monotonic_time(:millisecond)}
+    inactive_nodes = Map.put(state.inactive_nodes, node.id, node)
+    {:reply, node, %{state | inactive_nodes: inactive_nodes}}
+  end
+
+  def handle_call(:next_synth_node, _from, state) do
+    next = %Node{type: :synth, id: ID.next(state.node_id_server)}
     node = %{next | created_at: System.monotonic_time(:millisecond)}
     inactive_nodes = Map.put(state.inactive_nodes, node.id, node)
     {:reply, node, %{state | inactive_nodes: inactive_nodes}}

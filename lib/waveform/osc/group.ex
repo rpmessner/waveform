@@ -35,16 +35,18 @@ defmodule Waveform.OSC.Group do
       # Map of pid => group (single group per process)
       process_groups: %{},
       # Map of monitor_ref => pid for cleanup
-      monitors: %{}
+      monitors: %{},
+      # Node.ID server to use for allocating IDs
+      node_id_server: ID
     )
   end
 
-  def reset do
-    GenServer.call(@me, {:reset})
+  def reset(server \\ @me) do
+    GenServer.call(server, {:reset})
   end
 
-  def state do
-    GenServer.call(@me, {:state})
+  def state(server \\ @me) do
+    GenServer.call(server, {:state})
   end
 
   @doc """
@@ -58,8 +60,8 @@ defmodule Waveform.OSC.Group do
       group = Group.new_group("my-group")
       Group.set_process_group(self(), group)
   """
-  def set_process_group(pid, %Group{} = group) when is_pid(pid) do
-    GenServer.call(@me, {:set_process_group, pid, group})
+  def set_process_group(pid, %Group{} = group, server \\ @me) when is_pid(pid) do
+    GenServer.call(server, {:set_process_group, pid, group})
   end
 
   @doc """
@@ -71,8 +73,8 @@ defmodule Waveform.OSC.Group do
 
       Group.get_process_group(self())
   """
-  def get_process_group(pid) when is_pid(pid) do
-    %State{process_groups: pg, root_synth_group: rsg} = state()
+  def get_process_group(pid, server \\ @me) when is_pid(pid) do
+    %State{process_groups: pg, root_synth_group: rsg} = state(server)
     pg[pid] || rsg
   end
 
@@ -81,12 +83,12 @@ defmodule Waveform.OSC.Group do
 
   This is an alias for `get_process_group/1`.
   """
-  def synth_group(pid) when is_pid(pid) do
-    get_process_group(pid)
+  def synth_group(pid, server \\ @me) when is_pid(pid) do
+    get_process_group(pid, server)
   end
 
-  def setup do
-    GenServer.call(@me, {:root_synth_group})
+  def setup(server \\ @me) do
+    GenServer.call(server, {:root_synth_group})
   end
 
   @doc """
@@ -97,28 +99,26 @@ defmodule Waveform.OSC.Group do
       Group.new_group("my-group")
       Group.new_group("my-group", parent_group)
   """
-  def new_group(name, parent \\ nil) do
-    parent = parent || synth_group(self()) || state().root_synth_group
-    GenServer.call(@me, {:new_group, name, :custom, :head, parent})
+  def new_group(name, parent \\ nil, server \\ @me) do
+    parent = parent || synth_group(self(), server) || state(server).root_synth_group
+    GenServer.call(server, {:new_group, name, :custom, :head, parent})
   end
 
-  def start_link(_state) do
-    GenServer.start_link(@me, default_state(), name: @me)
-  end
-
-  defp default_state do
-    %State{}
+  def start_link(opts \\ []) do
+    name = Keyword.get(opts, :name, @me)
+    node_id_server = Keyword.get(opts, :node_id_server, ID)
+    GenServer.start_link(@me, %State{node_id_server: node_id_server}, name: name)
   end
 
   def init(state) do
     # Create root synth group on startup
-    group = %Group{type: :synth, name: :root_synth_group, id: ID.next()}
+    group = %Group{type: :synth, name: :root_synth_group, id: ID.next(state.node_id_server)}
     create_group(group.id, :head, state.root_group.id)
     {:ok, %{state | root_synth_group: group}}
   end
 
   def handle_call({:root_synth_group}, _from, state) do
-    group = %Group{type: :synth, name: :root_synth_group, id: ID.next()}
+    group = %Group{type: :synth, name: :root_synth_group, id: ID.next(state.node_id_server)}
 
     create_group(group.id, :head, state.root_group.id)
 
@@ -160,7 +160,7 @@ defmodule Waveform.OSC.Group do
       out_bus: out_bus,
       name: name,
       type: type,
-      id: ID.next()
+      id: ID.next(state.node_id_server)
     }
 
     create_group(new_group.id, action, parent_id)
@@ -181,7 +181,7 @@ defmodule Waveform.OSC.Group do
       in_bus: in_bus,
       name: name,
       type: type,
-      id: ID.next()
+      id: ID.next(state.node_id_server)
     }
 
     create_group(new_group.id, action, parent_id)
@@ -189,8 +189,8 @@ defmodule Waveform.OSC.Group do
     {:reply, new_group, state}
   end
 
-  def handle_call({:reset}, _from, _state) do
-    {:reply, :ok, default_state()}
+  def handle_call({:reset}, _from, state) do
+    {:reply, :ok, %State{node_id_server: state.node_id_server}}
   end
 
   def handle_call({:state}, _from, state) do

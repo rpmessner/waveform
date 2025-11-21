@@ -155,9 +155,11 @@ defmodule Waveform.PatternScheduler do
 
   - `:cps` - Cycles per second (default: 0.5625 = 135 BPM)
   - `:tick_interval_ms` - How often to check for events (default: 10ms)
+  - `:name` - Process name (default: #{__MODULE__})
   """
   def start_link(opts \\ []) do
-    GenServer.start_link(@me, opts, name: @me)
+    {name, opts} = Keyword.pop(opts, :name, @me)
+    GenServer.start_link(@me, opts, name: name)
   end
 
   @doc """
@@ -171,8 +173,8 @@ defmodule Waveform.PatternScheduler do
       # 140 BPM
       PatternScheduler.set_cps(140 / 240)
   """
-  def set_cps(cps) when is_number(cps) and cps > 0 do
-    GenServer.call(@me, {:set_cps, cps})
+  def set_cps(cps, server \\ @me) when is_number(cps) and cps > 0 do
+    GenServer.call(server, {:set_cps, cps})
   end
 
   @doc """
@@ -206,8 +208,8 @@ defmodule Waveform.PatternScheduler do
         {0.875, [s: "hh", n: 1]}
       ])
   """
-  def schedule_pattern(pattern_id, events) when is_list(events) do
-    GenServer.call(@me, {:schedule_pattern, pattern_id, events})
+  def schedule_pattern(pattern_id, events, server \\ @me) when is_list(events) do
+    GenServer.call(server, {:schedule_pattern, pattern_id, events})
   end
 
   @doc """
@@ -224,8 +226,8 @@ defmodule Waveform.PatternScheduler do
         {0.5, [s: "bd", n: 2]}
       ])
   """
-  def update_pattern(pattern_id, events) when is_list(events) do
-    GenServer.call(@me, {:update_pattern, pattern_id, events})
+  def update_pattern(pattern_id, events, server \\ @me) when is_list(events) do
+    GenServer.call(server, {:update_pattern, pattern_id, events})
   end
 
   @doc """
@@ -235,8 +237,8 @@ defmodule Waveform.PatternScheduler do
 
       PatternScheduler.stop_pattern(:kick)
   """
-  def stop_pattern(pattern_id) do
-    GenServer.call(@me, {:stop_pattern, pattern_id})
+  def stop_pattern(pattern_id, server \\ @me) do
+    GenServer.call(server, {:stop_pattern, pattern_id})
   end
 
   @doc """
