@@ -31,7 +31,9 @@ defmodule Waveform.Lang do
       sclang_pid: nil,
       sclang_os_pid: nil,
       server_ready: false,
-      server_ready_subscribers: []
+      server_ready_subscribers: [],
+      superdirt_ready: false,
+      superdirt_ready_subscribers: []
     )
   end
 
@@ -73,6 +75,26 @@ defmodule Waveform.Lang do
   def wait_for_server(opts \\ []) do
     timeout = Keyword.get(opts, :timeout, 30_000)
     GenServer.call(@me, :wait_for_server, timeout)
+  end
+
+  @doc """
+  Wait for SuperDirt to be ready.
+
+  Blocks until SuperDirt has been started and loaded all samples.
+  Returns immediately if SuperDirt is already ready.
+
+  ## Options
+
+  - `:timeout` - Maximum time to wait in milliseconds (default: 60000)
+
+  ## Examples
+
+      Lang.wait_for_superdirt()
+      Lang.wait_for_superdirt(timeout: 30000)
+  """
+  def wait_for_superdirt(opts \\ []) do
+    timeout = Keyword.get(opts, :timeout, 60_000)
+    GenServer.call(@me, :wait_for_superdirt, timeout)
   end
 
   # gen_server callbacks
@@ -184,6 +206,17 @@ defmodule Waveform.Lang do
     {:noreply, %{state | server_ready_subscribers: subscribers}}
   end
 
+  def handle_call(:wait_for_superdirt, _from, %State{superdirt_ready: true} = state) do
+    # SuperDirt already ready, reply immediately
+    {:reply, :ok, state}
+  end
+
+  def handle_call(:wait_for_superdirt, from, %State{superdirt_ready: false} = state) do
+    # SuperDirt not ready yet, add caller to subscribers list
+    subscribers = [from | state.superdirt_ready_subscribers]
+    {:noreply, %{state | superdirt_ready_subscribers: subscribers}}
+  end
+
   def handle_call({:command, command}, _from, state) do
     if state.sclang_os_pid do
       :exec.send(state.sclang_os_pid, "#{command}\n")
@@ -197,16 +230,21 @@ defmodule Waveform.Lang do
     line = IO.iodata_to_binary(data)
     # Uncomment for debugging: IO.puts("[SC] #{line}")
 
-    case line do
-      "SuperCollider 3 server ready" <> _rest ->
+    cond do
+      line =~ "SuperCollider 3 server ready" ->
         Waveform.OSC.setup()
         send(@me, :server_ready)
+        {:noreply, state}
 
-      _ ->
-        nil
+      # SuperDirt prints "SuperDirt: listening to Tidal on port 57120" when ready
+      # This is more reliable than a custom postln since it's part of SuperDirt itself
+      line =~ "SuperDirt: listening to Tidal on port" ->
+        send(@me, :superdirt_ready)
+        {:noreply, state}
+
+      true ->
+        {:noreply, state}
     end
-
-    {:noreply, state}
   end
 
   def handle_info(:server_ready, state) do
@@ -216,5 +254,14 @@ defmodule Waveform.Lang do
     end)
 
     {:noreply, %{state | server_ready: true, server_ready_subscribers: []}}
+  end
+
+  def handle_info(:superdirt_ready, state) do
+    # Notify all waiting subscribers
+    Enum.each(state.superdirt_ready_subscribers, fn from ->
+      GenServer.reply(from, :ok)
+    end)
+
+    {:noreply, %{state | superdirt_ready: true, superdirt_ready_subscribers: []}}
   end
 end

@@ -9,25 +9,48 @@ defmodule Waveform.Helpers do
   Ensure SuperDirt is started and ready.
 
   If SuperDirt is already running, this returns immediately.
-  Otherwise, it starts SuperDirt and waits for it to load.
+  Otherwise, it starts SuperDirt and waits for it to load all samples.
+
+  This function blocks until SuperDirt is fully initialized by monitoring
+  stdout from the SuperCollider process, eliminating the need for arbitrary
+  sleep times.
+
+  ## Options
+
+  - `:timeout` - Maximum time to wait in milliseconds (default: 60000)
+
+  ## Examples
+
+      Helpers.ensure_superdirt_ready()
+      Helpers.ensure_superdirt_ready(timeout: 30000)
   """
-  def ensure_superdirt_ready do
+  def ensure_superdirt_ready(opts \\ []) do
+    timeout = Keyword.get(opts, :timeout, 60_000)
+
     # Wait for server first
     Lang.wait_for_server()
 
-    # Pre-checks - these give SuperDirt more time to initialize
+    # Check if SuperDirt is already running
     Lang.send_command(~S"""
-    if(SuperDirt.class.notNil, { "SUPERDIRT_CLASS_EXISTS".postln; }, { "SUPERDIRT_CLASS_NOT_FOUND".postln; });
+    if(~dirt.notNil, { "SUPERDIRT_READY".postln; });
     """)
 
-    Process.sleep(1000)
+    # Give it a moment to respond if it's already running
+    Process.sleep(100)
 
-    Lang.send_command(~S"""
-    if(~dirt.notNil, { "DIRT_IS_RUNNING".postln; }, { "DIRT_NOT_RUNNING".postln; });
-    """)
+    # Try to wait for SuperDirt (will return immediately if already ready)
+    case Lang.wait_for_superdirt(timeout: 500) do
+      :ok ->
+        # Already running
+        :ok
 
-    Process.sleep(1000)
+      {:timeout, _} ->
+        # Not running yet, start it
+        start_superdirt(timeout)
+    end
+  end
 
+  defp start_superdirt(timeout) do
     # Determine sample path based on platform
     sample_path =
       case :os.type() do
@@ -35,29 +58,25 @@ defmodule Waveform.Helpers do
           "/Users/#{System.get_env("USER")}/Library/Application Support/SuperCollider/downloaded-quarks/Dirt-Samples"
 
         {:unix, _} ->
-          "/Users/#{System.get_env("USER")}/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples"
+          "#{System.get_env("HOME")}/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples"
 
         {:win32, _} ->
           # Windows path - adjust as needed
           "C:/Users/#{System.get_env("USERNAME")}/AppData/Local/SuperCollider/downloaded-quarks/Dirt-Samples"
       end
 
-    # Start SuperDirt with explicit sample path
-    # Use the same pattern that works for BD, but with explicit path
+    # Start SuperDirt - it will print "SuperDirt: listening to Tidal on port 57120"
+    # when ready, which we monitor in handle_info to detect readiness
     Lang.send_command("""
-    ~dirt = SuperDirt(2, s); ~dirt.loadSoundFiles("#{sample_path}/*"); ~dirt.start(57120, [0, 0]); "SUPERDIRT_STARTED".postln;
+    fork {
+      ~dirt = SuperDirt(2, s);
+      ~dirt.loadSoundFiles("#{sample_path}/*");
+      ~dirt.start(57120, [0, 0]);
+    };
     """)
 
-    # Wait for samples to load (1800+ files takes time)
-    Process.sleep(15_000)
-
-    # Verify SuperDirt is running
-    Lang.send_command(~S"""
-    if(~dirt.notNil, { "DIRT_NOW_RUNNING".postln; }, { "DIRT_STILL_NOT_RUNNING".postln; });
-    """)
-
-    Process.sleep(1000)
-
-    :ok
+    # Wait for SuperDirt to finish loading
+    # This monitors stdout for "SuperDirt: listening to Tidal on port" message
+    Lang.wait_for_superdirt(timeout: timeout)
   end
 end
