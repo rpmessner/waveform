@@ -33,6 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Improved
 
+- **Demo Files** - Updated all demos to use event-driven SuperDirt initialization
+  - Replaced `Process.sleep` calls with `Helpers.ensure_superdirt_ready/0`
+  - Reduced initialization boilerplate from 36 lines to 3 lines per demo
+  - Eliminates ~11 seconds of arbitrary waits per demo startup
+  - More responsive: returns immediately when SuperDirt is ready
+  - Removed song name references for generic demo titles
+
 - **Test Infrastructure** - Refactored all tests to use idiomatic ExUnit patterns
   - All test modules now use `start_supervised!/2` for proper isolation
   - Tests run in parallel with `async: true` for 40% faster execution
