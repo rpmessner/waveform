@@ -10,41 +10,11 @@
 #   mix run demos/01_basic_patterns.exs
 
 alias Waveform.PatternScheduler
-alias Waveform.SuperDirt
-alias Waveform.Lang
+alias Waveform.Helpers
 
 # Wait for SuperCollider server and start SuperDirt
-IO.puts("Waiting for SuperCollider server...")
-Lang.wait_for_server()
-IO.puts("✓ Server ready!")
-
-IO.puts("\nChecking SuperDirt...")
-
-Lang.send_command(
-  "if(SuperDirt.class.notNil, { \"SUPERDIRT_CLASS_EXISTS\".postln; }, { \"SUPERDIRT_CLASS_NOT_FOUND\".postln; });"
-)
-
-Process.sleep(1000)
-
-Lang.send_command(
-  "if(~dirt.notNil, { \"DIRT_IS_RUNNING\".postln; }, { \"DIRT_NOT_RUNNING\".postln; });"
-)
-
-Process.sleep(1000)
-
-IO.puts("Starting SuperDirt...")
-
-Lang.send_command(
-  "~dirt = SuperDirt(2, s); ~dirt.loadSoundFiles; ~dirt.start(57120, [0, 0]); \"SUPERDIRT_STARTED\".postln;"
-)
-
-Process.sleep(8000)
-
-Lang.send_command(
-  "if(~dirt.notNil, { \"DIRT_NOW_RUNNING\".postln; }, { \"DIRT_STILL_NOT_RUNNING\".postln; });"
-)
-
-Process.sleep(1000)
+IO.puts("Starting SuperCollider and SuperDirt...")
+Helpers.ensure_superdirt_ready()
 IO.puts("✓ SuperDirt ready!\n")
 
 # Set tempo (original is around 92 BPM)
@@ -144,7 +114,7 @@ PatternScheduler.schedule_pattern(:guitar, guitar)
 
 IO.puts("""
 
-🎸 Radiohead - Creep (Simple Style)
+🎸 Demo 1: Basic Patterns
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Playing at 92 BPM with 4 patterns
 
