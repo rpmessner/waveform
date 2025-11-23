@@ -6,6 +6,11 @@ Waveform provides low-level OSC messaging, node/group management, and a simple A
 
 ## Prerequisites
 
+**Requirements:**
+- Elixir 1.17 or later
+- Erlang/OTP 27 or later
+- SuperCollider 3.x
+
 **⚠️ SuperCollider must be installed on your system before using Waveform.**
 
 ### Installing SuperCollider

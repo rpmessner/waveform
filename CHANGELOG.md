@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **[BREAKING]** Minimum required versions updated for modern Elixir/OTP support
+  - Now requires Elixir 1.17+ (previously 1.12+)
+  - Now requires OTP 27+ (previously OTP 24+)
+  - Ensures compatibility with latest language features and tooling
+
 - **[BREAKING]** Migrated from `exexec` to `erlexec` v2.2.2
   - Replaced unmaintained exexec wrapper with direct erlexec usage
   - All functionality remains the same; only internal implementation changed

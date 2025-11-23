@@ -8,7 +8,7 @@ defmodule Waveform.MixProject do
     [
       app: :waveform,
       version: @version,
-      elixir: "~> 1.12",
+      elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
