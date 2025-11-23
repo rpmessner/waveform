@@ -11,43 +11,14 @@
 
 defmodule SyncopatedRhythmDemo do
   alias Waveform.PatternScheduler
-  alias Waveform.Lang
+  alias Waveform.Helpers
 
   @bpm 100
   @cps @bpm / 240
 
   defp start_superdirt do
-    IO.puts("Waiting for SuperCollider server...")
-    Lang.wait_for_server()
-    IO.puts("✓ Server ready!")
-
-    IO.puts("\nChecking SuperDirt...")
-
-    Lang.send_command(
-      "if(SuperDirt.class.notNil, { \"SUPERDIRT_CLASS_EXISTS\".postln; }, { \"SUPERDIRT_CLASS_NOT_FOUND\".postln; });"
-    )
-
-    Process.sleep(1000)
-
-    Lang.send_command(
-      "if(~dirt.notNil, { \"DIRT_IS_RUNNING\".postln; }, { \"DIRT_NOT_RUNNING\".postln; });"
-    )
-
-    Process.sleep(1000)
-
-    IO.puts("Starting SuperDirt...")
-
-    Lang.send_command(
-      "~dirt = SuperDirt(2, s); ~dirt.loadSoundFiles; ~dirt.start(57120, [0, 0]); \"SUPERDIRT_STARTED\".postln;"
-    )
-
-    Process.sleep(8000)
-
-    Lang.send_command(
-      "if(~dirt.notNil, { \"DIRT_NOW_RUNNING\".postln; }, { \"DIRT_STILL_NOT_RUNNING\".postln; });"
-    )
-
-    Process.sleep(1000)
+    IO.puts("Starting SuperCollider and SuperDirt...")
+    Helpers.ensure_superdirt_ready()
     IO.puts("✓ SuperDirt ready!\n")
   end
 
