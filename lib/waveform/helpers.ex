@@ -30,23 +30,12 @@ defmodule Waveform.Helpers do
     # Wait for server first
     Lang.wait_for_server()
 
-    # Check if SuperDirt is already running
-    Lang.send_command(~S"""
-    if(~dirt.notNil, { "SUPERDIRT_READY".postln; });
-    """)
-
-    # Give it a moment to respond if it's already running
-    Process.sleep(100)
-
-    # Try to wait for SuperDirt (will return immediately if already ready)
-    case Lang.wait_for_superdirt(timeout: 500) do
-      :ok ->
-        # Already running
-        :ok
-
-      {:timeout, _} ->
-        # Not running yet, start it
-        start_superdirt(timeout)
+    # Check if SuperDirt is already running (returns immediately)
+    if Lang.superdirt_ready?() do
+      :ok
+    else
+      # Not running, start it immediately and wait
+      start_superdirt(timeout)
     end
   end
 
