@@ -78,6 +78,20 @@ defmodule Waveform.Lang do
   end
 
   @doc """
+  Check if SuperDirt is ready.
+
+  Returns immediately with the current state.
+
+  ## Examples
+
+      Lang.superdirt_ready?()
+      #=> true or false
+  """
+  def superdirt_ready? do
+    GenServer.call(@me, :superdirt_ready?)
+  end
+
+  @doc """
   Wait for SuperDirt to be ready.
 
   Blocks until SuperDirt has been started and loaded all samples.
@@ -204,6 +218,10 @@ defmodule Waveform.Lang do
     # Server not ready yet, add caller to subscribers list
     subscribers = [from | state.server_ready_subscribers]
     {:noreply, %{state | server_ready_subscribers: subscribers}}
+  end
+
+  def handle_call(:superdirt_ready?, _from, state) do
+    {:reply, state.superdirt_ready, state}
   end
 
   def handle_call(:wait_for_superdirt, _from, %State{superdirt_ready: true} = state) do
