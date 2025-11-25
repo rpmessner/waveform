@@ -28,7 +28,7 @@ Session documents help maintain context across development sessions, especially 
   - Enhanced diagnostics to prevent regression
   - Song demos: Superstition, Creep, Giant Steps
 
-- **[2025-01-19: Pattern Scheduler and SuperDirt Verification](./2025-01-19-pattern-scheduler-and-superdirt-verification.md)**
+- **[2025-01-19: Pattern Scheduler and SuperDirt Verification](./2025-11-19-pattern-scheduler-and-superdirt-verification.md)**
   - Implemented high-precision pattern scheduler (528 lines)
   - Cycle-based timing with 10ms tick interval
   - Hot-swappable patterns and instant tempo changes
