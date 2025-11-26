@@ -135,14 +135,19 @@ defmodule Waveform.PatternScheduler do
 
     ## Fields
 
-    - `events` - List of {cycle_position, params} tuples
+    - `events` - List of {cycle_position, params} tuples (static patterns)
+    - `query_fn` - Function (cycle_number) -> events (dynamic/cycle-aware patterns)
     - `active` - Whether this pattern is currently playing
     - `last_scheduled_cycle` - Last cycle we scheduled events for (prevents duplicates)
     - `output` - Output destination: `:superdirt`, `:midi`, or list like `[:superdirt, :midi]`
     - `output_opts` - Additional options for output (e.g., midi_channel, midi_port)
+
+    Note: Either `events` OR `query_fn` should be set, not both.
+    If `query_fn` is set, it takes precedence over `events`.
     """
     defstruct [
       :events,
+      :query_fn,
       :active,
       :last_scheduled_cycle,
       output: :superdirt,
@@ -184,11 +189,27 @@ defmodule Waveform.PatternScheduler do
   @doc """
   Schedule a new pattern or update an existing one.
 
+  Accepts either a static event list or a query function for cycle-aware patterns.
+
+  ## Static Events
+
   Events are a list of {cycle_position, params} tuples where:
   - cycle_position is a float from 0.0 to 1.0 (position within one cycle)
   - params is a keyword list for SuperDirt (e.g., [s: "bd", n: 0])
 
   The pattern will loop continuously until stopped.
+
+  ## Query Functions (Cycle-Aware Patterns)
+
+  For dynamic patterns that change based on cycle number, pass a function:
+
+      query_fn :: (cycle_number :: integer) -> [{position, params}]
+
+  The function receives the current cycle number (0, 1, 2, ...) and returns
+  events for that specific cycle. This enables transformations like:
+  - `every(4, rev)` - reverse the pattern every 4th cycle
+  - `iter(4)` - rotate the pattern start point each cycle
+  - Random variations per cycle
 
   ## Options
 
@@ -218,17 +239,51 @@ defmodule Waveform.PatternScheduler do
         output: [:superdirt, :midi],
         midi_channel: 10
       )
-  """
-  def schedule_pattern(pattern_id, events, opts \\ [])
 
+      # Cycle-aware pattern using query function
+      # Alternates between two patterns every cycle
+      PatternScheduler.schedule_pattern(:alternating, fn cycle ->
+        if rem(cycle, 2) == 0 do
+          [{0.0, [s: "bd"]}, {0.5, [s: "sd"]}]
+        else
+          [{0.0, [s: "hh"]}, {0.5, [s: "cp"]}]
+        end
+      end)
+
+      # Pattern that only plays every 4th cycle
+      PatternScheduler.schedule_pattern(:sparse, fn cycle ->
+        if rem(cycle, 4) == 0 do
+          [{0.0, [s: "bd", gain: 1.2]}]
+        else
+          []
+        end
+      end)
+
+  """
+  def schedule_pattern(pattern_id, events_or_fn, opts \\ [])
+
+  # Static events with server as third arg (backward compat)
   def schedule_pattern(pattern_id, events, server)
       when is_list(events) and (is_atom(server) or is_pid(server)) do
     GenServer.call(server, {:schedule_pattern, pattern_id, events, []})
   end
 
+  # Static events with options
   def schedule_pattern(pattern_id, events, opts) when is_list(events) and is_list(opts) do
     {server, opts} = Keyword.pop(opts, :server, @me)
     GenServer.call(server, {:schedule_pattern, pattern_id, events, opts})
+  end
+
+  # Query function with server as third arg
+  def schedule_pattern(pattern_id, query_fn, server)
+      when is_function(query_fn, 1) and (is_atom(server) or is_pid(server)) do
+    GenServer.call(server, {:schedule_pattern_fn, pattern_id, query_fn, []})
+  end
+
+  # Query function with options
+  def schedule_pattern(pattern_id, query_fn, opts) when is_function(query_fn, 1) and is_list(opts) do
+    {server, opts} = Keyword.pop(opts, :server, @me)
+    GenServer.call(server, {:schedule_pattern_fn, pattern_id, query_fn, opts})
   end
 
   @doc """
@@ -312,8 +367,28 @@ defmodule Waveform.PatternScheduler do
     # Create new pattern or replace existing one
     pattern = %Pattern{
       events: events,
+      query_fn: nil,
       active: true,
       # Fresh start
+      last_scheduled_cycle: nil,
+      output: output,
+      output_opts: output_opts
+    }
+
+    new_patterns = Map.put(state.patterns, pattern_id, pattern)
+    {:reply, :ok, %{state | patterns: new_patterns}}
+  end
+
+  def handle_call({:schedule_pattern_fn, pattern_id, query_fn, opts}, _from, state) do
+    # Extract output configuration
+    output = Keyword.get(opts, :output, :superdirt)
+    output_opts = Keyword.drop(opts, [:output])
+
+    # Create pattern with query function instead of static events
+    pattern = %Pattern{
+      events: nil,
+      query_fn: query_fn,
+      active: true,
       last_scheduled_cycle: nil,
       output: output,
       output_opts: output_opts
@@ -419,8 +494,11 @@ defmodule Waveform.PatternScheduler do
   end
 
   defp schedule_pattern_events(state, pattern_id, pattern, current_cycle, look_ahead_cycle) do
+    # Get events - either static or from query function
+    events = get_pattern_events(pattern, current_cycle)
+
     # For each event in the pattern
-    Enum.reduce(pattern.events, state, fn {cycle_position, params}, acc_state ->
+    Enum.reduce(events, state, fn {cycle_position, params}, acc_state ->
       # Find all occurrences of this event in the look-ahead window
       schedule_event_occurrences(
         acc_state,
@@ -432,6 +510,23 @@ defmodule Waveform.PatternScheduler do
         look_ahead_cycle
       )
     end)
+  end
+
+  # Get events from pattern - either static events or via query function
+  defp get_pattern_events(%Pattern{query_fn: query_fn}, current_cycle)
+       when is_function(query_fn, 1) do
+    # Query for the current cycle's events
+    cycle_int = floor(current_cycle)
+    query_fn.(cycle_int)
+  end
+
+  defp get_pattern_events(%Pattern{events: events}, _current_cycle) when is_list(events) do
+    events
+  end
+
+  defp get_pattern_events(%Pattern{events: nil, query_fn: nil}, _current_cycle) do
+    # No events and no query function - return empty list
+    []
   end
 
   # Schedule all occurrences of an event in the cycle window.
