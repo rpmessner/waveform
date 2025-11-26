@@ -670,6 +670,53 @@ config :waveform,
   midi_clock_smoothing: 8               # Ticks to average for BPM calculation
 ```
 
+### Buffer Management
+
+Load custom samples into SuperCollider for use with your own synth definitions. This is separate from SuperDirt's sample loading.
+
+```elixir
+alias Waveform.Buffer
+
+# Load a sample file
+{:ok, buf_num} = Buffer.read("/path/to/kick.wav")
+
+# Load portion of a file
+{:ok, buf_num} = Buffer.read("/path/to/long_sample.wav",
+  start_frame: 44100,   # Start 1 second in (at 44.1kHz)
+  num_frames: 88200     # Load 2 seconds
+)
+
+# Allocate empty buffer (for recording)
+{:ok, buf_num} = Buffer.allocate(88200, 2)  # 2 seconds stereo
+
+# List all managed buffers
+Buffer.list()
+
+# Free a buffer
+Buffer.free(buf_num)
+
+# Free all buffers
+Buffer.free_all()
+```
+
+**Playing buffers with synths:**
+
+First, define a synth in SuperCollider:
+
+```supercollider
+SynthDef(\playbuf, { |out=0, bufnum, rate=1, amp=0.5|
+  var sig = PlayBuf.ar(2, bufnum, BufRateScale.kr(bufnum) * rate, doneAction: 2);
+  Out.ar(out, sig * amp);
+}).add;
+```
+
+Then play it from Elixir:
+
+```elixir
+{:ok, buf} = Buffer.read("/path/to/sample.wav")
+Waveform.Synth.new("playbuf", bufnum: buf, rate: 1.0, amp: 0.8)
+```
+
 ## Development
 
 ```bash
@@ -710,8 +757,8 @@ When working on Waveform (especially with AI assistants), consult the session do
 - [x] MIDI output support (✅ Complete - v0.4.0)
 - [x] MIDI input support (✅ Complete - v0.4.0)
 - [x] MIDI clock sync (✅ Complete - v0.4.0)
+- [x] Buffer management for custom samples (✅ Complete - v0.4.0)
 - [ ] More examples and guides
-- [ ] Buffer management for custom samples
 
 ## Troubleshooting
 
