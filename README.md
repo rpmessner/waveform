@@ -384,6 +384,34 @@ PatternScheduler.stop_pattern(:hats)
 PatternScheduler.hush()
 ```
 
+**Cycle-aware patterns (dynamic patterns):**
+
+For patterns that change based on cycle number, pass a query function instead of a static event list:
+
+```elixir
+# Alternates between two patterns every cycle
+PatternScheduler.schedule_pattern(:alternating, fn cycle ->
+  if rem(cycle, 2) == 0 do
+    [{0.0, [s: "bd"]}, {0.5, [s: "sd"]}]
+  else
+    [{0.0, [s: "hh"]}, {0.5, [s: "cp"]}]
+  end
+end)
+
+# Only play every 4th cycle
+PatternScheduler.schedule_pattern(:sparse, fn cycle ->
+  if rem(cycle, 4) == 0 do
+    [{0.0, [s: "bd", gain: 1.2]}]
+  else
+    []
+  end
+end)
+
+# Reverse pattern every 4th cycle (integration with uzu_pattern)
+# pattern = UzuPattern.Pattern.new("bd sd hh cp") |> UzuPattern.Pattern.every(4, &rev/1)
+# PatternScheduler.schedule_pattern(:drums, &UzuPattern.Pattern.query(&1, pattern))
+```
+
 **For more advanced pattern languages**, see [KinoSpaetzle](https://github.com/rpmessner/kino_spaetzle) - a TidalCycles-inspired live coding environment for Livebook that adds mini-notation parsing on top of Waveform's scheduler.
 
 ### MIDI Output
