@@ -128,6 +128,8 @@ This will verify that your system is properly configured, including checking for
 - **Pattern Scheduler**: High-precision continuous pattern playback with cycle-based timing
 - **Hot-Swappable Patterns**: Change patterns while they're playing without stopping
 - **MIDI Output**: Send patterns to hardware synths, DAWs, or any MIDI device
+- **MIDI Input**: Receive notes and CC from controllers, route to SuperDirt or custom handlers
+- **MIDI Clock**: Sync with external gear as master or slave (24 PPQ)
 - **Multi-Output**: Route patterns to SuperCollider, MIDI, or both simultaneously
 
 ## Installation
@@ -474,6 +476,90 @@ events = [
 PatternScheduler.schedule_pattern(:multi, events, output: :midi)
 ```
 
+### MIDI Input
+
+Receive MIDI input from controllers, keyboards, or other MIDI devices. Route notes directly to SuperDirt for live playing, or register custom handlers for advanced control.
+
+**Basic MIDI input:**
+
+```elixir
+alias Waveform.MIDI.Input
+
+# List available input ports
+Input.list_ports()
+
+# Start listening to a port
+Input.listen("USB MIDI Keyboard")
+
+# Or listen to all available ports
+Input.listen_all()
+
+# Register a handler for note events
+Input.on_note(fn event ->
+  IO.inspect(event)
+  # %{type: :note_on, note: 60, velocity: 100, channel: 1}
+end)
+
+# Register a handler for CC (control change) events
+Input.on_cc(fn %{cc: cc, value: v} ->
+  IO.puts("CC #{cc} = #{v}")
+end)
+
+# Stop listening
+Input.stop()
+```
+
+**Route MIDI to SuperDirt for live playing:**
+
+```elixir
+# Play piano samples with incoming notes
+# Velocity is automatically mapped to gain
+Input.route_to_superdirt(s: "piano")
+
+# Use a different sample with reduced volume
+Input.route_to_superdirt(s: "superpiano", gain_scale: 0.5)
+
+# Add effects
+Input.route_to_superdirt(s: "piano", room: 0.5, size: 0.8)
+
+# Stop routing
+Input.stop_superdirt_routing()
+```
+
+**Channel filtering:**
+
+```elixir
+# Only receive events from channel 1
+Input.set_channel_filter(1)
+
+# Receive from all channels (default)
+Input.set_channel_filter(nil)
+```
+
+**All event types:**
+
+```elixir
+# Handle all MIDI events (for debugging or custom routing)
+Input.on_all(fn event ->
+  case event.type do
+    :note_on -> "Note #{event.note} on"
+    :note_off -> "Note #{event.note} off"
+    :cc -> "CC #{event.cc} = #{event.value}"
+    :program_change -> "Program #{event.program}"
+    :pitch_bend -> "Pitch bend #{event.value}"
+    :aftertouch -> "Aftertouch on note #{event.note}"
+    _ -> "Unknown"
+  end
+end)
+
+# Clear specific handlers
+Input.clear_handlers(:note)
+Input.clear_handlers(:cc)
+
+# Clear all handlers
+Input.clear_handlers()
+```
+
 **Velocity curves:**
 
 Convert gain values (0.0-1.0) to MIDI velocity using different curves:
@@ -495,6 +581,58 @@ Create virtual MIDI outputs that appear as MIDI devices to other applications (m
 {:ok, conn} = MIDI.Port.create_virtual_output("Waveform")
 
 # Other apps (DAWs, etc.) can now connect to "Waveform" as a MIDI input
+```
+
+### MIDI Clock Sync
+
+Synchronize with external MIDI devices using MIDI clock. Waveform can act as a clock master (sending clock) or slave (receiving clock).
+
+**Master mode - send clock to external gear:**
+
+```elixir
+alias Waveform.MIDI.Clock
+
+# Start sending clock at 120 BPM
+Clock.start_master(120)
+
+# Change tempo on the fly
+Clock.set_bpm(140)
+
+# Transport controls
+Clock.send_start()     # Tell receivers to start playback
+Clock.send_stop()      # Tell receivers to stop
+Clock.send_continue()  # Resume from current position
+
+# Stop sending clock
+Clock.stop_master()
+```
+
+**Slave mode - sync to external clock:**
+
+```elixir
+# Start listening for clock from a MIDI device
+Clock.start_slave("USB MIDI Keyboard")
+
+# PatternScheduler tempo automatically syncs to incoming clock
+# When external device sends Stop, patterns will hush
+
+# Check if clock is running (received Start without Stop)
+Clock.running?()
+
+# Get calculated BPM from incoming clock
+Clock.get_bpm()
+
+# Stop listening
+Clock.stop_slave()
+```
+
+**Configuration:**
+
+```elixir
+# config/config.exs
+config :waveform,
+  midi_clock_port: "IAC Driver Bus 1",  # Default clock output port
+  midi_clock_smoothing: 8               # Ticks to average for BPM calculation
 ```
 
 ## Development
@@ -535,7 +673,8 @@ When working on Waveform (especially with AI assistants), consult the session do
 - [x] SuperDirt integration (✅ Complete - v0.3.0)
 - [x] Pattern scheduling utilities (✅ Complete - v0.3.0)
 - [x] MIDI output support (✅ Complete - v0.4.0)
-- [ ] MIDI input support (recording, controllers)
+- [x] MIDI input support (✅ Complete - v0.4.0)
+- [x] MIDI clock sync (✅ Complete - v0.4.0)
 - [ ] More examples and guides
 - [ ] Buffer management for custom samples
 
