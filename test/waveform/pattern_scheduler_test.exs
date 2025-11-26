@@ -167,4 +167,95 @@ defmodule Waveform.PatternSchedulerTest do
       assert pattern.active == true
     end
   end
+
+  describe "query function patterns" do
+    test "accepts a query function", %{scheduler: scheduler} do
+      query_fn = fn _cycle -> [{0.0, [s: "bd"]}] end
+
+      assert :ok = PatternScheduler.schedule_pattern(:test_fn, query_fn, scheduler)
+
+      state = :sys.get_state(scheduler)
+      pattern = Map.get(state.patterns, :test_fn)
+
+      assert pattern.query_fn == query_fn
+      assert pattern.events == nil
+      assert pattern.active == true
+    end
+
+    test "accepts query function with options", %{scheduler: scheduler} do
+      query_fn = fn _cycle -> [{0.0, [note: 60]}] end
+
+      assert :ok =
+               PatternScheduler.schedule_pattern(:test_fn_opts, query_fn,
+                 server: scheduler,
+                 output: :midi,
+                 midi_channel: 10
+               )
+
+      state = :sys.get_state(scheduler)
+      pattern = Map.get(state.patterns, :test_fn_opts)
+
+      assert pattern.query_fn == query_fn
+      assert pattern.output == :midi
+      assert pattern.output_opts[:midi_channel] == 10
+    end
+
+    test "query function receives cycle number", %{scheduler: scheduler} do
+      test_pid = self()
+
+      query_fn = fn cycle ->
+        send(test_pid, {:queried, cycle})
+        [{0.0, [s: "bd"]}]
+      end
+
+      PatternScheduler.schedule_pattern(:test_cycle, query_fn, scheduler)
+
+      # Wait for a tick to query the function
+      assert_receive {:queried, cycle}, 1000
+      assert is_integer(cycle)
+      assert cycle >= 0
+    end
+
+    test "different events per cycle", %{scheduler: scheduler} do
+      test_pid = self()
+
+      query_fn = fn cycle ->
+        send(test_pid, {:cycle, cycle})
+
+        if rem(cycle, 2) == 0 do
+          [{0.0, [s: "bd"]}]
+        else
+          [{0.0, [s: "sd"]}]
+        end
+      end
+
+      PatternScheduler.schedule_pattern(:alternating, query_fn, scheduler)
+
+      # Should receive multiple cycle queries
+      assert_receive {:cycle, _}, 1000
+    end
+
+    test "query function can return empty list", %{scheduler: scheduler} do
+      query_fn = fn cycle ->
+        # Only play on every 4th cycle
+        if rem(cycle, 4) == 0 do
+          [{0.0, [s: "bd"]}]
+        else
+          []
+        end
+      end
+
+      assert :ok = PatternScheduler.schedule_pattern(:sparse, query_fn, scheduler)
+    end
+
+    test "can stop query function pattern", %{scheduler: scheduler} do
+      query_fn = fn _cycle -> [{0.0, [s: "bd"]}] end
+      PatternScheduler.schedule_pattern(:test_stop, query_fn, scheduler)
+
+      assert :ok = PatternScheduler.stop_pattern(:test_stop, scheduler)
+
+      state = :sys.get_state(scheduler)
+      refute Map.has_key?(state.patterns, :test_stop)
+    end
+  end
 end
