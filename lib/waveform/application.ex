@@ -28,7 +28,9 @@ defmodule Waveform.Application do
       {Waveform.MIDI.Port, []},
       {Waveform.MIDI.Scheduler, []},
       {Waveform.MIDI.Input, []},
-      {Waveform.MIDI.Clock, []}
+      {Waveform.MIDI.Clock, []},
+      # Buffer management for custom sample loading
+      {Waveform.Buffer, []}
     ]
 
     opts = [strategy: :one_for_one, name: Waveform.Supervisor]
