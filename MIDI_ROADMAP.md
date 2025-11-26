@@ -110,10 +110,10 @@ defmodule Waveform.MIDI do
 end
 ```
 
-**Dependencies**: Add PortMidi or similar MIDI library to mix.exs
+**Dependencies**: Add Midiex library to mix.exs (Rustler NIF wrapping midir)
 
 **Tasks**:
-- [ ] Add MIDI dependency (portmidi, midiclient, or similar)
+- [ ] Add Midiex dependency (`{:midiex, "~> 0.6"}`)
 - [ ] Create `Waveform.MIDI` module
 - [ ] Implement `play/1` - Convert params to MIDI note on/off
 - [ ] Implement `note_on/4` - Send MIDI note on
@@ -435,24 +435,43 @@ config :waveform,
 
 ## Dependencies
 
-**Primary Options**:
+**Selected Library**: [Midiex](https://hex.pm/packages/midiex) v0.6.3
 
-1. **portmidi** (C binding)
-   - Pros: Cross-platform, well-tested, low-latency
-   - Cons: Requires C compiler, NIF complexity
-   - Package: https://hex.pm/packages/portmidi
+Midiex is a Rustler NIF wrapping the [midir](https://github.com/boddlnagg/midir) Rust library (740+ stars, actively maintained).
 
-2. **midiclient** (Pure Elixir)
-   - Pros: Pure Elixir, simpler
-   - Cons: macOS only (CoreMIDI)
-   - Package: https://hex.pm/packages/midiclient
+**Why Midiex over alternatives:**
 
-3. **midiex** (Rust NIF)
-   - Pros: Fast, cross-platform
-   - Cons: Requires Rust
-   - Package: https://hex.pm/packages/midiex
+| Library | Status | Pros | Cons |
+|---------|--------|------|------|
+| **midiex** ✓ | Active (Sept 2024) | Precompiled binaries, cross-platform, virtual ports | Pre-1.0 API |
+| portmidi | Stale (2019) | Well-tested | Requires C compiler, no updates in 5+ years |
+| midiclient | Limited | Pure Elixir | macOS only |
 
-**Recommendation**: Start with **portmidi** for maximum compatibility.
+**Midiex Features:**
+- **Precompiled binaries** - No Rust toolchain required for users
+- **Cross-platform** - macOS (ARM/x86), Linux (x86/ARM/RISC-V), Windows
+- **Virtual ports** - App can appear as MIDI device (except Windows)
+- **Hot-plug support** - Device notifications on macOS
+- **Backend drivers** - ALSA, CoreMIDI, WinMM, WinRT, JACK
+
+**Installation:**
+```elixir
+# mix.exs
+{:midiex, "~> 0.6"}
+```
+
+**Basic API:**
+```elixir
+# List ports
+Midiex.ports()
+
+# Create virtual output
+conn = Midiex.create_virtual_output("Waveform")
+
+# Send MIDI messages (raw bytes)
+Midiex.send_msg(conn, <<0x90, 60, 127>>)  # Note On: middle C, velocity 127
+Midiex.send_msg(conn, <<0x80, 60, 0>>)    # Note Off: middle C
+```
 
 ---
 
@@ -570,7 +589,7 @@ HarmonyServer's EventConverter already produces the correct format - no changes 
 
 | Phase | Description | Est. Time | Dependencies |
 |-------|-------------|-----------|--------------|
-| 1 | Core MIDI output | 4-5h | PortMidi library |
+| 1 | Core MIDI output | 4-5h | Midiex library |
 | 2 | Advanced features (CC, program change) | 3-4h | Phase 1 |
 | 3 | Multi-port & routing | 2-3h | Phase 1 |
 | 4 | Testing & docs | 2-3h | Phases 1-3 |

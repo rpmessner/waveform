@@ -127,6 +127,8 @@ This will verify that your system is properly configured, including checking for
 - **SuperDirt Integration**: TidalCycles-compatible sample playback and effects
 - **Pattern Scheduler**: High-precision continuous pattern playback with cycle-based timing
 - **Hot-Swappable Patterns**: Change patterns while they're playing without stopping
+- **MIDI Output**: Send patterns to hardware synths, DAWs, or any MIDI device
+- **Multi-Output**: Route patterns to SuperCollider, MIDI, or both simultaneously
 
 ## Installation
 
@@ -382,6 +384,119 @@ PatternScheduler.hush()
 
 **For more advanced pattern languages**, see [KinoSpaetzle](https://github.com/rpmessner/kino_spaetzle) - a TidalCycles-inspired live coding environment for Livebook that adds mini-notation parsing on top of Waveform's scheduler.
 
+### MIDI Output
+
+Waveform supports MIDI output as a parallel audio destination to SuperCollider. Send patterns to hardware synths, DAWs, or any MIDI-capable software.
+
+**Basic MIDI playback:**
+
+```elixir
+alias Waveform.MIDI
+
+# List available MIDI ports
+MIDI.Port.list_outputs()
+
+# Send a single note
+MIDI.play(note: 60, velocity: 80, channel: 1)
+
+# With automatic note-off after 500ms
+MIDI.play(note: 60, velocity: 80, duration_ms: 500)
+
+# Control change and program change
+MIDI.control_change(1, 64, 1)      # Modulation wheel to 64
+MIDI.program_change(5, 1)          # Change to program 5
+
+# Raw note on/off
+MIDI.note_on(60, 100, 1)
+MIDI.note_off(60, 1)
+
+# Panic - all notes off
+MIDI.all_notes_off()
+```
+
+**Pattern scheduling with MIDI output:**
+
+```elixir
+alias Waveform.PatternScheduler
+
+# Set tempo
+PatternScheduler.set_cps(0.5)  # 120 BPM
+
+# Define a melody pattern
+melody = [
+  {0.0, [note: 60, velocity: 80]},
+  {0.25, [note: 64, velocity: 70]},
+  {0.5, [note: 67, velocity: 90]},
+  {0.75, [note: 72, velocity: 85]}
+]
+
+# Schedule with MIDI output
+PatternScheduler.schedule_pattern(:melody, melody,
+  output: :midi,
+  midi_channel: 1
+)
+
+# Send to BOTH SuperCollider and MIDI simultaneously
+PatternScheduler.schedule_pattern(:hybrid, melody,
+  output: [:superdirt, :midi],
+  midi_channel: 1
+)
+```
+
+**Multi-port routing:**
+
+Configure port aliases for easy routing to multiple MIDI destinations:
+
+```elixir
+# config/config.exs
+config :waveform,
+  midi_ports: %{
+    drums: "IAC Driver Bus 1",
+    synth: "USB MIDI Device",
+    hardware: "MIDI Out 1"
+  }
+```
+
+```elixir
+# Use aliases in patterns
+PatternScheduler.schedule_pattern(:bass, bass_events,
+  output: :midi,
+  midi_port: :synth,
+  midi_channel: 2
+)
+
+# Per-event port routing
+events = [
+  {0.0, [note: 36, port: :drums, channel: 10]},   # Kick to drums port
+  {0.5, [note: 60, port: :synth, channel: 1]}     # Note to synth port
+]
+
+PatternScheduler.schedule_pattern(:multi, events, output: :midi)
+```
+
+**Velocity curves:**
+
+Convert gain values (0.0-1.0) to MIDI velocity using different curves:
+
+```elixir
+# config/config.exs
+config :waveform,
+  midi_velocity_curve: :linear       # Default: 0.5 gain → ~64 velocity
+  # midi_velocity_curve: :exponential  # Quieter: 0.5 gain → ~32 velocity
+  # midi_velocity_curve: :logarithmic  # Louder: 0.5 gain → ~90 velocity
+```
+
+**Virtual MIDI ports:**
+
+Create virtual MIDI outputs that appear as MIDI devices to other applications (macOS/Linux only):
+
+```elixir
+# Create a virtual output named "Waveform"
+{:ok, conn} = MIDI.Port.create_virtual_output("Waveform")
+
+# Other apps (DAWs, etc.) can now connect to "Waveform" as a MIDI input
+```
+
 ## Development
 
 ```bash
@@ -419,7 +534,8 @@ When working on Waveform (especially with AI assistants), consult the session do
 
 - [x] SuperDirt integration (✅ Complete - v0.3.0)
 - [x] Pattern scheduling utilities (✅ Complete - v0.3.0)
-- [ ] MIDI support
+- [x] MIDI output support (✅ Complete - v0.4.0)
+- [ ] MIDI input support (recording, controllers)
 - [ ] More examples and guides
 - [ ] Buffer management for custom samples
 
@@ -508,10 +624,53 @@ export SCLANG_PATH=/path/to/sclang
 2. Test SuperDirt: `mix waveform.check`
 3. Report issues: https://github.com/rpmessner/waveform/issues
 
+## Ecosystem Role
+
+Waveform is the **audio layer** of the Elixir music ecosystem:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client Applications                       │
+│  kino_harmony (Livebook) │ harmony.nvim (Neovim) │ discord_uzu  │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+              ┌─────────────────────────┐
+              │     HarmonyServer       │
+              │    (API Gateway)        │
+              └───────────┬─────────────┘
+                          │
+        ┌─────────────────┼─────────────────┐
+        ▼                 ▼                 ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  UzuParser   │  │   harmony    │  │   waveform   │ ◀── YOU ARE HERE
+│  (patterns)  │  │   (theory)   │  │   (audio)    │
+│              │  │              │  │              │
+│ • parse      │  │ • chords     │  │ • OSC        │
+│ • fast/slow  │  │ • scales     │  │ • SuperDirt  │
+│ • stack/cat  │  │ • voicings   │  │ • MIDI       │
+│ • transform  │  │ • intervals  │  │ • scheduling │
+└──────────────┘  └──────────────┘  └──────────────┘
+```
+
+**Waveform handles:**
+- OSC communication with SuperCollider
+- SuperDirt sample playback and effects
+- Pattern scheduling with cycle-based timing
+- MIDI output to hardware synths, DAWs, and virtual instruments
+
+**Waveform does NOT handle:**
+- Pattern parsing (→ UzuParser)
+- Pattern transformations (→ UzuParser)
+- Music theory (→ harmony)
+- API gateway / RPC (→ HarmonyServer)
+
 ## Related Projects
 
-- [KinoSpaetzle](https://github.com/rpmessner/kino_spaetzle) - TidalCycles-like live coding for Livebook (uses Waveform)
-- [Harmony](https://github.com/rpmessner/harmony) - Music theory library for Elixir (useful for higher-level integrations)
+- [HarmonyServer](https://github.com/rpmessner/harmony_server) - API gateway that coordinates UzuParser, harmony, and Waveform
+- [UzuParser](https://github.com/rpmessner/uzu_parser) - Pattern parsing and transformations
+- [Harmony](https://github.com/rpmessner/harmony) - Music theory library for Elixir
+- [kino_harmony](https://github.com/rpmessner/kino_harmony) - Livebook live coding widget
 - [SuperCollider](https://supercollider.github.io/) - The audio synthesis platform
 
 ## Contributing
