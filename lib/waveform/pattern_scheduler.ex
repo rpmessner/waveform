@@ -138,11 +138,15 @@ defmodule Waveform.PatternScheduler do
     - `events` - List of {cycle_position, params} tuples
     - `active` - Whether this pattern is currently playing
     - `last_scheduled_cycle` - Last cycle we scheduled events for (prevents duplicates)
+    - `output` - Output destination: `:superdirt`, `:midi`, or list like `[:superdirt, :midi]`
+    - `output_opts` - Additional options for output (e.g., midi_channel, midi_port)
     """
     defstruct [
       :events,
       :active,
-      :last_scheduled_cycle
+      :last_scheduled_cycle,
+      output: :superdirt,
+      output_opts: []
     ]
   end
 
@@ -186,9 +190,15 @@ defmodule Waveform.PatternScheduler do
 
   The pattern will loop continuously until stopped.
 
+  ## Options
+
+  - `:output` - Output destination: `:superdirt` (default), `:midi`, or `[:superdirt, :midi]`
+  - `:midi_channel` - MIDI channel (1-16) for MIDI output
+  - `:midi_port` - MIDI port name for MIDI output
+
   ## Examples
 
-      # Simple kick pattern (4 on the floor)
+      # Simple kick pattern (4 on the floor) - SuperDirt output (default)
       PatternScheduler.schedule_pattern(:kick, [
         {0.0, [s: "bd"]},
         {0.25, [s: "bd"]},
@@ -196,20 +206,29 @@ defmodule Waveform.PatternScheduler do
         {0.75, [s: "bd"]}
       ])
 
-      # Hi-hat pattern
-      PatternScheduler.schedule_pattern(:hats, [
-        {0.0, [s: "hh", n: 0]},
-        {0.125, [s: "hh", n: 1]},
-        {0.25, [s: "hh", n: 0]},
-        {0.375, [s: "hh", n: 1]},
-        {0.5, [s: "hh", n: 0]},
-        {0.625, [s: "hh", n: 1]},
-        {0.75, [s: "hh", n: 0]},
-        {0.875, [s: "hh", n: 1]}
-      ])
+      # MIDI melody pattern
+      PatternScheduler.schedule_pattern(:melody, [
+        {0.0, [note: 60, velocity: 80]},
+        {0.25, [note: 64, velocity: 70]},
+        {0.5, [note: 67, velocity: 90]}
+      ], output: :midi, midi_channel: 1)
+
+      # Send to both SuperDirt and MIDI
+      PatternScheduler.schedule_pattern(:hybrid, events,
+        output: [:superdirt, :midi],
+        midi_channel: 10
+      )
   """
-  def schedule_pattern(pattern_id, events, server \\ @me) when is_list(events) do
-    GenServer.call(server, {:schedule_pattern, pattern_id, events})
+  def schedule_pattern(pattern_id, events, opts \\ [])
+
+  def schedule_pattern(pattern_id, events, server)
+      when is_list(events) and (is_atom(server) or is_pid(server)) do
+    GenServer.call(server, {:schedule_pattern, pattern_id, events, []})
+  end
+
+  def schedule_pattern(pattern_id, events, opts) when is_list(events) and is_list(opts) do
+    {server, opts} = Keyword.pop(opts, :server, @me)
+    GenServer.call(server, {:schedule_pattern, pattern_id, events, opts})
   end
 
   @doc """
@@ -280,13 +299,24 @@ defmodule Waveform.PatternScheduler do
     {:reply, :ok, %{state | cps: cps}}
   end
 
-  def handle_call({:schedule_pattern, pattern_id, events}, _from, state) do
+  def handle_call({:schedule_pattern, pattern_id, events}, from, state) do
+    # Backward compatibility: no options provided
+    handle_call({:schedule_pattern, pattern_id, events, []}, from, state)
+  end
+
+  def handle_call({:schedule_pattern, pattern_id, events, opts}, _from, state) do
+    # Extract output configuration
+    output = Keyword.get(opts, :output, :superdirt)
+    output_opts = Keyword.drop(opts, [:output])
+
     # Create new pattern or replace existing one
     pattern = %Pattern{
       events: events,
       active: true,
       # Fresh start
-      last_scheduled_cycle: nil
+      last_scheduled_cycle: nil,
+      output: output,
+      output_opts: output_opts
     }
 
     new_patterns = Map.put(state.patterns, pattern_id, pattern)
@@ -395,6 +425,7 @@ defmodule Waveform.PatternScheduler do
       schedule_event_occurrences(
         acc_state,
         pattern_id,
+        pattern,
         cycle_position,
         params,
         current_cycle,
@@ -412,6 +443,7 @@ defmodule Waveform.PatternScheduler do
   defp schedule_event_occurrences(
          state,
          pattern_id,
+         pattern,
          cycle_position,
          params,
          current_cycle,
@@ -434,6 +466,7 @@ defmodule Waveform.PatternScheduler do
     schedule_occurrence_loop(
       state,
       pattern_id,
+      pattern,
       cycle_position,
       params,
       first_occurrence,
@@ -444,6 +477,7 @@ defmodule Waveform.PatternScheduler do
   defp schedule_occurrence_loop(
          state,
          _pattern_id,
+         _pattern,
          _cycle_position,
          _params,
          event_cycle,
@@ -457,6 +491,7 @@ defmodule Waveform.PatternScheduler do
   defp schedule_occurrence_loop(
          state,
          pattern_id,
+         pattern,
          cycle_position,
          params,
          event_cycle,
@@ -471,14 +506,15 @@ defmodule Waveform.PatternScheduler do
       schedule_occurrence_loop(
         state,
         pattern_id,
+        pattern,
         cycle_position,
         params,
         event_cycle + 1.0,
         look_ahead_cycle
       )
     else
-      # New event! Send it to SuperDirt
-      send_event_to_superdirt(state, event_cycle, params)
+      # New event! Send it to the configured output(s)
+      send_event(pattern, params)
 
       # Mark as scheduled
       new_scheduled_events = MapSet.put(state.scheduled_events, event_id)
@@ -488,6 +524,7 @@ defmodule Waveform.PatternScheduler do
       schedule_occurrence_loop(
         new_state,
         pattern_id,
+        pattern,
         cycle_position,
         params,
         event_cycle + 1.0,
@@ -496,14 +533,47 @@ defmodule Waveform.PatternScheduler do
     end
   end
 
-  # Send a single event to SuperDirt at the correct time.
+  # Send a single event to the configured output(s).
   #
-  # We already have OSC bundle support with timestamps, so we just
-  # call SuperDirt.play/1 and it handles the timing!
-  defp send_event_to_superdirt(_state, _event_cycle, params) do
+  # Routes to SuperDirt, MIDI, or both based on pattern configuration.
+  defp send_event(pattern, params) do
+    case pattern.output do
+      :superdirt ->
+        send_to_superdirt(params)
+
+      :midi ->
+        send_to_midi(params, pattern.output_opts)
+
+      outputs when is_list(outputs) ->
+        Enum.each(outputs, fn
+          :superdirt -> send_to_superdirt(params)
+          :midi -> send_to_midi(params, pattern.output_opts)
+        end)
+    end
+  end
+
+  defp send_to_superdirt(params) do
     # SuperDirt.play already handles timestamps via OSC bundles
-    # The latency we calculated is already built into the bundle timing
     Waveform.SuperDirt.play(params)
+  end
+
+  defp send_to_midi(params, output_opts) do
+    # Map pattern-level options to MIDI param names
+    # :midi_port -> :port, :midi_channel -> :channel
+    midi_opts =
+      output_opts
+      |> Keyword.take([:midi_port, :midi_channel])
+      |> Enum.map(fn
+        {:midi_port, v} -> {:port, v}
+        {:midi_channel, v} -> {:channel, v}
+      end)
+
+    # Merge: midi_opts (pattern-level) <- params (event-level takes precedence)
+    merged_params =
+      midi_opts
+      |> Keyword.merge(params)
+
+    Waveform.MIDI.play(merged_params)
   end
 
   # Schedule the next tick of the scheduling loop.

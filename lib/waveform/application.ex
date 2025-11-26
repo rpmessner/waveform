@@ -9,6 +9,7 @@ defmodule Waveform.Application do
   - PatternScheduler: High-precision pattern scheduling for continuous playback
   - Node: Node ID allocation and tracking
   - Group: Group management
+  - MIDI.Port: MIDI port management and connection caching
   """
   use Application
 
@@ -21,7 +22,10 @@ defmodule Waveform.Application do
       # Start node IDs at 100 to leave room for system nodes
       {Waveform.OSC.Node.ID, initial_id: 100},
       {Waveform.OSC.Node, []},
-      {Waveform.OSC.Group, []}
+      {Waveform.OSC.Group, []},
+      # MIDI port management and note scheduling
+      {Waveform.MIDI.Port, []},
+      {Waveform.MIDI.Scheduler, []}
     ]
 
     opts = [strategy: :one_for_one, name: Waveform.Supervisor]
