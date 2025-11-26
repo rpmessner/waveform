@@ -407,12 +407,19 @@ PatternScheduler.schedule_pattern(:sparse, fn cycle ->
   end
 end)
 
-# Reverse pattern every 4th cycle (integration with uzu_pattern)
-# pattern = UzuPattern.Pattern.new("bd sd hh cp") |> UzuPattern.Pattern.every(4, &rev/1)
-# PatternScheduler.schedule_pattern(:drums, &UzuPattern.Pattern.query(&1, pattern))
+# Integration with UzuPattern for cycle-aware transformations
+alias UzuPattern.Pattern
+
+pattern = Pattern.new("bd sd hh cp")
+  |> Pattern.fast(2)
+  |> Pattern.every(4, &Pattern.rev/1)
+
+PatternScheduler.schedule_pattern(:drums, fn cycle ->
+  Pattern.query(pattern, cycle)
+end)
 ```
 
-**For more advanced pattern languages**, see [KinoSpaetzle](https://github.com/rpmessner/kino_spaetzle) - a TidalCycles-inspired live coding environment for Livebook that adds mini-notation parsing on top of Waveform's scheduler.
+**For more advanced pattern languages**, see [kino_harmony](https://github.com/rpmessner/kino_harmony) - a TidalCycles-inspired live coding environment for Livebook with advanced jazz harmony support.
 
 ### MIDI Output
 
@@ -802,22 +809,32 @@ Waveform is the **audio layer** of the Elixir music ecosystem:
 └──────────────────────────┬──────────────────────────────────────┘
                            │
                            ▼
-              ┌─────────────────────────┐
-              │     HarmonyServer       │
-              │    (API Gateway)        │
-              └───────────┬─────────────┘
-                          │
-        ┌─────────────────┼─────────────────┐
-        ▼                 ▼                 ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│  UzuParser   │  │   harmony    │  │   waveform   │ ◀── YOU ARE HERE
-│  (patterns)  │  │   (theory)   │  │   (audio)    │
-│              │  │              │  │              │
-│ • parse      │  │ • chords     │  │ • OSC        │
-│ • fast/slow  │  │ • scales     │  │ • SuperDirt  │
-│ • stack/cat  │  │ • voicings   │  │ • MIDI       │
-│ • transform  │  │ • intervals  │  │ • scheduling │
-└──────────────┘  └──────────────┘  └──────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                      HarmonyServer                               │
+│                     (coordination)                               │
+│                                                                  │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐         │
+│  │  UzuParser   │──▶│  UzuPattern  │   │   harmony    │         │
+│  │  (parsing)   │   │ (transforms) │   │   (theory)   │         │
+│  │              │   │              │   │              │         │
+│  │ • parse/1    │   │ • fast/slow  │   │ • chords     │         │
+│  │ • mini-      │   │ • rev/early  │   │ • scales     │         │
+│  │   notation   │   │ • stack/cat  │   │ • voicings   │         │
+│  │ • [%Event{}] │   │ • every/when │   │ • intervals  │         │
+│  └──────────────┘   └──────────────┘   └──────────────┘         │
+│                                                                  │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+                 ┌──────────────────┐
+                 │    waveform      │ ◀── YOU ARE HERE
+                 │    (audio)       │
+                 │                  │
+                 │ • OSC            │
+                 │ • SuperDirt      │
+                 │ • MIDI           │
+                 │ • scheduling     │
+                 └──────────────────┘
 ```
 
 **Waveform handles:**
@@ -828,14 +845,15 @@ Waveform is the **audio layer** of the Elixir music ecosystem:
 
 **Waveform does NOT handle:**
 - Pattern parsing (→ UzuParser)
-- Pattern transformations (→ UzuParser)
+- Pattern transformations (→ UzuPattern)
 - Music theory (→ harmony)
 - API gateway / RPC (→ HarmonyServer)
 
 ## Related Projects
 
-- [HarmonyServer](https://github.com/rpmessner/harmony_server) - API gateway that coordinates UzuParser, harmony, and Waveform
-- [UzuParser](https://github.com/rpmessner/uzu_parser) - Pattern parsing and transformations
+- [HarmonyServer](https://github.com/rpmessner/harmony_server) - API gateway that coordinates UzuParser, UzuPattern, harmony, and Waveform
+- [UzuParser](https://github.com/rpmessner/uzu_parser) - Pattern parsing (mini-notation to events)
+- [UzuPattern](https://github.com/rpmessner/uzu_pattern) - Pattern transformations (fast, slow, rev, stack, cat, every, jux)
 - [Harmony](https://github.com/rpmessner/harmony) - Music theory library for Elixir
 - [kino_harmony](https://github.com/rpmessner/kino_harmony) - Livebook live coding widget
 - [SuperCollider](https://supercollider.github.io/) - The audio synthesis platform
