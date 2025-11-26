@@ -10,6 +10,7 @@ defmodule Waveform.Application do
   - Node: Node ID allocation and tracking
   - Group: Group management
   - MIDI.Port: MIDI port management and connection caching
+  - MIDI.Input: MIDI input handling and event dispatch
   """
   use Application
 
@@ -23,9 +24,11 @@ defmodule Waveform.Application do
       {Waveform.OSC.Node.ID, initial_id: 100},
       {Waveform.OSC.Node, []},
       {Waveform.OSC.Group, []},
-      # MIDI port management and note scheduling
+      # MIDI port management, note scheduling, input handling, and clock sync
       {Waveform.MIDI.Port, []},
-      {Waveform.MIDI.Scheduler, []}
+      {Waveform.MIDI.Scheduler, []},
+      {Waveform.MIDI.Input, []},
+      {Waveform.MIDI.Clock, []}
     ]
 
     opts = [strategy: :one_for_one, name: Waveform.Supervisor]
