@@ -203,47 +203,53 @@ defmodule Mix.Tasks.Waveform.InstallSamples do
     IO.puts("\nStarting installation...")
     IO.puts("(This may take several minutes depending on your connection)\n")
 
-    # Install via Quarks
-    Lang.send_command(~S"""
-    Quarks.install("Dirt-Samples"); "DIRT_SAMPLES_INSTALL_STARTED".postln;
+    # Install via Quarks with completion marker
+    # We use a Routine to detect when the installation completes or fails
+    Lang.send_command("""
+    Routine({
+      var success = false;
+      try {
+        Quarks.install("Dirt-Samples");
+        // Wait a moment for files to finish writing
+        2.wait;
+        // Check if installation succeeded
+        if(Quarks.isInstalled("Dirt-Samples"), {
+          success = true;
+          "#{Lang.marker_quarks_install_complete()}".postln;
+        }, {
+          "#{Lang.marker_quarks_install_failed()}".postln;
+        });
+      } {
+        |err|
+        "#{Lang.marker_quarks_install_failed()}".postln;
+        err.postln;
+      };
+    }).play;
     """)
 
     IO.puts("Installation started. Waiting for download to complete...")
 
-    # Wait and monitor
-    wait_for_installation(sample_path, 300)
-  end
+    # Wait for event-driven completion instead of polling
+    case Lang.wait_for_quarks_installation(timeout: 600_000) do
+      :ok ->
+        count = count_wav_files(sample_path)
+        installation_complete(count, sample_path)
 
-  defp wait_for_installation(sample_path, max_attempts) do
-    Enum.reduce_while(1..max_attempts, 0, fn attempt, prev_count ->
-      Process.sleep(2000)
-      current_count = count_wav_files(sample_path)
-      check_installation_progress(current_count, prev_count, attempt, max_attempts, sample_path)
-    end)
-  end
+      {:error, :installation_error} ->
+        IO.puts("\n✗ Installation failed! SuperCollider reported an error.")
+        IO.puts("Check the SuperCollider output above for details.")
+        count = count_wav_files(sample_path)
+        installation_timeout(count, sample_path)
 
-  defp check_installation_progress(current_count, prev_count, attempt, max_attempts, sample_path) do
-    cond do
-      current_count > 1000 ->
-        installation_complete(current_count, sample_path)
-
-      current_count > prev_count && current_count > 0 ->
-        IO.write(".")
-        {:cont, current_count}
-
-      attempt == max_attempts ->
-        installation_timeout(current_count, sample_path)
-
-      true ->
-        if rem(attempt, 5) == 0, do: IO.write(".")
-        {:cont, current_count}
+      {:timeout, _} ->
+        count = count_wav_files(sample_path)
+        installation_timeout(count, sample_path)
     end
   end
 
   defp installation_complete(count, sample_path) do
     IO.puts("\n✓ Installation complete! Found #{count}+ sample files.")
     show_post_install_instructions(sample_path)
-    {:halt, count}
   end
 
   defp installation_timeout(count, sample_path) do

@@ -54,18 +54,12 @@ defmodule Waveform.Helpers do
           "C:/Users/#{System.get_env("USERNAME")}/AppData/Local/SuperCollider/downloaded-quarks/Dirt-Samples"
       end
 
-    # Start SuperDirt - it will print "SuperDirt: listening to Tidal on port 57120"
+    # Start SuperDirt - it will emit "WAVEFORM_SUPERDIRT_READY" marker
     # when ready, which we monitor in handle_info to detect readiness
-    Lang.send_command("""
-    fork {
-      ~dirt = SuperDirt(2, s);
-      ~dirt.loadSoundFiles("#{sample_path}/*");
-      ~dirt.start(57120, [0, 0]);
-    };
-    """)
+    Waveform.SuperDirt.start_superdirt(sample_path)
 
     # Wait for SuperDirt to finish loading
-    # This monitors stdout for "SuperDirt: listening to Tidal on port" message
+    # This monitors stdout for "WAVEFORM_SUPERDIRT_READY" marker
     Lang.wait_for_superdirt(timeout: timeout)
   end
 end

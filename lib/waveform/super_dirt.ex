@@ -60,15 +60,6 @@ defmodule Waveform.SuperDirt do
       };
       ```
 
-  ### Verification
-
-  Check if SuperDirt is ready:
-
-      ```elixir
-      Waveform.SuperDirt.verify()
-      # => :ok or {:error, reason}
-      ```
-
   ## Examples
 
   Trigger a bass drum sample:
@@ -238,53 +229,48 @@ defmodule Waveform.SuperDirt do
   end
 
   @doc """
-  Verify that SuperDirt is installed and loaded in SuperCollider.
+  Start SuperDirt in the SuperCollider session with custom sample path.
 
-  Returns `:ok` if SuperDirt is ready, or `{:error, reason}` if there's a problem.
+  Sends a command to SuperCollider to initialize SuperDirt with 2 output channels,
+  load samples from the specified path, and start listening on port 57120.
+
+  This function sends the command asynchronously using `fork` in SuperCollider,
+  which means it returns immediately without waiting for SuperDirt to finish loading.
+  Use `Waveform.Lang.wait_for_superdirt/1` if you need to wait for startup completion.
+
+  ## Parameters
+
+  - `sample_path` - Absolute path to the directory containing sample folders (e.g., Dirt-Samples)
 
   ## Examples
 
-      case SuperDirt.verify() do
-        :ok ->
-          IO.puts("SuperDirt is ready!")
+      # macOS
+      SuperDirt.start_superdirt("/Users/username/Library/Application Support/SuperCollider/downloaded-quarks/Dirt-Samples")
 
-        {:error, :not_installed} ->
-          IO.puts("SuperDirt Quark is not installed. Run: Quarks.install(\\"SuperDirt\\")")
+      # Linux
+      SuperDirt.start_superdirt("/home/username/.local/share/SuperCollider/downloaded-quarks/Dirt-Samples")
 
-        {:error, :not_loaded} ->
-          IO.puts("SuperDirt is installed but not loaded. Run: SuperDirt.start")
+  ## Notes
 
-        {:error, reason} ->
-          IO.puts("Could not verify SuperDirt: \#{reason}")
-      end
+  - The `fork` wrapper ensures SuperDirt starts asynchronously without blocking SuperCollider
+  - SuperDirt will load all samples from subdirectories within the sample_path
+  - Default configuration uses 2 orbits and listens on port 57120
 
+  See also: `Waveform.Helpers.ensure_superdirt_ready/1` for a higher-level function
+  that automatically detects the sample path and waits for startup.
   """
-  def verify do
-    # Check if Lang process is running
-    if Process.whereis(Waveform.Lang) do
-      # Send command to check if SuperDirt class exists and is started
-      command = """
-      if(SuperDirt.class.notNil, {
-        if(~dirt.notNil, {
-          "SUPERDIRT_RUNNING".postln;
-        }, {
-          "SUPERDIRT_INSTALLED_NOT_RUNNING".postln;
-        });
-      }, {
-        "SUPERDIRT_NOT_INSTALLED".postln;
-      });
-      """
+  def start_superdirt(sample_path) do
+    Waveform.Lang.send_command("""
+    fork {
+      ~dirt = SuperDirt(2, s);
+      ~dirt.loadSoundFiles("#{sample_path}/*");
+      ~dirt.start(57120, [0, 0]);
+      s.sync;
+      "#{Waveform.Lang.marker_superdirt_ready()}".postln;
+    };
+    """)
 
-      # Send the command and give it time to respond
-      Waveform.Lang.send_command(command)
-      Process.sleep(200)
-
-      # Note: We can't easily get the response since Lang just sends commands
-      # Users should check the SuperCollider post window or use mix waveform.doctor
-      :ok
-    else
-      {:error, :lang_not_running}
-    end
+    :ok
   end
 
   @doc """
@@ -369,8 +355,7 @@ defmodule Waveform.SuperDirt do
 
     IMPORTANT: SuperDirt must be installed and loaded in SuperCollider.
     - Check installation: mix waveform.doctor
-    - Load SuperDirt: Waveform.Lang.send_command("SuperDirt.start;")
-    - Verify: Waveform.SuperDirt.verify()
+    - Load SuperDirt: Waveform.Helpers.ensure_superdirt_ready()
     """)
 
     {:ok, state}

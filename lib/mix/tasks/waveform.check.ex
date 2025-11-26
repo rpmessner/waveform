@@ -44,9 +44,6 @@ defmodule Mix.Tasks.Waveform.Check do
     Mix.shell().info("Starting Waveform application...")
     Mix.Task.run("app.start")
 
-    # Give it a moment to initialize
-    Process.sleep(1000)
-
     # Ensure SuperDirt is ready
     Mix.shell().info("Starting SuperDirt with Dirt-Samples...")
 
