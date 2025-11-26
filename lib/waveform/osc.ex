@@ -72,6 +72,7 @@ defmodule Waveform.OSC do
   @n_end ~c"/n_end"
   @status ~c"/status"
   @status_reply ~c"/status.reply"
+  @b_info ~c"/b_info"
 
   @yes 1
 
@@ -220,6 +221,13 @@ defmodule Waveform.OSC do
 
   defp process_osc_message({:cmd, [@n_end, node_id | _]}) do
     Node.deactivate_node(node_id)
+  end
+
+  defp process_osc_message({:cmd, [@b_info, buffer_num, num_frames, num_channels, sample_rate]}) do
+    # Forward buffer info to Buffer module
+    if Process.whereis(Waveform.Buffer) do
+      send(Waveform.Buffer, {:buffer_info, buffer_num, num_frames, num_channels, sample_rate})
+    end
   end
 
   defp process_osc_message(_), do: nil
