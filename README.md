@@ -850,27 +850,15 @@ export SCLANG_PATH=/path/to/sclang
 Waveform is the **audio layer** of the Elixir music ecosystem:
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Client Applications                       │
-│  kino_harmony (Livebook) │ harmony.nvim (Neovim) │ discord_uzu  │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      HarmonyServer                               │
-│                     (coordination)                               │
-│                                                                  │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐         │
-│  │  UzuParser   │──▶│  UzuPattern  │   │   harmony    │         │
-│  │  (parsing)   │   │ (transforms) │   │   (theory)   │         │
-│  │              │   │              │   │              │         │
-│  │ • parse/1    │   │ • fast/slow  │   │ • chords     │         │
-│  │ • mini-      │   │ • rev/early  │   │ • scales     │         │
-│  │   notation   │   │ • stack/cat  │   │ • voicings   │         │
-│  │ • [%Event{}] │   │ • every/when │   │ • intervals  │         │
-│  └──────────────┘   └──────────────┘   └──────────────┘         │
-│                                                                  │
-└──────────────────────────┬──────────────────────────────────────┘
+  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+  │  UzuParser   │──▶│  UzuPattern  │   │   harmony    │
+  │  (parsing)   │   │ (transforms) │   │   (theory)   │
+  │              │   │              │   │              │
+  │ • parse/1    │   │ • fast/slow  │   │ • chords     │
+  │ • mini-      │   │ • rev/early  │   │ • scales     │
+  │   notation   │   │ • stack/cat  │   │ • voicings   │
+  │ • [%Event{}] │   │ • every/when │   │ • intervals  │
+  └──────────────┘   └──────────────┘   └──────────────┘
                            │
                            ▼
                  ┌──────────────────┐
@@ -898,11 +886,9 @@ Waveform is the **audio layer** of the Elixir music ecosystem:
 
 ## Related Projects
 
-- [HarmonyServer](https://github.com/rpmessner/harmony_server) - API gateway that coordinates UzuParser, UzuPattern, harmony, and Waveform
 - [UzuParser](https://github.com/rpmessner/uzu_parser) - Pattern parsing (mini-notation to events)
 - [UzuPattern](https://github.com/rpmessner/uzu_pattern) - Pattern transformations (fast, slow, rev, stack, cat, every, jux)
 - [Harmony](https://github.com/rpmessner/harmony) - Music theory library for Elixir
-- [kino_harmony](https://github.com/rpmessner/kino_harmony) - Livebook live coding widget
 - [SuperCollider](https://supercollider.github.io/) - The audio synthesis platform
 
 ## Contributing
