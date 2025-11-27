@@ -419,8 +419,6 @@ PatternScheduler.schedule_pattern(:drums, fn cycle ->
 end)
 ```
 
-**For more advanced pattern languages**, see [kino_harmony](https://github.com/rpmessner/kino_harmony) - a TidalCycles-inspired live coding environment for Livebook with advanced jazz harmony support.
-
 ### MIDI Output
 
 Waveform supports MIDI output as a parallel audio destination to SuperCollider. Send patterns to hardware synths, DAWs, or any MIDI-capable software.
@@ -882,7 +880,6 @@ Waveform is the **audio layer** of the Elixir music ecosystem:
 - Pattern parsing (→ UzuParser)
 - Pattern transformations (→ UzuPattern)
 - Music theory (→ harmony)
-- API gateway / RPC (→ HarmonyServer)
 
 ## Related Projects
 
