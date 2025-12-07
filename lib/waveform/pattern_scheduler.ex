@@ -608,10 +608,36 @@ defmodule Waveform.PatternScheduler do
         look_ahead_cycle
       )
     else
-      # New event! Send it to the configured output(s)
-      send_event(pattern, params)
+      cycle_int = Float.floor(event_cycle) |> trunc()
 
-      # Mark as scheduled
+      # Check for division param - division stretches the pattern over N cycles
+      # e.g., [sd sd]/2 with events at 0.0 and 0.5:
+      #   - Event at 0.0: scaled_pos=0.0, plays on cycles where (cycle % 2) == 0
+      #   - Event at 0.5: scaled_pos=1.0, plays on cycles where (cycle % 2) == 1
+      division = Keyword.get(params, :division) || 1
+
+      should_play =
+        if division > 1 do
+          scaled_pos = cycle_position * division
+          event_cycle_offset = trunc(Float.floor(scaled_pos))
+          cycle_within_iteration = rem(cycle_int, trunc(division))
+          event_cycle_offset == cycle_within_iteration
+        else
+          true
+        end
+
+      if should_play do
+        # Apply cycle-aware param transformations
+        clean_params =
+          params
+          |> apply_alternation(cycle_int)
+          |> Keyword.delete(:division)
+
+        # New event! Send it to the configured output(s)
+        send_event(pattern, clean_params)
+      end
+
+      # Mark as scheduled (even if skipped due to division)
       new_scheduled_events = MapSet.put(state.scheduled_events, event_id)
       new_state = %{state | scheduled_events: new_scheduled_events}
 
@@ -627,6 +653,38 @@ defmodule Waveform.PatternScheduler do
       )
     end
   end
+
+  # Apply alternation: pick sound based on cycle number.
+  # For <bd sd hh>, cycle 0 plays bd, cycle 1 plays sd, cycle 2 plays hh, cycle 3 plays bd, etc.
+  defp apply_alternation(params, cycle_int) do
+    case Keyword.get(params, :alternate) do
+      nil ->
+        params
+
+      alternates when is_list(alternates) ->
+        # Pick based on cycle (modulo number of alternatives)
+        index = rem(cycle_int, length(alternates))
+        selected = Enum.at(alternates, index)
+
+        # Replace sound with selected alternative
+        params
+        |> update_sound_from_alternate(selected)
+        |> Keyword.delete(:alternate)
+    end
+  end
+
+  # Update the :s param with the selected alternate sound
+  defp update_sound_from_alternate(params, %{sound: sound, sample: sample}) do
+    params = Keyword.put(params, :s, sound)
+
+    if sample do
+      Keyword.put(params, :n, sample)
+    else
+      params
+    end
+  end
+
+  defp update_sound_from_alternate(params, _), do: params
 
   # Send a single event to the configured output(s).
   #
