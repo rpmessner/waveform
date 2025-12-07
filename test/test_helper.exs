@@ -28,20 +28,6 @@ defmodule Waveform.TestSupport do
   end
 end
 
-# Mock the OSC module for tests - must include all public functions
-defmodule Waveform.OSC do
-  @moduledoc false
-  # Test stubs - do nothing but don't crash
-  def send_command(_cmd), do: :ok
-  def send_msg(_msg), do: :ok
-  def send_synthdef(_bytes), do: :ok
-  def new_synth(_name, _id, _action, _group_id, _args), do: :ok
-  def new_group(_id, _action, _parent), do: :ok
-  def delete_group(_id), do: :ok
-  def notify, do: :ok
-  def status, do: :ok
-end
-
 # Start test servers
 Waveform.TestSupport.start_test_servers()
 
