@@ -566,25 +566,6 @@ PatternScheduler.schedule_pattern(:sweep, synth, output: :midi)
 
 ---
 
-## Integration with HarmonyServer
-
-HarmonyServer will use Waveform's MIDI support transparently:
-
-```elixir
-# In HarmonyServer
-events = HarmonyServer.parse("bd sd hh sd")
-
-HarmonyServer.schedule_pattern(:drums, events,
-  bpm: 140,
-  audio_engine: :midi,  # Routes to Waveform.MIDI
-  midi_port: "IAC Driver"
-)
-```
-
-HarmonyServer's EventConverter already produces the correct format - no changes needed!
-
----
-
 ## Timeline
 
 | Phase | Description | Est. Time | Dependencies |
