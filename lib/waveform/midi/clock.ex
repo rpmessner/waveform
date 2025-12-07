@@ -369,7 +369,7 @@ defmodule Waveform.MIDI.Clock do
       # Encoded as 14-bit value (LSB, MSB)
       position = min(midi_beats, 16_383)
       lsb = position &&& 0x7F
-      msb = (position >>> 7) &&& 0x7F
+      msb = position >>> 7 &&& 0x7F
       Midiex.send_msg(state.master_port, <<@song_position, lsb, msb>>)
     end
 
@@ -470,10 +470,18 @@ defmodule Waveform.MIDI.Clock do
 
   # --- Private Helpers ---
 
-  defp dispatch_clock_event(%{type: :clock_tick}, sync), do: GenServer.cast(@me, {:clock_tick, sync})
-  defp dispatch_clock_event(%{type: :start}, sync), do: GenServer.cast(@me, {:transport, :start, sync})
-  defp dispatch_clock_event(%{type: :stop}, sync), do: GenServer.cast(@me, {:transport, :stop, sync})
-  defp dispatch_clock_event(%{type: :continue}, sync), do: GenServer.cast(@me, {:transport, :continue, sync})
+  defp dispatch_clock_event(%{type: :clock_tick}, sync),
+    do: GenServer.cast(@me, {:clock_tick, sync})
+
+  defp dispatch_clock_event(%{type: :start}, sync),
+    do: GenServer.cast(@me, {:transport, :start, sync})
+
+  defp dispatch_clock_event(%{type: :stop}, sync),
+    do: GenServer.cast(@me, {:transport, :stop, sync})
+
+  defp dispatch_clock_event(%{type: :continue}, sync),
+    do: GenServer.cast(@me, {:transport, :continue, sync})
+
   defp dispatch_clock_event(_event, _sync), do: :ok
 
   defp bpm_to_tick_interval(bpm) do

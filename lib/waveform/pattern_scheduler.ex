@@ -281,7 +281,8 @@ defmodule Waveform.PatternScheduler do
   end
 
   # Query function with options
-  def schedule_pattern(pattern_id, query_fn, opts) when is_function(query_fn, 1) and is_list(opts) do
+  def schedule_pattern(pattern_id, query_fn, opts)
+      when is_function(query_fn, 1) and is_list(opts) do
     {server, opts} = Keyword.pop(opts, :server, @me)
     GenServer.call(server, {:schedule_pattern_fn, pattern_id, query_fn, opts})
   end

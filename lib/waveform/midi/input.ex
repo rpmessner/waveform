@@ -479,17 +479,19 @@ defmodule Waveform.MIDI.Input do
 
   # MIDI parsing
 
-  defp parse_midi([status, data1, data2]) when status >= @note_off_min and status <= @note_off_max do
+  defp parse_midi([status, data1, data2])
+       when status >= @note_off_min and status <= @note_off_max do
     %{
       type: :note_off,
       note: data1,
       velocity: data2,
-      channel: (status - @note_off_min) + 1
+      channel: status - @note_off_min + 1
     }
   end
 
-  defp parse_midi([status, data1, data2]) when status >= @note_on_min and status <= @note_on_max do
-    channel = (status - @note_on_min) + 1
+  defp parse_midi([status, data1, data2])
+       when status >= @note_on_min and status <= @note_on_max do
+    channel = status - @note_on_min + 1
 
     # Note on with velocity 0 is treated as note off
     if data2 == 0 do
@@ -505,7 +507,7 @@ defmodule Waveform.MIDI.Input do
       type: :aftertouch,
       note: data1,
       pressure: data2,
-      channel: (status - @aftertouch_min) + 1
+      channel: status - @aftertouch_min + 1
     }
   end
 
@@ -514,7 +516,7 @@ defmodule Waveform.MIDI.Input do
       type: :cc,
       cc: data1,
       value: data2,
-      channel: (status - @cc_min) + 1
+      channel: status - @cc_min + 1
     }
   end
 
@@ -523,7 +525,7 @@ defmodule Waveform.MIDI.Input do
     %{
       type: :program_change,
       program: data1,
-      channel: (status - @program_change_min) + 1
+      channel: status - @program_change_min + 1
     }
   end
 
@@ -532,18 +534,19 @@ defmodule Waveform.MIDI.Input do
     %{
       type: :channel_pressure,
       pressure: data1,
-      channel: (status - @channel_pressure_min) + 1
+      channel: status - @channel_pressure_min + 1
     }
   end
 
-  defp parse_midi([status, lsb, msb]) when status >= @pitch_bend_min and status <= @pitch_bend_max do
+  defp parse_midi([status, lsb, msb])
+       when status >= @pitch_bend_min and status <= @pitch_bend_max do
     # Pitch bend is 14-bit value (0-16383, center at 8192)
-    value = (msb <<< 7) ||| lsb
+    value = msb <<< 7 ||| lsb
 
     %{
       type: :pitch_bend,
       value: value,
-      channel: (status - @pitch_bend_min) + 1
+      channel: status - @pitch_bend_min + 1
     }
   end
 
@@ -558,7 +561,7 @@ defmodule Waveform.MIDI.Input do
 
   # Song Position Pointer (0xF2 + LSB + MSB)
   defp parse_midi([0xF2, lsb, msb]) do
-    position = (msb <<< 7) ||| lsb
+    position = msb <<< 7 ||| lsb
     %{type: :song_position, position: position}
   end
 

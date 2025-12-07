@@ -457,7 +457,7 @@ defmodule Waveform.MIDI.InputTest do
 
       status >= 0xE0 and status <= 0xEF ->
         [lsb, msb] = rest
-        value = (msb <<< 7) ||| lsb
+        value = msb <<< 7 ||| lsb
         %{type: :pitch_bend, value: value, channel: status - 0xE0 + 1}
 
       # System real-time messages
@@ -475,7 +475,7 @@ defmodule Waveform.MIDI.InputTest do
 
       status == 0xF2 ->
         [lsb, msb] = rest
-        position = (msb <<< 7) ||| lsb
+        position = msb <<< 7 ||| lsb
         %{type: :song_position, position: position}
 
       true ->
@@ -596,7 +596,7 @@ defmodule Waveform.MIDI.ClockTest do
       [0xFC] -> %{type: :stop}
       [0xFE] -> %{type: :active_sensing}
       [0xFF] -> %{type: :reset}
-      [0xF2, lsb, msb] -> %{type: :song_position, position: (msb <<< 7) ||| lsb}
+      [0xF2, lsb, msb] -> %{type: :song_position, position: msb <<< 7 ||| lsb}
       [0xF3, song] -> %{type: :song_select, song: song}
       _ -> nil
     end

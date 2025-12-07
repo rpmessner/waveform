@@ -18,10 +18,12 @@ defmodule Waveform.BufferTest do
     end
 
     test "read with options returns buffer number" do
-      {:ok, buf_num} = Buffer.read("/tmp/nonexistent.wav",
-        start_frame: 44_100,
-        num_frames: 88_200
-      )
+      {:ok, buf_num} =
+        Buffer.read("/tmp/nonexistent.wav",
+          start_frame: 44_100,
+          num_frames: 88_200
+        )
+
       assert is_integer(buf_num)
 
       Buffer.free(buf_num)

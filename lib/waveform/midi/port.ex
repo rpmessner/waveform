@@ -269,7 +269,9 @@ defmodule Waveform.MIDI.Port do
     e -> {:error, {:virtual_port_failed, e}}
   end
 
-  defp default_output_config(nil), do: {{:virtual, "Waveform"}, fn -> create_virtual("Waveform") end}
+  defp default_output_config(nil),
+    do: {{:virtual, "Waveform"}, fn -> create_virtual("Waveform") end}
+
   defp default_output_config(port_name), do: {port_name, fn -> open_output_port(port_name) end}
 
   defp get_or_open_connection(state, key, open_fn) do

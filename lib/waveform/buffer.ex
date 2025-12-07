@@ -221,8 +221,9 @@ defmodule Waveform.Buffer do
 
   @impl true
   def init(opts) do
-    start_index = Keyword.get(opts, :start_index) ||
-                  Application.get_env(:waveform, :buffer_start_index, 1000)
+    start_index =
+      Keyword.get(opts, :start_index) ||
+        Application.get_env(:waveform, :buffer_start_index, 1000)
 
     state = %State{
       next_buffer_num: start_index,
@@ -256,9 +257,10 @@ defmodule Waveform.Buffer do
       loaded_at: System.system_time(:second)
     }
 
-    new_state = %{state |
-      next_buffer_num: buffer_num + 1,
-      buffers: Map.put(state.buffers, buffer_num, buffer_info)
+    new_state = %{
+      state
+      | next_buffer_num: buffer_num + 1,
+        buffers: Map.put(state.buffers, buffer_num, buffer_info)
     }
 
     {:reply, {:ok, buffer_num}, new_state}
@@ -277,9 +279,10 @@ defmodule Waveform.Buffer do
       loaded_at: System.system_time(:second)
     }
 
-    new_state = %{state |
-      next_buffer_num: buffer_num + 1,
-      buffers: Map.put(state.buffers, buffer_num, buffer_info)
+    new_state = %{
+      state
+      | next_buffer_num: buffer_num + 1,
+        buffers: Map.put(state.buffers, buffer_num, buffer_info)
     }
 
     {:reply, {:ok, buffer_num}, new_state}
