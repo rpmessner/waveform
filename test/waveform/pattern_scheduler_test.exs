@@ -6,9 +6,8 @@ defmodule Waveform.PatternSchedulerTest do
   # Note: These tests use NoOp transport, so no actual audio is sent
 
   setup do
-    # Start SuperDirt (needed for latency queries) with a random UDP port to avoid conflicts
-    random_port = 50_000 + :rand.uniform(10_000)
-    super_dirt = start_supervised!({Waveform.SuperDirt, [name: nil, udp_port: random_port]})
+    # Start SuperDirt (needed for latency queries) with port 0 for OS-assigned port
+    super_dirt = start_supervised!({Waveform.SuperDirt, [name: nil, udp_port: 0]})
 
     # Start scheduler with default CPS
     scheduler = start_supervised!({PatternScheduler, [cps: 0.5625, name: nil]})

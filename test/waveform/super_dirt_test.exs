@@ -7,9 +7,8 @@ defmodule Waveform.SuperDirtTest do
   # No actual OSC messages are sent to SuperDirt
 
   setup do
-    # Start SuperDirt with random UDP port to avoid conflicts
-    random_port = 50_000 + :rand.uniform(10_000)
-    super_dirt = start_supervised!({SuperDirt, [name: nil, udp_port: random_port]})
+    # Start SuperDirt with port 0 to let OS assign an available port
+    super_dirt = start_supervised!({SuperDirt, [name: nil, udp_port: 0]})
 
     %{super_dirt: super_dirt}
   end
