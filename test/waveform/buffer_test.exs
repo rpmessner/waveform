@@ -19,8 +19,8 @@ defmodule Waveform.BufferTest do
 
     test "read with options returns buffer number" do
       {:ok, buf_num} = Buffer.read("/tmp/nonexistent.wav",
-        start_frame: 44100,
-        num_frames: 88200
+        start_frame: 44_100,
+        num_frames: 88_200
       )
       assert is_integer(buf_num)
 
@@ -35,7 +35,7 @@ defmodule Waveform.BufferTest do
     end
 
     test "allocate returns buffer number" do
-      {:ok, buf_num} = Buffer.allocate(88200, 2)
+      {:ok, buf_num} = Buffer.allocate(88_200, 2)
       assert is_integer(buf_num)
       assert buf_num >= 1000
 
@@ -78,7 +78,7 @@ defmodule Waveform.BufferTest do
     end
 
     test "free returns error for unknown buffer" do
-      assert {:error, :not_found} = Buffer.free(999999)
+      assert {:error, :not_found} = Buffer.free(999_999)
     end
 
     test "free_all clears all buffers" do
@@ -101,7 +101,7 @@ defmodule Waveform.BufferTest do
     end
 
     test "zero returns error for unknown buffer" do
-      assert {:error, :not_found} = Buffer.zero(999999)
+      assert {:error, :not_found} = Buffer.zero(999_999)
     end
   end
 end

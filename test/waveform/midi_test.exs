@@ -88,14 +88,12 @@ defmodule Waveform.MIDI.PortTest do
 
   # Helper to check if MIDI hardware is available
   defp midi_available? do
-    try do
-      Port.list_ports()
-      true
-    rescue
-      _ -> false
-    catch
-      _ -> false
-    end
+    Port.list_ports()
+    true
+  rescue
+    _ -> false
+  catch
+    _ -> false
   end
 
   describe "port listing" do
@@ -173,8 +171,8 @@ defmodule Waveform.MIDI.SchedulerTest do
     end
 
     test "all_notes_off clears pending notes" do
-      Scheduler.schedule_note_off(60, 1, 10000)
-      Scheduler.schedule_note_off(64, 1, 10000)
+      Scheduler.schedule_note_off(60, 1, 10_000)
+      Scheduler.schedule_note_off(64, 1, 10_000)
       assert :ok = Scheduler.all_notes_off()
     end
   end
@@ -424,6 +422,7 @@ defmodule Waveform.MIDI.InputTest do
 
   # Helper to test parsing without going through GenServer
   # This duplicates the parsing logic but allows unit testing without hardware
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp parse_midi_test(data) do
     import Bitwise
 
@@ -557,35 +556,36 @@ defmodule Waveform.MIDI.ClockTest do
       # 0.5 / 24 = 0.020833... seconds per tick
       # = 20833 microseconds per tick
       interval = bpm_to_tick_interval(120)
-      assert_in_delta interval, 20833, 1
+      assert_in_delta interval, 20_833, 1
 
       # At 60 BPM:
       # 60 / 60 = 1.0 seconds per beat
       # 1.0 / 24 = 0.041666... seconds per tick
-      # = 41667 microseconds per tick
+      # = 41_667 microseconds per tick
       interval = bpm_to_tick_interval(60)
-      assert_in_delta interval, 41667, 1
+      assert_in_delta interval, 41_667, 1
 
       # At 240 BPM:
       # 60 / 240 = 0.25 seconds per beat
       # 0.25 / 24 = 0.010417... seconds per tick
-      # = 10417 microseconds per tick
+      # = 10_417 microseconds per tick
       interval = bpm_to_tick_interval(240)
-      assert_in_delta interval, 10417, 1
+      assert_in_delta interval, 10_417, 1
     end
 
     test "calculates BPM from tick interval" do
-      # 20833 us per tick → 120 BPM
-      bpm = tick_interval_to_bpm(20833)
+      # 20_833 us per tick → 120 BPM
+      bpm = tick_interval_to_bpm(20_833)
       assert_in_delta bpm, 120, 0.5
 
-      # 41667 us per tick → 60 BPM
-      bpm = tick_interval_to_bpm(41667)
+      # 41_667 us per tick → 60 BPM
+      bpm = tick_interval_to_bpm(41_667)
       assert_in_delta bpm, 60, 0.5
     end
   end
 
   # Helper to test clock message parsing
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp parse_clock_test(data) do
     import Bitwise
 
