@@ -1,0 +1,10 @@
+# Lefthook configuration
+# https://github.com/evilmartians/lefthook
+
+pre-commit:
+  parallel: true
+  commands:
+    elixir-format:
+      glob: "*.{ex,exs}"
+      run: mix format {staged_files}
+      stage_fixed: true
