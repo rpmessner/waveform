@@ -283,9 +283,6 @@ defmodule Mix.Tasks.Waveform.Install do
       case run_sclang_code(path, command) do
         {output, _} ->
           String.contains?(output, "SUPERDIRT_INSTALLED")
-
-        _ ->
-          false
       end
     end
   rescue
@@ -396,9 +393,6 @@ defmodule Mix.Tasks.Waveform.Install do
 
       {:win32, _} ->
         {:windows, nil}
-
-      _ ->
-        :unknown
     end
   end
 

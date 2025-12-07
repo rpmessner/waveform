@@ -17,7 +17,16 @@ defmodule Waveform.MixProject do
       name: "Waveform",
       source_url: @source_url,
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
+      dialyzer: [
+        # Include Mix in PLT for mix task analysis
+        plt_add_apps: [:mix]
+      ]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.post": :test,
@@ -48,7 +57,8 @@ defmodule Waveform.MixProject do
       # Dev/test dependencies
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.18", only: :test, runtime: false}
+      {:excoveralls, "~> 0.18", only: :test, runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 
