@@ -434,39 +434,32 @@ defmodule Waveform.MIDI.Input do
   defp passes_channel_filter?(_event, _filter), do: true
 
   defp dispatch_event(event, state) do
-    # Dispatch to type-specific handlers
-    type_handlers =
-      case event.type do
-        t when t in [:note_on, :note_off] -> state.handlers.note
-        :cc -> state.handlers.cc
-        :program_change -> state.handlers.program_change
-        :pitch_bend -> state.handlers.pitch_bend
-        :aftertouch -> state.handlers.aftertouch
-        _ -> []
-      end
+    event
+    |> handlers_for_event(state.handlers)
+    |> Enum.concat(state.handlers.all)
+    |> Enum.each(&safe_call_handler(&1, event))
 
-    Enum.each(type_handlers, fn handler ->
-      try do
-        handler.(event)
-      rescue
-        e -> Logger.error("MIDI handler error: #{inspect(e)}")
-      end
-    end)
-
-    # Dispatch to "all" handlers
-    Enum.each(state.handlers.all, fn handler ->
-      try do
-        handler.(event)
-      rescue
-        e -> Logger.error("MIDI handler error: #{inspect(e)}")
-      end
-    end)
-
-    # Handle SuperDirt routing for note_on events
-    if event.type == :note_on and state.superdirt_routing != nil do
-      route_note_to_superdirt(event, state.superdirt_routing)
-    end
+    maybe_route_to_superdirt(event, state.superdirt_routing)
   end
+
+  defp handlers_for_event(%{type: t}, handlers) when t in [:note_on, :note_off], do: handlers.note
+  defp handlers_for_event(%{type: :cc}, handlers), do: handlers.cc
+  defp handlers_for_event(%{type: :program_change}, handlers), do: handlers.program_change
+  defp handlers_for_event(%{type: :pitch_bend}, handlers), do: handlers.pitch_bend
+  defp handlers_for_event(%{type: :aftertouch}, handlers), do: handlers.aftertouch
+  defp handlers_for_event(_event, _handlers), do: []
+
+  defp safe_call_handler(handler, event) do
+    handler.(event)
+  rescue
+    e -> Logger.error("MIDI handler error: #{inspect(e)}")
+  end
+
+  defp maybe_route_to_superdirt(%{type: :note_on} = event, opts) when not is_nil(opts) do
+    route_note_to_superdirt(event, opts)
+  end
+
+  defp maybe_route_to_superdirt(_event, _opts), do: :ok
 
   defp route_note_to_superdirt(event, opts) do
     sample = opts[:s] || opts[:sample] || "piano"

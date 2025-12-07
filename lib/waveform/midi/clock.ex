@@ -69,8 +69,8 @@ defmodule Waveform.MIDI.Clock do
   require Logger
   import Bitwise
 
-  alias Waveform.MIDI.Port
   alias Waveform.MIDI.Input
+  alias Waveform.MIDI.Port
 
   @me __MODULE__
 
@@ -306,29 +306,9 @@ defmodule Waveform.MIDI.Clock do
   def handle_call({:start_slave, port_name, opts}, _from, state) do
     sync_scheduler = Keyword.get(opts, :sync_scheduler, true)
 
-    # We use Input.on_all to receive clock messages
     case Input.listen(port_name) do
       :ok ->
-        Input.on_all(fn event ->
-          # Clock messages come through as raw status bytes
-          case event do
-            %{type: :clock_tick} ->
-              GenServer.cast(@me, {:clock_tick, sync_scheduler})
-
-            %{type: :start} ->
-              GenServer.cast(@me, {:transport, :start, sync_scheduler})
-
-            %{type: :stop} ->
-              GenServer.cast(@me, {:transport, :stop, sync_scheduler})
-
-            %{type: :continue} ->
-              GenServer.cast(@me, {:transport, :continue, sync_scheduler})
-
-            _ ->
-              :ok
-          end
-        end)
-
+        Input.on_all(&dispatch_clock_event(&1, sync_scheduler))
         Logger.info("MIDI Clock slave listening on #{port_name}")
         {:reply, :ok, %{state | slave_port: port_name}}
 
@@ -387,7 +367,7 @@ defmodule Waveform.MIDI.Clock do
     if state.master_port do
       # Song Position is in MIDI beats (1 beat = 6 clocks)
       # Encoded as 14-bit value (LSB, MSB)
-      position = min(midi_beats, 16383)
+      position = min(midi_beats, 16_383)
       lsb = position &&& 0x7F
       msb = (position >>> 7) &&& 0x7F
       Midiex.send_msg(state.master_port, <<@song_position, lsb, msb>>)
@@ -489,6 +469,12 @@ defmodule Waveform.MIDI.Clock do
   end
 
   # --- Private Helpers ---
+
+  defp dispatch_clock_event(%{type: :clock_tick}, sync), do: GenServer.cast(@me, {:clock_tick, sync})
+  defp dispatch_clock_event(%{type: :start}, sync), do: GenServer.cast(@me, {:transport, :start, sync})
+  defp dispatch_clock_event(%{type: :stop}, sync), do: GenServer.cast(@me, {:transport, :stop, sync})
+  defp dispatch_clock_event(%{type: :continue}, sync), do: GenServer.cast(@me, {:transport, :continue, sync})
+  defp dispatch_clock_event(_event, _sync), do: :ok
 
   defp bpm_to_tick_interval(bpm) do
     # BPM to microseconds per tick

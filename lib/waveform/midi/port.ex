@@ -226,42 +226,8 @@ defmodule Waveform.MIDI.Port do
   @impl true
   def handle_call(:get_default_output, _from, state) do
     default_port = Application.get_env(:waveform, :midi_port)
-
-    case default_port do
-      nil ->
-        # Create virtual output as default
-        case Map.get(state.connections, {:virtual, "Waveform"}) do
-          nil ->
-            case create_virtual("Waveform") do
-              {:ok, conn} ->
-                new_state = put_in(state.connections[{:virtual, "Waveform"}], conn)
-                {:reply, {:ok, conn}, new_state}
-
-              {:error, reason} ->
-                {:reply, {:error, reason}, state}
-            end
-
-          conn ->
-            {:reply, {:ok, conn}, state}
-        end
-
-      port_name ->
-        # Use configured default
-        case Map.get(state.connections, port_name) do
-          nil ->
-            case open_output_port(port_name) do
-              {:ok, conn} ->
-                new_state = put_in(state.connections[port_name], conn)
-                {:reply, {:ok, conn}, new_state}
-
-              {:error, reason} ->
-                {:reply, {:error, reason}, state}
-            end
-
-          conn ->
-            {:reply, {:ok, conn}, state}
-        end
-    end
+    {key, open_fn} = default_output_config(default_port)
+    get_or_open_connection(state, key, open_fn)
   end
 
   @impl true
@@ -297,11 +263,29 @@ defmodule Waveform.MIDI.Port do
   end
 
   defp create_virtual(name) do
-    try do
-      conn = Midiex.create_virtual_output(name)
-      {:ok, conn}
-    rescue
-      e -> {:error, {:virtual_port_failed, e}}
+    conn = Midiex.create_virtual_output(name)
+    {:ok, conn}
+  rescue
+    e -> {:error, {:virtual_port_failed, e}}
+  end
+
+  defp default_output_config(nil), do: {{:virtual, "Waveform"}, fn -> create_virtual("Waveform") end}
+  defp default_output_config(port_name), do: {port_name, fn -> open_output_port(port_name) end}
+
+  defp get_or_open_connection(state, key, open_fn) do
+    case Map.get(state.connections, key) do
+      nil ->
+        case open_fn.() do
+          {:ok, conn} ->
+            new_state = put_in(state.connections[key], conn)
+            {:reply, {:ok, conn}, new_state}
+
+          {:error, reason} ->
+            {:reply, {:error, reason}, state}
+        end
+
+      conn ->
+        {:reply, {:ok, conn}, state}
     end
   end
 
