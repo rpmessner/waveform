@@ -201,8 +201,10 @@ defmodule Waveform.Lang do
         System.get_env("MIX_ENV") == "test"
 
     if skip_sclang? do
-      # Still warn if we're in test mode but not CI
-      if System.get_env("CI") == nil and
+      # Still warn if we're in test mode, unless CI or explicitly disabled via config
+      waveform_enabled = Application.get_env(:waveform, :enabled, true)
+
+      if System.get_env("CI") == nil and waveform_enabled != false and
            (Mix.env() == :test or System.get_env("MIX_ENV") == "test") do
         IO.warn("""
 
