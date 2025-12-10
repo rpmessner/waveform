@@ -53,6 +53,7 @@ defmodule Waveform.MixProject do
       {:erlexec, "~> 2.0"},
       {:recase, "~> 0.2"},
       {:midiex, "~> 0.6"},
+      {:uzu_pattern, path: "../uzu_pattern"},
 
       # Dev/test dependencies
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},

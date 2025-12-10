@@ -23,4 +23,6 @@
   "portmidi": {:hex, :portmidi, "5.1.2", "17a70db5d09885b15f841f878e2f4622996c02cf05ffeb90173d69d38f2589a8", [:make, :mix], [], "hexpm", "988044c7248883db855f129cd784698a300a9b86d4245164449e574545ec7de0"},
   "recase": {:hex, :recase, "0.6.0", "1dd2dd2f4e06603b74977630e739f08b7fedbb9420cc14de353666c2fc8b99f4", [:mix], [], "hexpm", "8712e318420a228eb2e6366ada230148ed3a4316a798319edd5512f64d78c990"},
   "rustler_precompiled": {:hex, :rustler_precompiled, "0.8.3", "4e741024b0b097fe783add06e53ae9a6f23ddc78df1010f215df0c02915ef5a8", [:mix], [{:castore, "~> 0.1 or ~> 1.0", [hex: :castore, repo: "hexpm", optional: false]}, {:rustler, "~> 0.23", [hex: :rustler, repo: "hexpm", optional: true]}], "hexpm", "c23f5f33cb6608542de4d04faf0f0291458c352a4648e4d28d17ee1098cddcc4"},
+  "uzu_parser": {:hex, :uzu_parser, "0.5.0", "f5694dd84ba3968469e9366abce43e9191e2308cca7b211b0e3dc19a707a5c0e", [:mix], [{:nimble_parsec, "~> 1.4", [hex: :nimble_parsec, repo: "hexpm", optional: false]}], "hexpm", "dac2e85b1fdbf5297698ec5342eb450dfec7714d1f3abcc8320f5ed55a55df0a"},
+  "uzu_pattern": {:hex, :uzu_pattern, "0.7.0", "d2b9b72573859892d1f1b4b875bc90c559e28c24f1d79184d0ce48dee2239738", [:mix], [{:uzu_parser, "~> 0.5.0", [hex: :uzu_parser, repo: "hexpm", optional: false]}], "hexpm", "007c6cdef865b266c9151129f9504d835281fe923526b135f47c29e2090a5386"},
 }

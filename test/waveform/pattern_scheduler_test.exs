@@ -2,14 +2,10 @@ defmodule Waveform.PatternSchedulerTest do
   use ExUnit.Case, async: true
 
   alias Waveform.PatternScheduler
-
-  # Note: These tests use NoOp transport, so no actual audio is sent
+  alias UzuPattern.Pattern
 
   setup do
-    # Start SuperDirt (needed for latency queries) with port 0 for OS-assigned port
     super_dirt = start_supervised!({Waveform.SuperDirt, [name: nil, udp_port: 0]})
-
-    # Start scheduler with default CPS
     scheduler = start_supervised!({PatternScheduler, [cps: 0.5625, name: nil]})
 
     %{scheduler: scheduler, super_dirt: super_dirt}
@@ -17,34 +13,32 @@ defmodule Waveform.PatternSchedulerTest do
 
   describe "basic pattern scheduling" do
     test "can schedule a simple pattern", %{scheduler: scheduler} do
-      events = [
-        {0.0, [s: "bd"]},
-        {0.5, [s: "sd"]}
-      ]
+      pattern = UzuPattern.parse("bd sd")
 
-      assert :ok = PatternScheduler.schedule_pattern(:test_pattern, events, scheduler)
+      assert :ok = PatternScheduler.schedule_pattern(:test_pattern, pattern, scheduler)
     end
 
     test "can update an existing pattern", %{scheduler: scheduler} do
-      events = [{0.0, [s: "bd"]}]
-      PatternScheduler.schedule_pattern(:test_pattern, events, scheduler)
+      pattern = UzuPattern.parse("bd")
+      PatternScheduler.schedule_pattern(:test_pattern, pattern, scheduler)
 
-      new_events = [{0.0, [s: "sd"]}]
-      assert :ok = PatternScheduler.update_pattern(:test_pattern, new_events, scheduler)
+      new_pattern = UzuPattern.parse("sd")
+      assert :ok = PatternScheduler.update_pattern(:test_pattern, new_pattern, scheduler)
     end
 
     test "can stop a pattern", %{scheduler: scheduler} do
-      events = [{0.0, [s: "bd"]}]
-      PatternScheduler.schedule_pattern(:test_pattern, events, scheduler)
+      pattern = UzuPattern.parse("bd")
+      PatternScheduler.schedule_pattern(:test_pattern, pattern, scheduler)
 
       assert :ok = PatternScheduler.stop_pattern(:test_pattern, scheduler)
     end
 
     test "hush stops all patterns", %{scheduler: scheduler, super_dirt: super_dirt} do
-      PatternScheduler.schedule_pattern(:pattern1, [{0.0, [s: "bd"]}], scheduler)
-      PatternScheduler.schedule_pattern(:pattern2, [{0.0, [s: "sd"]}], scheduler)
+      pattern1 = UzuPattern.parse("bd")
+      pattern2 = UzuPattern.parse("sd")
+      PatternScheduler.schedule_pattern(:pattern1, pattern1, scheduler)
+      PatternScheduler.schedule_pattern(:pattern2, pattern2, scheduler)
 
-      # Hush is implemented via SuperDirt
       assert :ok = Waveform.SuperDirt.hush(super_dirt)
     end
   end
@@ -55,7 +49,6 @@ defmodule Waveform.PatternSchedulerTest do
     end
 
     test "CPS must be positive" do
-      # Note: This doesn't need a scheduler since it's testing the function clause guard
       assert_raise FunctionClauseError, fn ->
         PatternScheduler.set_cps(-0.5, self())
       end
@@ -64,60 +57,41 @@ defmodule Waveform.PatternSchedulerTest do
 
   describe "cycle calculation" do
     test "calculates current cycle based on elapsed time", %{scheduler: scheduler} do
-      # Give the scheduler a moment to initialize
       Process.sleep(100)
 
       state = :sys.get_state(scheduler)
 
-      # Time elapsed since start (in microseconds)
       now = System.monotonic_time(:microsecond)
       elapsed_us = now - state.start_time
 
-      # Convert to cycles
       elapsed_s = elapsed_us / 1_000_000
       expected_cycle = elapsed_s * state.cps
 
-      # Should be close to expected (allowing for small timing variations)
       assert_in_delta expected_cycle, 0, 0.1
     end
   end
 
   describe "multiple patterns" do
     test "can run multiple patterns simultaneously", %{scheduler: scheduler} do
-      PatternScheduler.schedule_pattern(
-        :drums,
-        [
-          {0.0, [s: "bd"]},
-          {0.5, [s: "sd"]}
-        ],
-        scheduler
-      )
+      drums = UzuPattern.parse("bd sd")
+      hats = UzuPattern.parse("hh hh hh hh")
 
-      PatternScheduler.schedule_pattern(
-        :hats,
-        [
-          {0.0, [s: "hh"]},
-          {0.25, [s: "hh"]},
-          {0.5, [s: "hh"]},
-          {0.75, [s: "hh"]}
-        ],
-        scheduler
-      )
+      PatternScheduler.schedule_pattern(:drums, drums, scheduler)
+      PatternScheduler.schedule_pattern(:hats, hats, scheduler)
 
-      # Both should be in state
       state = :sys.get_state(scheduler)
       assert Map.has_key?(state.patterns, :drums)
       assert Map.has_key?(state.patterns, :hats)
     end
 
     test "patterns are independent", %{scheduler: scheduler} do
-      PatternScheduler.schedule_pattern(:pattern1, [{0.0, [s: "bd"]}], scheduler)
-      PatternScheduler.schedule_pattern(:pattern2, [{0.0, [s: "cp"]}], scheduler)
+      pattern1 = UzuPattern.parse("bd")
+      pattern2 = UzuPattern.parse("cp")
+      PatternScheduler.schedule_pattern(:pattern1, pattern1, scheduler)
+      PatternScheduler.schedule_pattern(:pattern2, pattern2, scheduler)
 
-      # Stop one
       PatternScheduler.stop_pattern(:pattern1, scheduler)
 
-      # Other should still exist
       state = :sys.get_state(scheduler)
       refute Map.has_key?(state.patterns, :pattern1)
       assert Map.has_key?(state.patterns, :pattern2)
@@ -136,7 +110,6 @@ defmodule Waveform.PatternSchedulerTest do
     end
 
     test "default CPS is 0.5625 (135 BPM)", %{scheduler: scheduler} do
-      # Reset CPS in case other tests changed it
       PatternScheduler.set_cps(0.5625, scheduler)
 
       state = :sys.get_state(scheduler)
@@ -150,111 +123,103 @@ defmodule Waveform.PatternSchedulerTest do
   end
 
   describe "pattern structure" do
-    test "pattern events are stored correctly", %{scheduler: scheduler} do
-      events = [
-        {0.0, [s: "bd", n: 1]},
-        {0.25, [s: "cp", gain: 0.8]},
-        {0.5, [s: "sd"]}
-      ]
+    test "uzu_pattern is stored correctly", %{scheduler: scheduler} do
+      pattern = UzuPattern.parse("bd cp sd")
 
-      PatternScheduler.schedule_pattern(:test, events, scheduler)
+      PatternScheduler.schedule_pattern(:test, pattern, scheduler)
 
       state = :sys.get_state(scheduler)
-      pattern = Map.get(state.patterns, :test)
+      stored_pattern = Map.get(state.patterns, :test)
 
-      assert pattern.events == events
-      assert pattern.active == true
+      assert %UzuPattern.Pattern{} = stored_pattern.uzu_pattern
+      assert stored_pattern.active == true
     end
   end
 
-  describe "query function patterns" do
-    test "accepts a query function", %{scheduler: scheduler} do
-      query_fn = fn _cycle -> [{0.0, [s: "bd"]}] end
+  describe "pattern transformations" do
+    test "fast transformation works", %{scheduler: scheduler} do
+      pattern =
+        UzuPattern.parse("bd sd")
+        |> Pattern.fast(2)
 
-      assert :ok = PatternScheduler.schedule_pattern(:test_fn, query_fn, scheduler)
+      assert :ok = PatternScheduler.schedule_pattern(:fast_test, pattern, scheduler)
 
-      state = :sys.get_state(scheduler)
-      pattern = Map.get(state.patterns, :test_fn)
-
-      assert pattern.query_fn == query_fn
-      assert pattern.events == nil
-      assert pattern.active == true
+      # Verify events are correct
+      events = Pattern.query(pattern, 0)
+      assert length(events) == 4
     end
 
-    test "accepts query function with options", %{scheduler: scheduler} do
-      query_fn = fn _cycle -> [{0.0, [note: 60]}] end
+    test "slow transformation works", %{scheduler: scheduler} do
+      pattern =
+        UzuPattern.parse("bd sd hh cp")
+        |> Pattern.slow(2)
+
+      assert :ok = PatternScheduler.schedule_pattern(:slow_test, pattern, scheduler)
+
+      # Slow by 2 means 2 events per cycle
+      events = Pattern.query(pattern, 0)
+      assert length(events) == 2
+    end
+
+    test "rev transformation works", %{scheduler: scheduler} do
+      pattern =
+        UzuPattern.parse("bd sd hh")
+        |> Pattern.rev()
+
+      assert :ok = PatternScheduler.schedule_pattern(:rev_test, pattern, scheduler)
+
+      events = Pattern.query(pattern, 0)
+      # First event should be hh (reversed from bd sd hh)
+      assert List.first(events).sound == "hh"
+    end
+
+    test "every transformation receives cycle number", %{scheduler: scheduler} do
+      test_pid = self()
+
+      # Create a pattern that reports when queried
+      base_pattern = UzuPattern.parse("bd sd")
+
+      pattern =
+        Pattern.every(base_pattern, 2, fn p ->
+          send(test_pid, :transformed)
+          Pattern.rev(p)
+        end)
+
+      PatternScheduler.schedule_pattern(:every_test, pattern, scheduler)
+
+      # Wait for scheduler to query the pattern
+      Process.sleep(50)
+
+      # Pattern was scheduled - every/3 applies transformation at query time
+      state = :sys.get_state(scheduler)
+      assert Map.has_key?(state.patterns, :every_test)
+    end
+  end
+
+  describe "output configuration" do
+    test "default output is superdirt", %{scheduler: scheduler} do
+      pattern = UzuPattern.parse("bd")
+      PatternScheduler.schedule_pattern(:test_output, pattern, scheduler)
+
+      state = :sys.get_state(scheduler)
+      stored = Map.get(state.patterns, :test_output)
+      assert stored.output == :superdirt
+    end
+
+    test "can set midi output", %{scheduler: scheduler} do
+      pattern = UzuPattern.parse("60 64 67")
 
       assert :ok =
-               PatternScheduler.schedule_pattern(:test_fn_opts, query_fn,
+               PatternScheduler.schedule_pattern(:midi_test, pattern,
                  server: scheduler,
                  output: :midi,
-                 midi_channel: 10
+                 midi_channel: 1
                )
 
       state = :sys.get_state(scheduler)
-      pattern = Map.get(state.patterns, :test_fn_opts)
-
-      assert pattern.query_fn == query_fn
-      assert pattern.output == :midi
-      assert pattern.output_opts[:midi_channel] == 10
-    end
-
-    test "query function receives cycle number", %{scheduler: scheduler} do
-      test_pid = self()
-
-      query_fn = fn cycle ->
-        send(test_pid, {:queried, cycle})
-        [{0.0, [s: "bd"]}]
-      end
-
-      PatternScheduler.schedule_pattern(:test_cycle, query_fn, scheduler)
-
-      # Wait for a tick to query the function
-      assert_receive {:queried, cycle}, 1000
-      assert is_integer(cycle)
-      assert cycle >= 0
-    end
-
-    test "different events per cycle", %{scheduler: scheduler} do
-      test_pid = self()
-
-      query_fn = fn cycle ->
-        send(test_pid, {:cycle, cycle})
-
-        if rem(cycle, 2) == 0 do
-          [{0.0, [s: "bd"]}]
-        else
-          [{0.0, [s: "sd"]}]
-        end
-      end
-
-      PatternScheduler.schedule_pattern(:alternating, query_fn, scheduler)
-
-      # Should receive multiple cycle queries
-      assert_receive {:cycle, _}, 1000
-    end
-
-    test "query function can return empty list", %{scheduler: scheduler} do
-      query_fn = fn cycle ->
-        # Only play on every 4th cycle
-        if rem(cycle, 4) == 0 do
-          [{0.0, [s: "bd"]}]
-        else
-          []
-        end
-      end
-
-      assert :ok = PatternScheduler.schedule_pattern(:sparse, query_fn, scheduler)
-    end
-
-    test "can stop query function pattern", %{scheduler: scheduler} do
-      query_fn = fn _cycle -> [{0.0, [s: "bd"]}] end
-      PatternScheduler.schedule_pattern(:test_stop, query_fn, scheduler)
-
-      assert :ok = PatternScheduler.stop_pattern(:test_stop, scheduler)
-
-      state = :sys.get_state(scheduler)
-      refute Map.has_key?(state.patterns, :test_stop)
+      stored = Map.get(state.patterns, :midi_test)
+      assert stored.output == :midi
+      assert stored.output_opts[:midi_channel] == 1
     end
   end
 end

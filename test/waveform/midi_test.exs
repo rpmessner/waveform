@@ -216,30 +216,30 @@ defmodule Waveform.PatternScheduler.MIDIIntegrationTest do
 
   describe "MIDI output option" do
     test "schedule_pattern accepts output: :midi option", %{scheduler: scheduler} do
-      events = [{0.0, [note: 60, velocity: 80]}]
+      pattern = UzuPattern.parse("60")
 
       assert :ok =
-               PatternScheduler.schedule_pattern(:test_midi, events,
+               PatternScheduler.schedule_pattern(:test_midi, pattern,
                  server: scheduler,
                  output: :midi
                )
     end
 
     test "schedule_pattern accepts output: [:superdirt, :midi] option", %{scheduler: scheduler} do
-      events = [{0.0, [note: 60, velocity: 80]}]
+      pattern = UzuPattern.parse("60")
 
       assert :ok =
-               PatternScheduler.schedule_pattern(:test_both, events,
+               PatternScheduler.schedule_pattern(:test_both, pattern,
                  server: scheduler,
                  output: [:superdirt, :midi]
                )
     end
 
     test "schedule_pattern accepts midi_channel option", %{scheduler: scheduler} do
-      events = [{0.0, [note: 60, velocity: 80]}]
+      pattern = UzuPattern.parse("60")
 
       assert :ok =
-               PatternScheduler.schedule_pattern(:test_channel, events,
+               PatternScheduler.schedule_pattern(:test_channel, pattern,
                  server: scheduler,
                  output: :midi,
                  midi_channel: 10
@@ -247,10 +247,10 @@ defmodule Waveform.PatternScheduler.MIDIIntegrationTest do
     end
 
     test "schedule_pattern accepts midi_port option", %{scheduler: scheduler} do
-      events = [{0.0, [note: 60, velocity: 80]}]
+      pattern = UzuPattern.parse("60")
 
       assert :ok =
-               PatternScheduler.schedule_pattern(:test_port, events,
+               PatternScheduler.schedule_pattern(:test_port, pattern,
                  server: scheduler,
                  output: :midi,
                  midi_port: "Some MIDI Port"
@@ -258,10 +258,10 @@ defmodule Waveform.PatternScheduler.MIDIIntegrationTest do
     end
 
     test "schedule_pattern accepts midi_port alias", %{scheduler: scheduler} do
-      events = [{0.0, [note: 60, velocity: 80]}]
+      pattern = UzuPattern.parse("60")
 
       assert :ok =
-               PatternScheduler.schedule_pattern(:test_alias, events,
+               PatternScheduler.schedule_pattern(:test_alias, pattern,
                  server: scheduler,
                  output: :midi,
                  midi_port: :drums

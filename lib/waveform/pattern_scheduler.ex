@@ -2,58 +2,21 @@ defmodule Waveform.PatternScheduler do
   @moduledoc """
   High-precision pattern scheduler for continuous audio pattern playback.
 
+  Works directly with UzuPattern patterns for cycle-based scheduling.
+
   ## Concept: Cycle-Based Timing
 
-  Instead of scheduling events at absolute times (e.g., "play at 10.5 seconds"),
-  the scheduler uses **cycles** as the fundamental unit:
+  The scheduler uses **cycles** as the fundamental unit:
 
       Cycle 0.0 -----> 1.0 -----> 2.0 -----> 3.0
                [pattern loop]  [pattern loop]
 
-  A pattern like "bd cp sd cp" (bass drum, clap, snare, clap) has 4 events
-  distributed across one cycle:
+  A pattern like "bd cp sd cp" has 4 events distributed across one cycle:
 
-  - Event 1: bd at cycle position 0.0
-  - Event 2: cp at cycle position 0.25
-  - Event 3: sd at cycle position 0.5
-  - Event 4: cp at cycle position 0.75
-  - (loops back to 0.0)
-
-  ## Concept: Look-Ahead Scheduling
-
-  The scheduler doesn't wait until the last moment to send events. Instead,
-  it "looks ahead" into the future:
-
-      Current time: 10.0 seconds
-      Latency: 0.02 seconds (20ms)
-      Look-ahead window: 10.0 to 10.02
-
-      The scheduler asks: "What events fall in this window?"
-      It schedules them NOW with timestamps for the future.
-
-  This prevents timing jitter and ensures smooth playback.
-
-  ## Concept: The Scheduling Loop
-
-  The scheduler runs continuously:
-
-      1. Calculate current cycle position (based on time and CPS)
-      2. Look ahead by latency amount
-      3. Find events in that cycle window
-      4. Send to SuperDirt with precise timestamps
-      5. Remember what we've already sent (don't duplicate)
-      6. Schedule next tick
-      7. Sleep and repeat
-
-  ## Architecture
-
-  The scheduler is a GenServer that manages:
-
-  - **Patterns**: Map of pattern_id -> pattern_data
-  - **Current cycle**: Where we are in musical time
-  - **CPS**: Cycles per second (tempo)
-  - **Tick rate**: How often we check for events to schedule
-  - **Scheduled events**: What we've already sent (to avoid duplicates)
+  - bd at cycle position 0.0
+  - cp at cycle position 0.25
+  - sd at cycle position 0.5
+  - cp at cycle position 0.75
 
   ## Example Usage
 
@@ -63,24 +26,21 @@ defmodule Waveform.PatternScheduler do
       # Set tempo (0.5625 CPS = 135 BPM)
       PatternScheduler.set_cps(0.5625)
 
-      # Schedule a pattern
-      # Events are a list of {cycle_position, params}
-      events = [
-        {0.0, [s: "bd"]},
-        {0.25, [s: "cp"]},
-        {0.5, [s: "sd"]},
-        {0.75, [s: "cp"]}
-      ]
+      # Schedule a pattern using UzuPattern
+      pattern = UzuPattern.parse("bd cp sd cp")
+      PatternScheduler.schedule_pattern(:drums, pattern)
 
-      PatternScheduler.schedule_pattern(:drums, events)
+      # Apply transformations
+      pattern =
+        UzuPattern.parse("bd sd hh cp")
+        |> UzuPattern.Pattern.fast(2)
+        |> UzuPattern.Pattern.every(4, &UzuPattern.Pattern.rev/1)
 
-      # Pattern now plays continuously, looping every cycle
-      # To change it (hot-swap):
-      new_events = [
-        {0.0, [s: "bd", n: 1]},
-        {0.5, [s: "bd", n: 2]}
-      ]
-      PatternScheduler.update_pattern(:drums, new_events)
+      PatternScheduler.schedule_pattern(:drums, pattern)
+
+      # Hot-swap to new pattern
+      new_pattern = UzuPattern.parse("bd bd sd sd")
+      PatternScheduler.update_pattern(:drums, new_pattern)
 
       # Stop a pattern
       PatternScheduler.stop_pattern(:drums)
@@ -88,37 +48,25 @@ defmodule Waveform.PatternScheduler do
   ## Timing Precision
 
   The scheduler uses:
-  - System.monotonic_time() for steady clock (doesn't jump)
+  - System.monotonic_time() for steady clock
   - Small tick intervals (default 10ms) for responsive scheduling
   - OSC bundle latency (20ms default) for audio stability
   - Cycle arithmetic to prevent drift over time
-
   """
   use GenServer
   require Logger
 
+  alias UzuPattern.Pattern, as: UzuPatternMod
+
   @me __MODULE__
 
   # How often to check for events to schedule (milliseconds)
-  # Smaller = more responsive but more CPU
-  # Larger = less CPU but events might be late
   @default_tick_interval_ms 10
 
   # --- Data Structures ---
 
   defmodule State do
-    @moduledoc """
-    Scheduler state.
-
-    ## Fields
-
-    - `patterns` - Map of pattern_id -> Pattern struct
-    - `cps` - Cycles per second (tempo)
-    - `start_time` - Monotonic time when scheduler started (microseconds)
-    - `tick_interval_ms` - How often to schedule (milliseconds)
-    - `tick_timer` - Reference to current timer
-    - `scheduled_events` - Set of event IDs already scheduled (to avoid duplicates)
-    """
+    @moduledoc false
     defstruct [
       :patterns,
       :cps,
@@ -130,24 +78,9 @@ defmodule Waveform.PatternScheduler do
   end
 
   defmodule Pattern do
-    @moduledoc """
-    A pattern is a collection of events that repeat every cycle.
-
-    ## Fields
-
-    - `events` - List of {cycle_position, params} tuples (static patterns)
-    - `query_fn` - Function (cycle_number) -> events (dynamic/cycle-aware patterns)
-    - `active` - Whether this pattern is currently playing
-    - `last_scheduled_cycle` - Last cycle we scheduled events for (prevents duplicates)
-    - `output` - Output destination: `:superdirt`, `:midi`, or list like `[:superdirt, :midi]`
-    - `output_opts` - Additional options for output (e.g., midi_channel, midi_port)
-
-    Note: Either `events` OR `query_fn` should be set, not both.
-    If `query_fn` is set, it takes precedence over `events`.
-    """
+    @moduledoc false
     defstruct [
-      :events,
-      :query_fn,
+      :uzu_pattern,
       :active,
       :last_scheduled_cycle,
       output: :superdirt,
@@ -187,29 +120,7 @@ defmodule Waveform.PatternScheduler do
   end
 
   @doc """
-  Schedule a new pattern or update an existing one.
-
-  Accepts either a static event list or a query function for cycle-aware patterns.
-
-  ## Static Events
-
-  Events are a list of {cycle_position, params} tuples where:
-  - cycle_position is a float from 0.0 to 1.0 (position within one cycle)
-  - params is a keyword list for SuperDirt (e.g., [s: "bd", n: 0])
-
-  The pattern will loop continuously until stopped.
-
-  ## Query Functions (Cycle-Aware Patterns)
-
-  For dynamic patterns that change based on cycle number, pass a function:
-
-      query_fn :: (cycle_number :: integer) -> [{position, params}]
-
-  The function receives the current cycle number (0, 1, 2, ...) and returns
-  events for that specific cycle. This enables transformations like:
-  - `every(4, rev)` - reverse the pattern every 4th cycle
-  - `iter(4)` - rotate the pattern start point each cycle
-  - Random variations per cycle
+  Schedule an UzuPattern for playback.
 
   ## Options
 
@@ -219,90 +130,49 @@ defmodule Waveform.PatternScheduler do
 
   ## Examples
 
-      # Simple kick pattern (4 on the floor) - SuperDirt output (default)
-      PatternScheduler.schedule_pattern(:kick, [
-        {0.0, [s: "bd"]},
-        {0.25, [s: "bd"]},
-        {0.5, [s: "bd"]},
-        {0.75, [s: "bd"]}
-      ])
+      # Parse and schedule a pattern
+      pattern = UzuPattern.parse("bd cp sd cp")
+      PatternScheduler.schedule_pattern(:drums, pattern)
 
-      # MIDI melody pattern
-      PatternScheduler.schedule_pattern(:melody, [
-        {0.0, [note: 60, velocity: 80]},
-        {0.25, [note: 64, velocity: 70]},
-        {0.5, [note: 67, velocity: 90]}
-      ], output: :midi, midi_channel: 1)
+      # With transformations
+      pattern =
+        UzuPattern.parse("bd sd hh cp")
+        |> UzuPattern.Pattern.fast(2)
 
-      # Send to both SuperDirt and MIDI
-      PatternScheduler.schedule_pattern(:hybrid, events,
-        output: [:superdirt, :midi],
-        midi_channel: 10
+      PatternScheduler.schedule_pattern(:drums, pattern)
+
+      # MIDI output
+      pattern = UzuPattern.parse("60 64 67")
+      PatternScheduler.schedule_pattern(:melody, pattern,
+        output: :midi,
+        midi_channel: 1
       )
-
-      # Cycle-aware pattern using query function
-      # Alternates between two patterns every cycle
-      PatternScheduler.schedule_pattern(:alternating, fn cycle ->
-        if rem(cycle, 2) == 0 do
-          [{0.0, [s: "bd"]}, {0.5, [s: "sd"]}]
-        else
-          [{0.0, [s: "hh"]}, {0.5, [s: "cp"]}]
-        end
-      end)
-
-      # Pattern that only plays every 4th cycle
-      PatternScheduler.schedule_pattern(:sparse, fn cycle ->
-        if rem(cycle, 4) == 0 do
-          [{0.0, [s: "bd", gain: 1.2]}]
-        else
-          []
-        end
-      end)
-
   """
-  def schedule_pattern(pattern_id, events_or_fn, opts \\ [])
+  def schedule_pattern(pattern_id, uzu_pattern, opts \\ [])
 
-  # Static events with server as third arg (backward compat)
-  def schedule_pattern(pattern_id, events, server)
-      when is_list(events) and (is_atom(server) or is_pid(server)) do
-    GenServer.call(server, {:schedule_pattern, pattern_id, events, []})
+  def schedule_pattern(pattern_id, %UzuPattern.Pattern{} = uzu_pattern, server)
+      when is_atom(server) or is_pid(server) do
+    GenServer.call(server, {:schedule_pattern, pattern_id, uzu_pattern, []})
   end
 
-  # Static events with options
-  def schedule_pattern(pattern_id, events, opts) when is_list(events) and is_list(opts) do
+  def schedule_pattern(pattern_id, %UzuPattern.Pattern{} = uzu_pattern, opts)
+      when is_list(opts) do
     {server, opts} = Keyword.pop(opts, :server, @me)
-    GenServer.call(server, {:schedule_pattern, pattern_id, events, opts})
-  end
-
-  # Query function with server as third arg
-  def schedule_pattern(pattern_id, query_fn, server)
-      when is_function(query_fn, 1) and (is_atom(server) or is_pid(server)) do
-    GenServer.call(server, {:schedule_pattern_fn, pattern_id, query_fn, []})
-  end
-
-  # Query function with options
-  def schedule_pattern(pattern_id, query_fn, opts)
-      when is_function(query_fn, 1) and is_list(opts) do
-    {server, opts} = Keyword.pop(opts, :server, @me)
-    GenServer.call(server, {:schedule_pattern_fn, pattern_id, query_fn, opts})
+    GenServer.call(server, {:schedule_pattern, pattern_id, uzu_pattern, opts})
   end
 
   @doc """
-  Update an existing pattern with new events (hot-swap).
+  Update an existing pattern (hot-swap).
 
-  This allows you to change a pattern while it's playing without stopping it.
-  The new events take effect immediately.
+  The new pattern takes effect immediately.
 
   ## Examples
 
-      # Change the kick pattern
-      PatternScheduler.update_pattern(:kick, [
-        {0.0, [s: "bd", n: 1]},
-        {0.5, [s: "bd", n: 2]}
-      ])
+      new_pattern = UzuPattern.parse("bd bd sd sd")
+      PatternScheduler.update_pattern(:drums, new_pattern)
   """
-  def update_pattern(pattern_id, events, server \\ @me) when is_list(events) do
-    GenServer.call(server, {:update_pattern, pattern_id, events})
+  def update_pattern(pattern_id, %UzuPattern.Pattern{} = uzu_pattern, server \\ @me) do
+    GenServer.call(server, {:update_pattern, pattern_id, uzu_pattern})
   end
 
   @doc """
@@ -350,45 +220,19 @@ defmodule Waveform.PatternScheduler do
   end
 
   def handle_call({:set_cps, cps}, _from, state) do
-    # Update tempo - affects all future scheduling
-    # Already-scheduled events keep their timestamps
     {:reply, :ok, %{state | cps: cps}}
   end
 
-  def handle_call({:schedule_pattern, pattern_id, events}, from, state) do
-    # Backward compatibility: no options provided
-    handle_call({:schedule_pattern, pattern_id, events, []}, from, state)
-  end
-
-  def handle_call({:schedule_pattern, pattern_id, events, opts}, _from, state) do
-    # Extract output configuration
+  def handle_call(
+        {:schedule_pattern, pattern_id, %UzuPattern.Pattern{} = uzu_pattern, opts},
+        _from,
+        state
+      ) do
     output = Keyword.get(opts, :output, :superdirt)
     output_opts = Keyword.drop(opts, [:output])
 
-    # Create new pattern or replace existing one
     pattern = %Pattern{
-      events: events,
-      query_fn: nil,
-      active: true,
-      # Fresh start
-      last_scheduled_cycle: nil,
-      output: output,
-      output_opts: output_opts
-    }
-
-    new_patterns = Map.put(state.patterns, pattern_id, pattern)
-    {:reply, :ok, %{state | patterns: new_patterns}}
-  end
-
-  def handle_call({:schedule_pattern_fn, pattern_id, query_fn, opts}, _from, state) do
-    # Extract output configuration
-    output = Keyword.get(opts, :output, :superdirt)
-    output_opts = Keyword.drop(opts, [:output])
-
-    # Create pattern with query function instead of static events
-    pattern = %Pattern{
-      events: nil,
-      query_fn: query_fn,
+      uzu_pattern: uzu_pattern,
       active: true,
       last_scheduled_cycle: nil,
       output: output,
@@ -399,16 +243,13 @@ defmodule Waveform.PatternScheduler do
     {:reply, :ok, %{state | patterns: new_patterns}}
   end
 
-  def handle_call({:update_pattern, pattern_id, events}, from, state) do
-    # Hot-swap: update events while keeping pattern active
+  def handle_call({:update_pattern, pattern_id, %UzuPattern.Pattern{} = uzu_pattern}, from, state) do
     case Map.get(state.patterns, pattern_id) do
       nil ->
-        # Pattern doesn't exist, create it
-        handle_call({:schedule_pattern, pattern_id, events}, from, state)
+        handle_call({:schedule_pattern, pattern_id, uzu_pattern, []}, from, state)
 
       pattern ->
-        # Update events, reset cycle tracking
-        updated_pattern = %{pattern | events: events, last_scheduled_cycle: nil}
+        updated_pattern = %{pattern | uzu_pattern: uzu_pattern, last_scheduled_cycle: nil}
         new_patterns = Map.put(state.patterns, pattern_id, updated_pattern)
         {:reply, :ok, %{state | patterns: new_patterns}}
     end
@@ -513,22 +354,29 @@ defmodule Waveform.PatternScheduler do
     end)
   end
 
-  # Get events from pattern - either static events or via query function
-  defp get_pattern_events(%Pattern{query_fn: query_fn}, current_cycle)
-       when is_function(query_fn, 1) do
-    # Query for the current cycle's events
+  # Query UzuPattern for events in the current cycle
+  defp get_pattern_events(%Pattern{uzu_pattern: uzu_pattern}, current_cycle) do
     cycle_int = floor(current_cycle)
-    query_fn.(cycle_int)
+
+    uzu_pattern
+    |> UzuPatternMod.query(cycle_int)
+    |> Enum.map(&convert_event/1)
   end
 
-  defp get_pattern_events(%Pattern{events: events}, _current_cycle) when is_list(events) do
-    events
+  # Convert UzuPattern.Event to Waveform's {cycle_position, params} format
+  defp convert_event(%UzuPattern.Event{} = event) do
+    params =
+      event.params
+      |> Map.to_list()
+      |> add_param(:s, event.sound)
+      |> add_param(:n, event.sample)
+
+    {event.time, params}
   end
 
-  defp get_pattern_events(%Pattern{events: nil, query_fn: nil}, _current_cycle) do
-    # No events and no query function - return empty list
-    []
-  end
+  defp add_param(params, _key, nil), do: params
+  defp add_param(params, _key, ""), do: params
+  defp add_param(params, key, value), do: [{key, value} | params]
 
   # Schedule all occurrences of an event in the cycle window.
   #
