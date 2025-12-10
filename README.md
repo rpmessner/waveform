@@ -316,7 +316,7 @@ end
 
 ### Pattern-Based Live Coding with SuperDirt
 
-Waveform includes built-in SuperDirt integration and a high-precision pattern scheduler for TidalCycles-style live coding.
+Waveform includes built-in SuperDirt integration and a high-precision pattern scheduler that works directly with [UzuPattern](https://github.com/rpmessner/uzu_pattern) for TidalCycles-style live coding.
 
 **Prerequisites:** Make sure SuperDirt is installed and loaded (see [Prerequisites](#prerequisites)).
 
@@ -334,44 +334,27 @@ SuperDirt.play(s: "sn", n: 2, gain: 0.8)  # Snare variant 2
 SuperDirt.play(s: "cp", room: 0.5, size: 0.8)  # Clap with reverb
 ```
 
-**Continuous pattern playback:**
+**Continuous pattern playback with UzuPattern:**
+
+The PatternScheduler works directly with `%UzuPattern.Pattern{}` structs. Parse mini-notation strings and schedule them for playback:
 
 ```elixir
 alias Waveform.PatternScheduler
+alias UzuPattern.Pattern
 
 # Set tempo (0.5625 = 135 BPM)
 PatternScheduler.set_cps(0.5625)
 
-# Define a drum pattern (events at cycle positions 0.0 to 1.0)
-drums = [
-  {0.0, [s: "bd"]},      # Kick on the 1
-  {0.25, [s: "cp"]},     # Clap on the 2
-  {0.5, [s: "sn"]},      # Snare on the 3
-  {0.75, [s: "cp"]}      # Clap on the 4
-]
-
-# Start the pattern looping
+# Parse and schedule a drum pattern
+drums = UzuPattern.parse("bd cp sn cp")
 PatternScheduler.schedule_pattern(:drums, drums)
 
 # Add a hi-hat pattern
-hats = [
-  {0.0, [s: "hh", n: 0]},
-  {0.125, [s: "hh", n: 1]},
-  {0.25, [s: "hh", n: 0]},
-  {0.375, [s: "hh", n: 1]},
-  {0.5, [s: "hh", n: 0]},
-  {0.625, [s: "hh", n: 1]},
-  {0.75, [s: "hh", n: 0]},
-  {0.875, [s: "hh", n: 1]}
-]
-
+hats = UzuPattern.parse("hh*8")
 PatternScheduler.schedule_pattern(:hats, hats)
 
 # Hot-swap the drum pattern while it's playing
-new_drums = [
-  {0.0, [s: "bd", n: 1]},
-  {0.5, [s: "bd", n: 2]}
-]
+new_drums = UzuPattern.parse("bd bd:1 sn bd:2")
 PatternScheduler.update_pattern(:drums, new_drums)
 
 # Change tempo on the fly
@@ -384,39 +367,63 @@ PatternScheduler.stop_pattern(:hats)
 PatternScheduler.hush()
 ```
 
-**Cycle-aware patterns (dynamic patterns):**
+**Pattern transformations:**
 
-For patterns that change based on cycle number, pass a query function instead of a static event list:
+Apply UzuPattern transformations before scheduling:
 
 ```elixir
-# Alternates between two patterns every cycle
-PatternScheduler.schedule_pattern(:alternating, fn cycle ->
-  if rem(cycle, 2) == 0 do
-    [{0.0, [s: "bd"]}, {0.5, [s: "sd"]}]
-  else
-    [{0.0, [s: "hh"]}, {0.5, [s: "cp"]}]
-  end
-end)
+# Speed up the pattern (2x = 8 events per cycle)
+drums = UzuPattern.parse("bd sd hh cp")
+        |> Pattern.fast(2)
 
-# Only play every 4th cycle
-PatternScheduler.schedule_pattern(:sparse, fn cycle ->
-  if rem(cycle, 4) == 0 do
-    [{0.0, [s: "bd", gain: 1.2]}]
-  else
-    []
-  end
-end)
+PatternScheduler.schedule_pattern(:drums, drums)
 
-# Integration with UzuPattern for cycle-aware transformations
-alias UzuPattern.Pattern
+# Slow down (half speed)
+ambient = UzuPattern.parse("pad:1 pad:2 pad:3 pad:4")
+          |> Pattern.slow(2)
 
-pattern = Pattern.new("bd sd hh cp")
-  |> Pattern.fast(2)
-  |> Pattern.every(4, &Pattern.rev/1)
+PatternScheduler.schedule_pattern(:ambient, ambient)
 
-PatternScheduler.schedule_pattern(:drums, fn cycle ->
-  Pattern.query(pattern, cycle)
-end)
+# Reverse the pattern
+reversed = UzuPattern.parse("bd sd hh cp")
+           |> Pattern.rev()
+
+PatternScheduler.schedule_pattern(:reversed, reversed)
+
+# Apply transformation every N cycles
+evolving = UzuPattern.parse("bd sd hh cp")
+           |> Pattern.every(4, &Pattern.rev/1)
+
+PatternScheduler.schedule_pattern(:evolving, evolving)
+
+# Stack multiple patterns (polyrhythm)
+poly = Pattern.stack([
+  UzuPattern.parse("bd ~ bd ~"),
+  UzuPattern.parse("~ cp ~ cp"),
+  UzuPattern.parse("hh*8")
+])
+
+PatternScheduler.schedule_pattern(:poly, poly)
+```
+
+**Signal patterns for modulation:**
+
+Use signal patterns (sine, saw, rand) to modulate parameters:
+
+```elixir
+alias UzuPattern.Pattern.{Effects, Signal}
+
+# Filter sweep with sine wave
+pattern = UzuPattern.parse("bd sd hh cp")
+          |> Effects.lpf(Signal.sine() |> Signal.range(200, 2000))
+
+PatternScheduler.schedule_pattern(:sweep, pattern)
+
+# Random panning
+pattern = UzuPattern.parse("hh*8")
+          |> Effects.pan(Signal.rand() |> Signal.range(-1, 1))
+
+PatternScheduler.schedule_pattern(:random_pan, pattern)
 ```
 
 ### MIDI Output
@@ -457,13 +464,8 @@ alias Waveform.PatternScheduler
 # Set tempo
 PatternScheduler.set_cps(0.5)  # 120 BPM
 
-# Define a melody pattern
-melody = [
-  {0.0, [note: 60, velocity: 80]},
-  {0.25, [note: 64, velocity: 70]},
-  {0.5, [note: 67, velocity: 90]},
-  {0.75, [note: 72, velocity: 85]}
-]
+# Parse a melody pattern (numbers are interpreted as MIDI notes)
+melody = UzuPattern.parse("60 64 67 72")
 
 # Schedule with MIDI output
 PatternScheduler.schedule_pattern(:melody, melody,
@@ -494,19 +496,12 @@ config :waveform,
 
 ```elixir
 # Use aliases in patterns
-PatternScheduler.schedule_pattern(:bass, bass_events,
+bass = UzuPattern.parse("36 48 36 48")
+PatternScheduler.schedule_pattern(:bass, bass,
   output: :midi,
   midi_port: :synth,
   midi_channel: 2
 )
-
-# Per-event port routing
-events = [
-  {0.0, [note: 36, port: :drums, channel: 10]},   # Kick to drums port
-  {0.5, [note: 60, port: :synth, channel: 1]}     # Note to synth port
-]
-
-PatternScheduler.schedule_pattern(:multi, events, output: :midi)
 ```
 
 ### MIDI Input
