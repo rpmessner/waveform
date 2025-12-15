@@ -360,23 +360,19 @@ defmodule Waveform.PatternScheduler do
 
     uzu_pattern
     |> UzuPatternMod.query(cycle_int)
-    |> Enum.map(&convert_event/1)
+    |> Enum.map(&convert_hap/1)
   end
 
-  # Convert UzuPattern.Event to Waveform's {cycle_position, params} format
-  defp convert_event(%UzuPattern.Event{} = event) do
-    params =
-      event.params
-      |> Map.to_list()
-      |> add_param(:s, event.sound)
-      |> add_param(:n, event.sample)
+  # Convert UzuPattern.Hap to Waveform's {cycle_position, params} format
+  defp convert_hap(%UzuPattern.Hap{} = hap) do
+    # Use whole.begin for onset time (when to trigger the sound)
+    onset = UzuPattern.Hap.onset(hap) || hap.part.begin
 
-    {event.time, params}
+    # hap.value is a map with :s, :n, and other params
+    params = Map.to_list(hap.value)
+
+    {onset, params}
   end
-
-  defp add_param(params, _key, nil), do: params
-  defp add_param(params, _key, ""), do: params
-  defp add_param(params, key, value), do: [{key, value} | params]
 
   # Schedule all occurrences of an event in the cycle window.
   #

@@ -168,9 +168,9 @@ defmodule Waveform.PatternSchedulerTest do
 
       assert :ok = PatternScheduler.schedule_pattern(:rev_test, pattern, scheduler)
 
-      events = Pattern.query(pattern, 0)
-      # First event should be hh (reversed from bd sd hh)
-      assert List.first(events).sound == "hh"
+      haps = Pattern.query(pattern, 0)
+      # First hap should be hh (reversed from bd sd hh)
+      assert List.first(haps).value.s == "hh"
     end
 
     test "every transformation receives cycle number", %{scheduler: scheduler} do
