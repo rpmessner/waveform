@@ -17,6 +17,7 @@ defmodule Waveform.MixProject do
       name: "Waveform",
       source_url: @source_url,
       test_coverage: [tool: ExCoveralls],
+      erlc_paths: ["src"],
       dialyzer: [
         # Include Mix in PLT for mix task analysis
         plt_add_apps: [:mix]
@@ -74,7 +75,7 @@ defmodule Waveform.MixProject do
   defp package do
     [
       name: "waveform",
-      files: ~w(lib .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
+      files: ~w(lib src .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
       licenses: ["MIT"],
       links: %{
         "GitHub" => @source_url
