@@ -368,10 +368,13 @@ defmodule Waveform.PatternScheduler do
     # Use whole.begin for onset time (when to trigger the sound)
     onset = UzuPattern.Hap.onset(hap) || hap.part.begin
 
+    # Convert Ratio to float for scheduling arithmetic
+    onset_float = UzuPattern.Time.to_float(onset)
+
     # hap.value is a map with :s, :n, and other params
     params = Map.to_list(hap.value)
 
-    {onset, params}
+    {onset_float, params}
   end
 
   # Schedule all occurrences of an event in the cycle window.
