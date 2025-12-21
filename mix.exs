@@ -1,7 +1,7 @@
 defmodule Waveform.MixProject do
   use Mix.Project
 
-  @version "0.3.0"
+  @version "0.4.0"
   @source_url "https://github.com/rpmessner/waveform"
 
   def project do
@@ -54,7 +54,7 @@ defmodule Waveform.MixProject do
       {:erlexec, "~> 2.0"},
       {:recase, "~> 0.2"},
       {:midiex, "~> 0.6"},
-      {:uzu_pattern, path: "../uzu_pattern"},
+      {:uzu_pattern, "~> 0.8.1"},
 
       # Dev/test dependencies
       {:ex_doc, "~> 0.31", only: :dev, runtime: false},

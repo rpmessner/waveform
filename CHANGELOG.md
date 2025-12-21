@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-12-20
+
 ### Changed
 
 - **[BREAKING]** Minimum required versions updated for modern Elixir/OTP support
@@ -18,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced unmaintained exexec wrapper with direct erlexec usage
   - All functionality remains the same; only internal implementation changed
   - `erlexec` is now a direct dependency in mix.exs
+
+- Updated `uzu_pattern` dependency to ~> 0.8.1 (from path dependency)
 
 ### Added
 
@@ -31,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Handle `:DOWN` messages from sclang process to prevent GenServer crash on exit
 - SuperDirt initialization now properly waits for readiness instead of fixed 15-second sleep
   - Monitors stdout for `"SuperDirt: listening to Tidal on port"` message
   - Faster startup when samples load quickly
@@ -55,3 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2025-11-21
 
 Previous release version.
+
+[Unreleased]: https://github.com/rpmessner/waveform/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/rpmessner/waveform/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/rpmessner/waveform/releases/tag/v0.3.0

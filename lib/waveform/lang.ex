@@ -417,4 +417,12 @@ defmodule Waveform.Lang do
 
     {:noreply, %{state | quarks_installation_subscribers: []}}
   end
+
+  # Handle process exit notifications from erlexec
+  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) do
+    # sclang process exited - log and continue (tests may trigger this)
+    require Logger
+    Logger.debug("sclang process exited: #{inspect(reason)}")
+    {:noreply, state}
+  end
 end
