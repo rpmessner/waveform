@@ -1,8 +1,8 @@
 defmodule Waveform.PatternSchedulerTest do
   use ExUnit.Case, async: true
 
-  alias Waveform.PatternScheduler
   alias UzuPattern.Pattern
+  alias Waveform.PatternScheduler
 
   setup do
     super_dirt = start_supervised!({Waveform.SuperDirt, [name: nil, udp_port: 0]})
